@@ -1,0 +1,70 @@
+{
+  "app": {
+    "name": "كورشوب"
+  },
+  "auth": {
+    "signIn": "تسجيل الدخول",
+    "signUp": "إنشاء حساب",
+    "email": "البريد الإلكتروني",
+    "password": "كلمة المرور",
+    "forgotPassword": "نسيت كلمة المرور؟",
+    "continueWithGoogle": "المتابعة مع جوجل",
+    "noAccount": "ليس لديك حساب؟",
+    "haveAccount": "لديك حساب بالفعل؟",
+    "confirmPassword": "تأكيد كلمة المرور",
+    "createAccount": "إنشاء حساب"
+  },
+  "common": {
+    "continue": "متابعة",
+    "skip": "تخطي",
+    "next": "التالي",
+    "back": "رجوع",
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "loading": "جاري التحميل..."
+  },
+  "onboarding": {
+    "stepOf": "الخطوة {{current}} من {{total}}",
+    "avatar": {
+      "title": "اختر صورتك الرمزية",
+      "subtitle": "اختر واحدة أو ارفع صورتك",
+      "upload": "ارفع من جهازك"
+    },
+    "profile": {
+      "title": "أخبرنا عنك",
+      "subtitle": "اسمك ونوع الحساب",
+      "name": "الاسم الكامل",
+      "role": "نوع الحساب",
+      "roles": {
+        "client": "عميل",
+        "clientDesc": "تصفح واشترِ المنتجات",
+        "seller": "بائع",
+        "sellerDesc": "بِع منتجاتك",
+        "driver": "سائق",
+        "driverDesc": "قريباً"
+      }
+    },
+    "location": {
+      "title": "موقعك",
+      "subtitle": "نستخدمه لإظهار المتاجر القريبة",
+      "city": "المدينة",
+      "useGps": "استخدم موقعي الحالي"
+    },
+    "permissions": {
+      "title": "الأذونات",
+      "subtitle": "فعّلها لأفضل تجربة",
+      "notifications": "الإشعارات",
+      "notificationsDesc": "تحديثات الطلبات والعروض",
+      "media": "الصور والوسائط",
+      "mediaDesc": "رفع صور المنتجات والملف الشخصي",
+      "allow": "السماح",
+      "allowed": "مسموح"
+    },
+    "interests": {
+      "title": "ما الذي يهمك؟",
+      "subtitle": "اختر 3 فئات على الأقل",
+      "selected": "{{count}} مختارة"
+    },
+    "finish": "إنهاء"
+  }
+}

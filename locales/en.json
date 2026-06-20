@@ -1,0 +1,70 @@
+{
+  "app": {
+    "name": "CoreShop"
+  },
+  "auth": {
+    "signIn": "Sign In",
+    "signUp": "Sign Up",
+    "email": "Email",
+    "password": "Password",
+    "forgotPassword": "Forgot password?",
+    "continueWithGoogle": "Continue with Google",
+    "noAccount": "Don't have an account?",
+    "haveAccount": "Already have an account?",
+    "confirmPassword": "Confirm Password",
+    "createAccount": "Create Account"
+  },
+  "common": {
+    "continue": "Continue",
+    "skip": "Skip",
+    "next": "Next",
+    "back": "Back",
+    "save": "Save",
+    "cancel": "Cancel",
+    "loading": "Loading..."
+  },
+  "onboarding": {
+    "stepOf": "Step {{current}} of {{total}}",
+    "avatar": {
+      "title": "Choose your avatar",
+      "subtitle": "Pick one or upload your own",
+      "upload": "Upload from device"
+    },
+    "profile": {
+      "title": "Tell us about you",
+      "subtitle": "Your name and account type",
+      "name": "Full name",
+      "role": "Account type",
+      "roles": {
+        "client": "Client",
+        "clientDesc": "Browse and buy products",
+        "seller": "Seller",
+        "sellerDesc": "Sell your products",
+        "driver": "Driver",
+        "driverDesc": "Coming soon"
+      }
+    },
+    "location": {
+      "title": "Your location",
+      "subtitle": "We use this to show nearby stores",
+      "city": "City",
+      "useGps": "Use my current location"
+    },
+    "permissions": {
+      "title": "Permissions",
+      "subtitle": "Enable for the best experience",
+      "notifications": "Notifications",
+      "notificationsDesc": "Order updates and offers",
+      "media": "Photos & Media",
+      "mediaDesc": "Upload product images and avatars",
+      "allow": "Allow",
+      "allowed": "Allowed"
+    },
+    "interests": {
+      "title": "What are you into?",
+      "subtitle": "Pick at least 3 categories",
+      "selected": "{{count}} selected"
+    },
+    "finish": "Finish"
+  }
+}

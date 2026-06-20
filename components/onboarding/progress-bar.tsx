@@ -1,0 +1,42 @@
+import { View } from "react-native";
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
+import { useEffect } from "react";
+import { Text } from "@/components/ui/text";
+import { useTranslation } from "react-i18next";
+
+interface Props {
+  current: number;
+  total: number;
+}
+
+export function ProgressBar({ current, total }: Props) {
+  const { t } = useTranslation();
+  const progress = useSharedValue(0);
+
+  useEffect(() => {
+    progress.value = withTiming(current / total, { duration: 400 });
+  }, [current, total]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    width: `${progress.value * 100}%`,
+  }));
+
+  return (
+    <View className="w-full gap-2">
+      <View className="flex-row justify-between">
+        <Text variant="medium" className="text-xs" style={{ color: "#6B7280" }}>
+          {t("onboarding.stepOf", { current, total })}
+        </Text>
+        <Text variant="semibold" className="text-xs text-brand">
+          {Math.round((current / total) * 100)}%
+        </Text>
+      </View>
+      <View className="h-1.5 w-full overflow-hidden rounded-full bg-brand-100">
+        <Animated.View
+          className="h-full rounded-full bg-brand"
+          style={animatedStyle}
+        />
+      </View>
+    </View>
+  );
+}

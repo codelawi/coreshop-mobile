@@ -1,11 +1,12 @@
 {
   "expo": {
-    "name": "coreshop-mobile",
+    "name": "CoreShop",
     "slug": "coreshop-mobile",
+    "scheme": "coreshop",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
@@ -13,7 +14,11 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.coreshop.mobile",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Allow CoreShop to use your location to show nearby stores."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -21,10 +26,36 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.coreshop.mobile",
+      "permissions": [
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ]
     },
     "web": {
-      "favicon": "./assets/favicon.png"
-    }
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow CoreShop to use your location to show nearby stores."
+        }
+      ],
+      "expo-web-browser"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "ac7a0146-f6aa-4fa3-b939-a8bc4713c03e"
+      }
+    },
+    "owner": "coreshop-io"
   }
 }
