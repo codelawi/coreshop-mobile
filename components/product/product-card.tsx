@@ -2,8 +2,10 @@ import { View, Pressable } from "react-native";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { HugeiconsIcon } from "@hugeicons/react-native";
-import { StarIcon } from "@hugeicons/core-free-icons";
+import { StarIcon, FavouriteIcon } from "@hugeicons/core-free-icons";
 import { Text } from "@/components/ui/text";
+import { useWishlistStore } from "@/stores/wishlist-store";
+import { useAuthStore } from "@/stores/auth-store";
 import type { HomeProduct } from "@/lib/queries/home";
 
 interface Props {
@@ -13,6 +15,9 @@ interface Props {
 
 export function ProductCard({ product, width = "48%" }: Props) {
   const router = useRouter();
+  const token = useAuthStore((s) => s.token);
+  const isWishlisted = useWishlistStore((s) => s.isWishlisted(product.id));
+  const toggle = useWishlistStore((s) => s.toggle);
 
   return (
     <Pressable
@@ -29,6 +34,7 @@ export function ProductCard({ product, width = "48%" }: Props) {
             transition={200}
           />
         ) : null}
+
         {product.discount_percent ? (
           <View
             className="absolute left-2 top-2 rounded-md px-2 py-0.5"
@@ -39,7 +45,32 @@ export function ProductCard({ product, width = "48%" }: Props) {
             </Text>
           </View>
         ) : null}
+
+        {token ? (
+          <Pressable
+            onPress={(e) => {
+              e.stopPropagation();
+              toggle(product.id);
+            }}
+            hitSlop={8}
+            className="absolute right-2 top-2 h-7 w-7 items-center justify-center rounded-full"
+            style={{
+              backgroundColor: isWishlisted ? "#FF4D4F" : "#fff",
+              shadowColor: "#000",
+              shadowOpacity: 0.1,
+              shadowRadius: 4,
+              elevation: 2,
+            }}
+          >
+            <HugeiconsIcon
+              icon={FavouriteIcon}
+              size={15}
+              color={isWishlisted ? "#fff" : "#9CA3AF"}
+            />
+          </Pressable>
+        ) : null}
       </View>
+
       <View className="p-2.5">
         <Text variant="medium" numberOfLines={2} className="text-xs text-brand" style={{ minHeight: 32 }}>
           {product.name}

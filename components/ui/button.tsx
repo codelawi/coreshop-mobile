@@ -69,16 +69,16 @@ export function Button({
         scale.value = withTiming(1, { duration: 120 });
         opacity.value = withTiming(1, { duration: 120 });
       }}
-      style={animatedStyle}
-      className={`flex-row items-center justify-center rounded-md ${variantBg[variant]} ${sizeStyles[size]} ${fullWidth ? "w-full" : ""} ${disabled ? "opacity-50" : ""} ${className ?? ""}`}
+      style={[animatedStyle, { justifyContent: "center", alignItems: "center" }]}
+      className={`flex-row rounded-md ${variantBg[variant]} ${sizeStyles[size]} ${fullWidth ? "w-full" : ""} ${disabled ? "opacity-50" : ""} ${className ?? ""}`}
       {...props}
     >
       {loading ? (
         <ActivityIndicator color={variantTextColor[variant]} />
       ) : (
-        <View className="flex-row items-center" style={{ gap: 8 }}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
           {leftIcon}
-          <Text variant="semibold" style={{ color: variantTextColor[variant], fontSize: 16 }}>
+          <Text variant="semibold" style={{ color: variantTextColor[variant], fontSize: 16, textAlign: "center" }}>
             {label}
           </Text>
           {rightIcon}

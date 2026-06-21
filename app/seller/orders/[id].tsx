@@ -109,7 +109,8 @@ export default function SellerOrderDetail() {
         contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: action ? 100 : 32, gap: 16 }}
       >
         {/* Customer + address */}
-        <Animated.View entering={FadeInDown.duration(300)} className="rounded-xl bg-white p-4 gap-3">
+        <Animated.View entering={FadeInDown.duration(300)} className="rounded-xl bg-white p-4">
+          <View className="gap-3">
           {order.client ? (
             <View className="flex-row items-center gap-3">
               <View className="h-10 w-10 items-center justify-center rounded-full bg-brand-50">
@@ -142,15 +143,17 @@ export default function SellerOrderDetail() {
               </View>
             </View>
           ) : null}
+          </View>
         </Animated.View>
 
         {/* Items */}
-        <Animated.View entering={FadeInDown.duration(300).delay(60)} className="rounded-xl bg-white p-4 gap-3">
+        <Animated.View entering={FadeInDown.duration(300).delay(60)} className="rounded-xl bg-white p-4">
+          <View className="gap-3">
           <Text variant="semibold" className="text-sm text-brand">
             Items ({order.items_count ?? order.items?.length ?? 0})
           </Text>
 
-          {order.items?.map((item, i) => (
+          {Array.isArray(order.items) && order.items.map((item, i) => (
             <View key={item.id}>
               {i > 0 ? <View className="h-px bg-brand-100 mb-3" /> : null}
               <View className="flex-row items-center gap-3">
@@ -186,13 +189,15 @@ export default function SellerOrderDetail() {
               </View>
             </View>
           ))}
+          </View>
         </Animated.View>
 
         {/* Payment summary */}
         <Animated.View
           entering={FadeInDown.duration(300).delay(120)}
-          className="rounded-xl bg-white p-4 gap-2"
+          className="rounded-xl bg-white p-4"
         >
+          <View className="gap-2">
           <Text variant="semibold" className="mb-1 text-sm text-brand">Payment</Text>
 
           <View className="flex-row justify-between">
@@ -232,6 +237,7 @@ export default function SellerOrderDetail() {
             >
               {order.payment_method?.replace(/_/g, " ") ?? "Cash on Delivery"}
             </Text>
+          </View>
           </View>
         </Animated.View>
 

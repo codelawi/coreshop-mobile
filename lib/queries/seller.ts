@@ -98,13 +98,12 @@ export interface CreateStoreInput {
   latitude?: number;
   longitude?: number;
   delivery_radius_km?: number;
+  logo?: string;
+  banner?: string;
   working_hours?: WorkingHours;
 }
 
-export interface UpdateStoreInput extends Partial<CreateStoreInput> {
-  logo?: string;
-  banner?: string;
-}
+export type UpdateStoreInput = Partial<CreateStoreInput>;
 
 export interface CreateProductInput {
   name: string;
@@ -220,10 +219,12 @@ export function useSellerOrders(status?: string) {
   return useQuery({
     queryKey: ["seller", "orders", status],
     queryFn: async () => {
-      const res = await api.get<{ success: boolean; data: SellerOrder[] }>("/seller/orders", {
-        params: status ? { status } : undefined,
-      });
-      return res.data.data;
+      const res = await api.get<{ success: boolean; data: SellerOrder[] | { data: SellerOrder[] } }>(
+        "/seller/orders",
+        { params: status ? { status } : undefined }
+      );
+      const payload = res.data.data;
+      return Array.isArray(payload) ? payload : ((payload as any)?.data ?? []);
     },
   });
 }

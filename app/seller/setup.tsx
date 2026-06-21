@@ -8,29 +8,34 @@ import {
   Switch,
   ActivityIndicator,
 } from "react-native";
+import { Image } from "expo-image";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useState, useRef } from "react";
 import { useRouter } from "expo-router";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import Animated, { FadeInRight, FadeOutLeft } from "react-native-reanimated";
+import Animated, { FadeInRight } from "react-native-reanimated";
 import { HugeiconsIcon } from "@hugeicons/react-native";
 import {
   ArrowLeft01Icon,
   ArrowRight01Icon,
   Location01Icon,
-  MapsLocation02Icon,
+  ImageUpload01Icon,
   Tick01Icon,
 } from "@hugeicons/core-free-icons";
 import MapView, { type Region, PROVIDER_DEFAULT } from "react-native-maps";
 import * as Location from "expo-location";
+import * as ImagePicker from "expo-image-picker";
+import * as FileSystem from "expo-file-system/legacy";
+import * as SecureStore from "expo-secure-store";
 import { toast } from "sonner-native";
 
 import { Text } from "@/components/ui/text";
 import { Input } from "@/components/ui/input";
 import type { WorkingHours } from "@/lib/queries/seller";
 import { useCreateStore, useUpdateStore, useSellerStore } from "@/lib/queries/seller";
+import { API_URL } from "@/lib/api";
 
 const DAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"] as const;
 const DAY_LABELS: Record<string, string> = {
@@ -56,6 +61,31 @@ const basicsSchema = z.object({
 
 type BasicsForm = z.infer<typeof basicsSchema>;
 
+async function uploadStoreImage(
+  localUri: string,
+  onLoading: (b: boolean) => void
+): Promise<string> {
+  onLoading(true);
+  try {
+    const token = await SecureStore.getItemAsync("auth_token");
+    const upload = await FileSystem.uploadAsync(
+      `${API_URL}/seller/upload/image`,
+      localUri,
+      {
+        httpMethod: "POST",
+        uploadType: FileSystem.FileSystemUploadType.MULTIPART,
+        fieldName: "image",
+        headers: { Authorization: `Bearer ${token ?? ""}` },
+      }
+    );
+    const json = JSON.parse(upload.body);
+    if (upload.status >= 400) { throw new Error(json?.message ?? "Upload failed"); }
+    return json.data.url as string;
+  } finally {
+    onLoading(false);
+  }
+}
+
 export default function SellerSetup() {
   const router = useRouter();
   const { data: existingStore } = useSellerStore();
@@ -63,8 +93,11 @@ export default function SellerSetup() {
   const updateStore = useUpdateStore();
 
   const isEditing = !!existingStore;
+  const TOTAL_STEPS = 4;
 
   const [step, setStep] = useState(0);
+
+  // Step 1 — location
   const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(
     existingStore?.latitude && existingStore?.longitude
       ? { latitude: Number(existingStore.latitude), longitude: Number(existingStore.longitude) }
@@ -73,8 +106,18 @@ export default function SellerSetup() {
   const [city, setCity] = useState(existingStore?.city ?? "");
   const [address, setAddress] = useState(existingStore?.address ?? "");
   const [gpsLoading, setGpsLoading] = useState(false);
-  const [hours, setHours] = useState<WorkingHours>(existingStore?.working_hours ?? DEFAULT_HOURS);
   const mapRef = useRef<MapView>(null);
+
+  // Step 2 — images
+  const [logoUri, setLogoUri] = useState<string | null>(existingStore?.logo ?? null);
+  const [logoUrl, setLogoUrl] = useState<string | null>(existingStore?.logo ?? null);
+  const [logoLoading, setLogoLoading] = useState(false);
+  const [bannerUri, setBannerUri] = useState<string | null>(existingStore?.banner ?? null);
+  const [bannerUrl, setBannerUrl] = useState<string | null>(existingStore?.banner ?? null);
+  const [bannerLoading, setBannerLoading] = useState(false);
+
+  // Step 3 — hours
+  const [hours, setHours] = useState<WorkingHours>(existingStore?.working_hours ?? DEFAULT_HOURS);
 
   const DEFAULT_REGION: Region = {
     latitude: coords?.latitude ?? 31.9522,
@@ -110,8 +153,8 @@ export default function SellerSetup() {
       setCoords({ latitude, longitude });
       mapRef.current?.animateToRegion({ latitude, longitude, latitudeDelta: 0.01, longitudeDelta: 0.01 });
       const [place] = await Location.reverseGeocodeAsync({ latitude, longitude });
-      if (place?.city) setCity(place.city);
-      if (place?.street) setAddress(place.street);
+      if (place?.city) { setCity(place.city); }
+      if (place?.street) { setAddress(place.street); }
     } catch {
       toast.error("Could not detect location");
     } finally {
@@ -121,6 +164,50 @@ export default function SellerSetup() {
 
   const onMapRegionChange = (region: Region) => {
     setCoords({ latitude: region.latitude, longitude: region.longitude });
+  };
+
+  const pickLogo = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") { toast.error("Media permission denied"); return; }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.85,
+    });
+    if (result.canceled) { return; }
+    const uri = result.assets[0].uri;
+    setLogoUri(uri);
+    setLogoUrl(null);
+    try {
+      const url = await uploadStoreImage(uri, setLogoLoading);
+      setLogoUrl(url);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Logo upload failed");
+      setLogoUri(null);
+    }
+  };
+
+  const pickBanner = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") { toast.error("Media permission denied"); return; }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [16, 5],
+      quality: 0.85,
+    });
+    if (result.canceled) { return; }
+    const uri = result.assets[0].uri;
+    setBannerUri(uri);
+    setBannerUrl(null);
+    try {
+      const url = await uploadStoreImage(uri, setBannerLoading);
+      setBannerUrl(url);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Banner upload failed");
+      setBannerUri(null);
+    }
   };
 
   const setDayOpen = (day: string, open: boolean) => {
@@ -138,6 +225,8 @@ export default function SellerSetup() {
       city: city || undefined,
       latitude: coords?.latitude,
       longitude: coords?.longitude,
+      logo: logoUrl ?? undefined,
+      banner: bannerUrl ?? undefined,
       working_hours: hours,
     };
 
@@ -169,12 +258,12 @@ export default function SellerSetup() {
           <Text variant="bold" className="flex-1 text-xl text-brand">
             {isEditing ? "Edit Store" : "Set Up Store"}
           </Text>
-          <Text className="text-sm" style={{ color: "#6B7280" }}>{step + 1} / 3</Text>
+          <Text className="text-sm" style={{ color: "#6B7280" }}>{step + 1} / {TOTAL_STEPS}</Text>
         </View>
 
         {/* Progress */}
         <View className="flex-row gap-1 px-6 mb-6">
-          {[0, 1, 2].map((i) => (
+          {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
             <View
               key={i}
               className="h-1 flex-1 rounded-full"
@@ -369,6 +458,133 @@ export default function SellerSetup() {
                 onPress={() => setStep(2)}
                 className="flex-1 flex-row items-center justify-center gap-2 rounded-xl bg-brand py-4"
               >
+                <Text variant="bold" style={{ color: "#fff" }}>Next: Images</Text>
+                <HugeiconsIcon icon={ArrowRight01Icon} size={18} color="#fff" />
+              </Pressable>
+            </View>
+          </Animated.View>
+        ) : null}
+
+        {/* Step 2 — Images */}
+        {step === 2 ? (
+          <Animated.View entering={FadeInRight.duration(300)} className="flex-1">
+            <ScrollView
+              contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 24, gap: 20 }}
+              showsVerticalScrollIndicator={false}
+            >
+              <View>
+                <Text variant="bold" className="text-lg text-brand">Store images</Text>
+                <Text className="mt-1 text-sm" style={{ color: "#6B7280" }}>
+                  Optional — you can add or update these later.
+                </Text>
+              </View>
+
+              {/* Logo */}
+              <View className="gap-2">
+                <Text variant="medium" className="text-sm text-brand">Store logo</Text>
+                <View className="flex-row items-center gap-4">
+                  <Pressable onPress={pickLogo} disabled={logoLoading}>
+                    <View
+                      className="h-24 w-24 items-center justify-center overflow-hidden rounded-2xl bg-white"
+                      style={{
+                        borderWidth: 2,
+                        borderColor: logoUrl ? "#0A0A0A" : "#E5E7EB",
+                        borderStyle: "dashed",
+                      }}
+                    >
+                      {logoUri ? (
+                        <>
+                          <Image
+                            source={{ uri: logoUri }}
+                            style={{ width: "100%", height: "100%" }}
+                            contentFit="cover"
+                          />
+                          {logoLoading ? (
+                            <View
+                              className="absolute inset-0 items-center justify-center rounded-2xl"
+                              style={{ backgroundColor: "rgba(0,0,0,0.45)" }}
+                            >
+                              <ActivityIndicator color="#fff" />
+                            </View>
+                          ) : null}
+                        </>
+                      ) : (
+                        <HugeiconsIcon icon={ImageUpload01Icon} size={28} color="#D1D5DB" />
+                      )}
+                    </View>
+                  </Pressable>
+                  <View className="flex-1 gap-1">
+                    <Text variant="medium" className="text-sm text-brand">
+                      {logoLoading ? "Uploading…" : logoUrl ? "Logo uploaded" : "Tap to upload"}
+                    </Text>
+                    <Text className="text-xs" style={{ color: "#9CA3AF" }}>
+                      Square image · JPG, PNG, WebP
+                    </Text>
+                  </View>
+                </View>
+              </View>
+
+              {/* Banner */}
+              <View className="gap-2">
+                <Text variant="medium" className="text-sm text-brand">Store banner</Text>
+                <Pressable onPress={pickBanner} disabled={bannerLoading}>
+                  <View
+                    className="w-full items-center justify-center overflow-hidden rounded-xl bg-white"
+                    style={{
+                      height: 140,
+                      borderWidth: 2,
+                      borderColor: bannerUrl ? "#0A0A0A" : "#E5E7EB",
+                      borderStyle: "dashed",
+                    }}
+                  >
+                    {bannerUri ? (
+                      <>
+                        <Image
+                          source={{ uri: bannerUri }}
+                          style={{ width: "100%", height: "100%" }}
+                          contentFit="cover"
+                        />
+                        {bannerLoading ? (
+                          <View
+                            className="absolute inset-0 items-center justify-center rounded-xl"
+                            style={{ backgroundColor: "rgba(0,0,0,0.45)" }}
+                          >
+                            <ActivityIndicator color="#fff" size="large" />
+                          </View>
+                        ) : null}
+                      </>
+                    ) : (
+                      <View className="items-center gap-2">
+                        <HugeiconsIcon icon={ImageUpload01Icon} size={32} color="#D1D5DB" />
+                        <Text className="text-sm" style={{ color: "#9CA3AF" }}>
+                          {bannerLoading ? "Uploading…" : "Tap to upload banner"}
+                        </Text>
+                        <Text className="text-xs" style={{ color: "#D1D5DB" }}>
+                          Landscape · 16:5 ratio recommended
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                </Pressable>
+                {bannerUrl ? (
+                  <Text className="text-xs" style={{ color: "#6B7280" }}>Banner uploaded</Text>
+                ) : null}
+              </View>
+            </ScrollView>
+
+            <View className="flex-row gap-3 px-6 pb-8 pt-4">
+              <Pressable
+                onPress={() => setStep(1)}
+                className="flex-1 items-center rounded-xl border border-brand-100 py-4"
+              >
+                <Text variant="bold" className="text-brand">Back</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => setStep(3)}
+                disabled={logoLoading || bannerLoading}
+                className="flex-1 flex-row items-center justify-center gap-2 rounded-xl bg-brand py-4"
+                style={{ opacity: logoLoading || bannerLoading ? 0.6 : 1 }}
+              >
                 <Text variant="bold" style={{ color: "#fff" }}>Next: Hours</Text>
                 <HugeiconsIcon icon={ArrowRight01Icon} size={18} color="#fff" />
               </Pressable>
@@ -376,8 +592,8 @@ export default function SellerSetup() {
           </Animated.View>
         ) : null}
 
-        {/* Step 2 — Working hours */}
-        {step === 2 ? (
+        {/* Step 3 — Working hours */}
+        {step === 3 ? (
           <Animated.View entering={FadeInRight.duration(300)} className="flex-1">
             <ScrollView
               contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 24, gap: 4 }}
@@ -434,7 +650,7 @@ export default function SellerSetup() {
 
             <View className="flex-row gap-3 px-6 pb-8 pt-4">
               <Pressable
-                onPress={() => setStep(1)}
+                onPress={() => setStep(2)}
                 className="flex-1 items-center rounded-xl border border-brand-100 py-4"
               >
                 <Text variant="bold" className="text-brand">Back</Text>

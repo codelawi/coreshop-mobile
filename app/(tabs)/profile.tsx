@@ -131,7 +131,7 @@ export default function Profile() {
         <Animated.View entering={FadeInUp.duration(400).delay(80)} className="mx-6 mt-4 overflow-hidden rounded-md bg-white">
           <Row icon={PackageIcon} label="My Orders" onPress={() => router.push("/orders" as any)} />
           <View className="ml-16 h-px bg-brand-100" />
-          <Row icon={FavouriteIcon} label="Wishlist" onPress={() => toast("Coming soon")} />
+          <Row icon={FavouriteIcon} label="Wishlist" onPress={() => router.push("/wishlist" as any)} />
           <View className="ml-16 h-px bg-brand-100" />
           <Row icon={Location01Icon} label="Addresses" onPress={() => router.push("/addresses" as any)} />
         </Animated.View>

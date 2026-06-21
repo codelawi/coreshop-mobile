@@ -45,7 +45,17 @@
           "locationAlwaysAndWhenInUsePermission": "Allow CoreShop to use your location to show nearby stores."
         }
       ],
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#0A0A0A",
+          "sounds": [],
+          "androidMode": "default",
+          "androidCollapsedTitle": "CoreShop"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

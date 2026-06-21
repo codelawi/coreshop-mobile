@@ -13,8 +13,8 @@ import {
   LockPasswordIcon,
   View as ViewIcon,
   ViewOffSlashIcon,
-  GoogleIcon,
 } from "@hugeicons/core-free-icons";
+import { GoogleIcon } from "@/components/ui/google-icon";
 import { useTranslation } from "react-i18next";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 
@@ -58,8 +58,14 @@ export default function SignIn() {
       toast.success("Welcome back");
       router.replace("/");
     },
-    onError: (err: any) => {
-      toast.error(err.response?.data?.message ?? "Login failed");
+    onError: async (err: any) => {
+      const body = err.response?.data;
+      if (body?.code === "email_unverified" && body?.data?.token) {
+        await setAuth(body.data.user, body.data.token);
+        router.replace("/(auth)/verify-email" as any);
+      } else {
+        toast.error(body?.message ?? "Login failed");
+      }
     },
   });
 
@@ -172,7 +178,7 @@ export default function SignIn() {
                 variant="outline"
                 fullWidth
                 size="lg"
-                leftIcon={<HugeiconsIcon icon={GoogleIcon} size={20} color="#0A0A0A" />}
+                leftIcon={<GoogleIcon size={20} />}
                 onPress={signInWithGoogle}
                 disabled={!googleReady}
                 loading={googleLoading}

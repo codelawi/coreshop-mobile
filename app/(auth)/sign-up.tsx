@@ -19,8 +19,8 @@ import {
   LockPasswordIcon,
   View as ViewIcon,
   ViewOffSlashIcon,
-  GoogleIcon,
 } from "@hugeicons/core-free-icons";
+import { GoogleIcon } from "@/components/ui/google-icon";
 import { useTranslation } from "react-i18next";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 
@@ -68,8 +68,7 @@ export default function SignUp() {
     },
     onSuccess: async (res) => {
       await setAuth(res.data.user, res.data.token);
-      toast.success("Account created");
-      router.replace("/");
+      router.replace("/(auth)/verify-email" as any);
     },
     onError: (err: any) => {
       console.log(
@@ -230,9 +229,7 @@ export default function SignUp() {
                 variant="outline"
                 fullWidth
                 size="lg"
-                leftIcon={
-                  <HugeiconsIcon icon={GoogleIcon} size={20} color="#0A0A0A" />
-                }
+                leftIcon={<GoogleIcon size={20} />}
                 onPress={signInWithGoogle}
                 disabled={!googleReady}
                 loading={googleLoading}

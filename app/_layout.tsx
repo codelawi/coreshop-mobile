@@ -28,6 +28,8 @@ import { Toaster } from "sonner-native";
 import { useAuthStore } from "@/stores/auth-store";
 import { useLanguageStore } from "@/stores/language-store";
 import { useCartStore } from "@/stores/cart-store";
+import { useWishlistStore } from "@/stores/wishlist-store";
+import { registerForPushNotifications, setupNotificationListeners } from "@/lib/notifications";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -50,13 +52,28 @@ export default function RootLayout() {
   const hydrateAuth = useAuthStore((s) => s.hydrate);
   const hydrateLang = useLanguageStore((s) => s.hydrate);
   const hydrateCart = useCartStore((s) => s.hydrate);
+  const hydrateWishlist = useWishlistStore((s) => s.hydrate);
+  const token = useAuthStore((s) => s.token);
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    Promise.all([hydrateAuth(), hydrateLang(), hydrateCart()]).then(() =>
+    Promise.all([hydrateAuth(), hydrateLang(), hydrateCart(), hydrateWishlist()]).then(() =>
       setHydrated(true)
     );
-  }, [hydrateAuth, hydrateLang, hydrateCart]);
+  }, [hydrateAuth, hydrateLang, hydrateCart, hydrateWishlist]);
+
+  // Register push token whenever the user is authenticated
+  useEffect(() => {
+    if (token) {
+      registerForPushNotifications();
+    }
+  }, [token]);
+
+  // Set up notification tap listener for the lifetime of the app
+  useEffect(() => {
+    const cleanup = setupNotificationListeners();
+    return cleanup;
+  }, []);
 
   if (!loaded || !hydrated) {
     return <View className="flex-1 bg-bg-light" />;
