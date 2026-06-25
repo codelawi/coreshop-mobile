@@ -24,6 +24,7 @@ import { Input } from "@/components/ui/input";
 import { api } from "@/lib/api";
 import { useAuthStore } from "@/stores/auth-store";
 import { useGoogleAuth } from "@/lib/useGoogleAuth";
+import { useThemeColors } from "@/lib/theme";
 
 const schema = z.object({
   email: z.string().email("Invalid email"),
@@ -35,6 +36,7 @@ type FormData = z.infer<typeof schema>;
 export default function SignIn() {
   const { t } = useTranslation();
   const router = useRouter();
+  const c = useThemeColors();
   const setAuth = useAuthStore((s) => s.setAuth);
   const [showPassword, setShowPassword] = useState(false);
   const { ready: googleReady, loading: googleLoading, signInWithGoogle } = useGoogleAuth();
@@ -70,7 +72,7 @@ export default function SignIn() {
   });
 
   return (
-    <SafeAreaView className="flex-1 bg-bg-light">
+    <SafeAreaView className="flex-1 bg-bg-light dark:bg-bg-dark">
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         className="flex-1"
@@ -88,7 +90,7 @@ export default function SignIn() {
               <Text variant="bold" className="text-4xl text-brand">
                 {t("app.name")}
               </Text>
-              <Text className="mt-2 text-base" style={{ color: "#6B7280" }}>
+              <Text className="mt-2 text-base" style={{ color: c.secondary }}>
                 {t("auth.signIn")}
               </Text>
             </Animated.View>
@@ -111,7 +113,7 @@ export default function SignIn() {
                     onChangeText={onChange}
                     error={errors.email?.message}
                     leftIcon={
-                      <HugeiconsIcon icon={Mail01Icon} size={22} color="#0A0A0A" />
+                      <HugeiconsIcon icon={Mail01Icon} size={22} color={c.brand} />
                     }
                   />
                 )}
@@ -130,7 +132,7 @@ export default function SignIn() {
                     onChangeText={onChange}
                     error={errors.password?.message}
                     leftIcon={
-                      <HugeiconsIcon icon={LockPasswordIcon} size={22} color="#0A0A0A" />
+                      <HugeiconsIcon icon={LockPasswordIcon} size={22} color={c.brand} />
                     }
                     rightIcon={
                       <Pressable
@@ -166,11 +168,11 @@ export default function SignIn() {
               />
 
               <View className="my-4 flex-row items-center gap-3">
-                <View className="h-px flex-1 bg-brand-100" />
-                <Text className="text-xs" style={{ color: "#6B7280" }}>
+                <View className="h-px flex-1 bg-brand-100 dark:bg-[#2A2A2A]" />
+                <Text className="text-xs" style={{ color: c.secondary }}>
                   OR
                 </Text>
-                <View className="h-px flex-1 bg-brand-100" />
+                <View className="h-px flex-1 bg-brand-100 dark:bg-[#2A2A2A]" />
               </View>
 
               <Button
@@ -189,7 +191,7 @@ export default function SignIn() {
               entering={FadeInUp.duration(700).delay(350)}
               className="mt-8 flex-row justify-center gap-1"
             >
-              <Text className="text-sm" style={{ color: "#6B7280" }}>
+              <Text className="text-sm" style={{ color: c.secondary }}>
                 {t("auth.noAccount")}
               </Text>
               <Link href={"/(auth)/sign-up" as any}>

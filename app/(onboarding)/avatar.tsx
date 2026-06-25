@@ -1,4 +1,4 @@
-import { View, Pressable, ActivityIndicator } from "react-native";
+import { View, Pressable } from "react-native";
 import { Image } from "expo-image";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useState } from "react";
@@ -17,11 +17,14 @@ import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
 import { ProgressBar } from "@/components/onboarding/progress-bar";
 import { useOnboardingStore } from "@/stores/onboarding-store";
+import { useThemeColors } from "@/lib/theme";
+import { Spinner } from "@/components/ui/spinner";
 import { API_URL } from "@/lib/api";
 
 export default function AvatarStep() {
   const { t } = useTranslation();
   const router = useRouter();
+  const c = useThemeColors();
   const setAvatar = useOnboardingStore((s) => s.setAvatar);
 
   const [previewUri, setPreviewUri] = useState<string | null>(null);
@@ -84,7 +87,7 @@ export default function AvatarStep() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-bg-light">
+    <SafeAreaView className="flex-1 bg-bg-light dark:bg-bg-dark">
       <View className="flex-1 px-6 pt-4">
         <ProgressBar current={1} total={5} />
 
@@ -92,7 +95,7 @@ export default function AvatarStep() {
           <Text variant="bold" className="text-3xl text-brand">
             {t("onboarding.avatar.title")}
           </Text>
-          <Text className="mt-2 text-base" style={{ color: "#6B7280" }}>
+          <Text className="mt-2 text-base" style={{ color: c.secondary }}>
             Upload a photo so others can recognise you.
           </Text>
         </Animated.View>
@@ -103,10 +106,10 @@ export default function AvatarStep() {
         >
           <Pressable onPress={pickAndUpload} disabled={uploading}>
             <View
-              className="h-40 w-40 items-center justify-center overflow-hidden rounded-full bg-white"
+              className="h-40 w-40 items-center justify-center overflow-hidden rounded-full bg-white dark:bg-bg-card"
               style={{
                 borderWidth: 2,
-                borderColor: uploadedUrl ? "#0A0A0A" : "#E5E7EB",
+                borderColor: uploadedUrl ? c.brand : c.border,
                 borderStyle: "dashed",
               }}
             >
@@ -122,7 +125,7 @@ export default function AvatarStep() {
                       className="absolute inset-0 items-center justify-center rounded-full"
                       style={{ backgroundColor: "rgba(0,0,0,0.45)" }}
                     >
-                      <ActivityIndicator color="#fff" size="large" />
+                      <Spinner size={40} color="#fff" trackColor="rgba(255,255,255,0.3)" strokeWidth={3} />
                     </View>
                   )}
                 </>
@@ -139,7 +142,7 @@ export default function AvatarStep() {
             </View>
           </Pressable>
 
-          <Text className="text-center text-sm" style={{ color: "#6B7280" }}>
+          <Text className="text-center text-sm" style={{ color: c.secondary }}>
             {uploading
               ? "Uploading…"
               : uploadedUrl

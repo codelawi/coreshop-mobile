@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import * as Google from "expo-auth-session/providers/google";
+import { makeRedirectUri } from "expo-auth-session";
 import { useRouter } from "expo-router";
 import { toast } from "sonner-native";
 import * as SecureStore from "expo-secure-store";
@@ -12,10 +13,13 @@ export function useGoogleAuth() {
   const setAuth = useAuthStore((s) => s.setAuth);
   const [loading, setLoading] = useState(false);
 
+  const redirectUri = makeRedirectUri({ scheme: "coreshop", path: "auth" });
+
   const [request, response, promptAsync] = Google.useAuthRequest({
     webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
     iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
     androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
+    redirectUri,
   });
 
   useEffect(() => {

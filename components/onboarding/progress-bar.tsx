@@ -3,6 +3,7 @@ import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-na
 import { useEffect } from "react";
 import { Text } from "@/components/ui/text";
 import { useTranslation } from "react-i18next";
+import { useThemeColors } from "@/lib/theme";
 
 interface Props {
   current: number;
@@ -11,6 +12,7 @@ interface Props {
 
 export function ProgressBar({ current, total }: Props) {
   const { t } = useTranslation();
+  const c = useThemeColors();
   const progress = useSharedValue(0);
 
   useEffect(() => {
@@ -24,7 +26,7 @@ export function ProgressBar({ current, total }: Props) {
   return (
     <View className="w-full gap-2">
       <View className="flex-row justify-between">
-        <Text variant="medium" className="text-xs" style={{ color: "#6B7280" }}>
+        <Text variant="medium" className="text-xs" style={{ color: c.secondary }}>
           {t("onboarding.stepOf", { current, total })}
         </Text>
         <Text variant="semibold" className="text-xs text-brand">

@@ -12,7 +12,7 @@ export function StoreCard({ store }: { store: HomeStore }) {
     <Pressable
       onPress={() => router.push(`/store/${store.id}` as any)}
       style={{ width: 160 }}
-      className="mr-3 overflow-hidden rounded-md bg-white"
+      className="mr-3 overflow-hidden rounded-md bg-white dark:bg-bg-card"
     >
       <View className="h-20 w-full bg-brand-50">
         {store.banner ? (

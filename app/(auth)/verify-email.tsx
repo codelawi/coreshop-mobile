@@ -1,4 +1,4 @@
-import { View, Pressable, ActivityIndicator } from "react-native";
+import { View, Pressable } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useState } from "react";
@@ -12,9 +12,12 @@ import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
 import { useAuthStore } from "@/stores/auth-store";
+import { useThemeColors } from "@/lib/theme";
+import { Spinner } from "@/components/ui/spinner";
 
 export default function VerifyEmail() {
   const router = useRouter();
+  const c = useThemeColors();
   const user = useAuthStore((s) => s.user);
   const setUser = useAuthStore((s) => s.setUser);
   const [checking, setChecking] = useState(false);
@@ -52,21 +55,21 @@ export default function VerifyEmail() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-bg-light">
+    <SafeAreaView className="flex-1 bg-bg-light dark:bg-bg-dark">
       <View className="flex-1 items-center justify-center px-8">
         <Animated.View entering={FadeInDown.duration(500)} className="items-center gap-5">
-          <View className="h-24 w-24 items-center justify-center rounded-full bg-white">
-            <HugeiconsIcon icon={Mail01Icon} size={48} color="#0A0A0A" />
+          <View className="h-24 w-24 items-center justify-center rounded-full bg-white dark:bg-bg-card">
+            <HugeiconsIcon icon={Mail01Icon} size={48} color={c.brand} />
           </View>
 
           <View className="items-center gap-2">
-            <Text variant="bold" className="text-center text-2xl text-brand">
+            <Text variant="bold" className="text-center text-2xl text-brand dark:text-white">
               Check your email
             </Text>
-            <Text className="text-center text-sm leading-5" style={{ color: "#6B7280" }}>
+            <Text className="text-center text-sm leading-5" style={{ color: c.secondary }}>
               We sent a verification link to
             </Text>
-            <Text variant="semibold" className="text-center text-sm text-brand">
+            <Text variant="semibold" className="text-center text-sm text-brand dark:text-white">
               {user?.email}
             </Text>
           </View>
@@ -87,11 +90,11 @@ export default function VerifyEmail() {
               className="flex-row items-center justify-center gap-2 py-3"
             >
               {resendMutation.isPending ? (
-                <ActivityIndicator size="small" color="#6B7280" />
+                <Spinner size={16} strokeWidth={2} />
               ) : (
-                <HugeiconsIcon icon={Refresh01Icon} size={16} color="#6B7280" />
+                <HugeiconsIcon icon={Refresh01Icon} size={16} color={c.secondary} />
               )}
-              <Text variant="medium" className="text-sm" style={{ color: "#6B7280" }}>
+              <Text variant="medium" className="text-sm" style={{ color: c.secondary }}>
                 Resend verification email
               </Text>
             </Pressable>
@@ -102,7 +105,7 @@ export default function VerifyEmail() {
           entering={FadeInUp.duration(500).delay(200)}
           className="absolute bottom-10 items-center"
         >
-          <Text className="text-xs text-center leading-4" style={{ color: "#9CA3AF" }}>
+          <Text className="text-xs text-center leading-4" style={{ color: c.muted }}>
             Didn't get it? Check your spam folder.{"\n"}The link expires in 60 minutes.
           </Text>
         </Animated.View>

@@ -5,7 +5,6 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
-  ActivityIndicator,
   Modal,
 } from "react-native";
 import { Image } from "expo-image";
@@ -24,10 +23,13 @@ import {
   Tick01Icon,
 } from "@hugeicons/core-free-icons";
 import { toast } from "sonner-native";
+import { useTranslation } from "react-i18next";
 
 import { Text } from "@/components/ui/text";
 import { Input } from "@/components/ui/input";
 import { useCategories } from "@/lib/queries/home";
+import { useThemeColors } from "@/lib/theme";
+import { Spinner } from "@/components/ui/spinner";
 import * as SecureStore from "expo-secure-store";
 import * as FileSystem from "expo-file-system/legacy";
 import { manipulateAsync, SaveFormat } from "expo-image-manipulator";
@@ -38,6 +40,7 @@ const variantSchema = z.object({
   size: z.string().optional(),
   color: z.string().optional(),
   color_hex: z.string().optional(),
+  image_url: z.string().optional(),
   price_adjustment: z.coerce.number().optional(),
   stock: z.coerce.number().int().min(0, "Required"),
 });
@@ -70,6 +73,8 @@ interface UploadingImage {
 }
 
 export function ProductForm({ initial, onSubmit, submitLabel }: Props) {
+  const c = useThemeColors();
+  const { t } = useTranslation();
   const { data: categories } = useCategories();
   const [catPickerOpen, setCatPickerOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -105,6 +110,7 @@ export function ProductForm({ initial, onSubmit, submitLabel }: Props) {
           size: v.size ?? "",
           color: v.color ?? "",
           color_hex: v.color_hex ?? "",
+          image_url: v.image_url ?? "",
           price_adjustment: Number(v.price_adjustment),
           stock: v.stock,
         })) ?? [],
@@ -122,7 +128,7 @@ export function ProductForm({ initial, onSubmit, submitLabel }: Props) {
 
   const pickAndUpload = async () => {
     if (uploadingImages.length >= 7) {
-      toast.error("Maximum 7 images");
+      toast.error(t("seller.productForm.maxImages"));
       return;
     }
 
@@ -134,7 +140,7 @@ export function ProductForm({ initial, onSubmit, submitLabel }: Props) {
       allowsEditing: false,
     });
 
-    if (result.canceled || !result.assets.length) return;
+    if (result.canceled || !result.assets.length) { return; }
 
     for (const asset of result.assets) {
       let insertedIndex = -1;
@@ -144,7 +150,6 @@ export function ProductForm({ initial, onSubmit, submitLabel }: Props) {
       });
 
       try {
-        // Convert to JPEG — handles HEIC and any other format iOS returns
         const jpeg = await manipulateAsync(
           asset.uri,
           [{ resize: { width: 1200 } }],
@@ -168,7 +173,7 @@ export function ProductForm({ initial, onSubmit, submitLabel }: Props) {
         );
 
         const json = JSON.parse(upload.body);
-        if (upload.status >= 400) throw { response: { data: json } };
+        if (upload.status >= 400) { throw { response: { data: json } }; }
 
         const s3Url = json.data.url;
 
@@ -189,7 +194,7 @@ export function ProductForm({ initial, onSubmit, submitLabel }: Props) {
           err?.response?.data?.message ??
           err?.response?.data?.errors?.image?.[0] ??
           err?.message ??
-          "Failed to upload image";
+          t("seller.productForm.errorFallback");
         toast.error(msg);
         console.error("Upload error:", JSON.stringify(err?.response?.data ?? err?.message));
       }
@@ -206,7 +211,7 @@ export function ProductForm({ initial, onSubmit, submitLabel }: Props) {
 
   const submit = async (values: ProductFormValues) => {
     if (uploadingImages.some((img) => img.uploading)) {
-      toast.error("Please wait for images to finish uploading");
+      toast.error(t("seller.productForm.waitForUpload"));
       return;
     }
     setSubmitting(true);
@@ -225,13 +230,14 @@ export function ProductForm({ initial, onSubmit, submitLabel }: Props) {
               size: v.size || undefined,
               color: v.color || undefined,
               color_hex: v.color_hex || undefined,
+              image_url: v.image_url || undefined,
               price_adjustment: v.price_adjustment ?? 0,
               stock: v.stock,
             }))
           : undefined,
       });
     } catch (err: any) {
-      const msg = err?.response?.data?.message ?? "Something went wrong";
+      const msg = err?.response?.data?.message ?? t("seller.productForm.errorFallback");
       toast.error(msg);
     } finally {
       setSubmitting(false);
@@ -246,13 +252,13 @@ export function ProductForm({ initial, onSubmit, submitLabel }: Props) {
       >
         {/* Name */}
         <View className="gap-1.5">
-          <Text variant="medium" className="text-sm text-brand">Product name *</Text>
+          <Text variant="medium" className="text-sm text-brand">{t("seller.productForm.name")}</Text>
           <Controller
             control={control}
             name="name"
             render={({ field: { onChange, value } }) => (
               <Input
-                placeholder="e.g. Classic White T-Shirt"
+                placeholder={t("seller.productForm.namePlaceholder")}
                 value={value}
                 onChangeText={onChange}
                 spellCheck={false}
@@ -269,22 +275,22 @@ export function ProductForm({ initial, onSubmit, submitLabel }: Props) {
 
         {/* Description */}
         <View className="gap-1.5">
-          <Text variant="medium" className="text-sm text-brand">Description</Text>
+          <Text variant="medium" className="text-sm text-brand">{t("seller.productForm.description")}</Text>
           <Controller
             control={control}
             name="description"
             render={({ field: { onChange, value } }) => (
               <TextInput
-                placeholder="Describe your product..."
+                placeholder={t("seller.productForm.descriptionPlaceholder")}
                 value={value}
                 onChangeText={onChange}
                 multiline
                 numberOfLines={4}
                 spellCheck={false}
                 autoCorrect={false}
-                className="rounded-xl border border-brand-100 bg-white px-4 py-3 text-sm text-brand"
+                className="rounded-xl border border-brand-100 dark:border-[#2A2A2A] bg-white dark:bg-bg-card px-4 py-3 text-sm text-brand dark:text-white"
                 style={{ minHeight: 100, textAlignVertical: "top" }}
-                placeholderTextColor="#9CA3AF"
+                placeholderTextColor={c.placeholder}
               />
             )}
           />
@@ -292,18 +298,18 @@ export function ProductForm({ initial, onSubmit, submitLabel }: Props) {
 
         {/* Category */}
         <View className="gap-1.5">
-          <Text variant="medium" className="text-sm text-brand">Category *</Text>
+          <Text variant="medium" className="text-sm text-brand">{t("seller.productForm.category")}</Text>
           <Pressable
             onPress={() => setCatPickerOpen(true)}
-            className="flex-row items-center rounded-xl border border-brand-100 bg-white px-4 py-3.5"
+            className="flex-row items-center rounded-xl border border-brand-100 dark:border-[#2A2A2A] bg-white dark:bg-bg-card px-4 py-3.5"
           >
             <Text
               className="flex-1 text-sm"
-              style={{ color: selectedCategoryId ? "#0A0A0A" : "#9CA3AF" }}
+              style={{ color: selectedCategoryId ? c.brand : c.placeholder }}
             >
-              {selectedCategory?.name ?? "Select a category"}
+              {selectedCategory?.name ?? t("seller.productForm.categoryPlaceholder")}
             </Text>
-            <HugeiconsIcon icon={ArrowDown01Icon} size={18} color="#9CA3AF" />
+            <HugeiconsIcon icon={ArrowDown01Icon} size={18} color={c.placeholder} />
           </Pressable>
           {errors.category_id ? (
             <Text className="text-xs" style={{ color: "#FF4D4F" }}>
@@ -315,7 +321,7 @@ export function ProductForm({ initial, onSubmit, submitLabel }: Props) {
         {/* Pricing */}
         <View className="flex-row gap-3">
           <View className="flex-1 gap-1.5">
-            <Text variant="medium" className="text-sm text-brand">Price (JOD) *</Text>
+            <Text variant="medium" className="text-sm text-brand">{t("seller.productForm.price")}</Text>
             <Controller
               control={control}
               name="price"
@@ -335,7 +341,7 @@ export function ProductForm({ initial, onSubmit, submitLabel }: Props) {
             ) : null}
           </View>
           <View className="flex-1 gap-1.5">
-            <Text variant="medium" className="text-sm text-brand">Original price</Text>
+            <Text variant="medium" className="text-sm text-brand">{t("seller.productForm.originalPrice")}</Text>
             <Controller
               control={control}
               name="original_price"
@@ -354,7 +360,7 @@ export function ProductForm({ initial, onSubmit, submitLabel }: Props) {
         {/* Stock & weight */}
         <View className="flex-row gap-3">
           <View className="flex-1 gap-1.5">
-            <Text variant="medium" className="text-sm text-brand">Stock *</Text>
+            <Text variant="medium" className="text-sm text-brand">{t("seller.productForm.stock")}</Text>
             <Controller
               control={control}
               name="stock"
@@ -374,13 +380,13 @@ export function ProductForm({ initial, onSubmit, submitLabel }: Props) {
             ) : null}
           </View>
           <View className="flex-1 gap-1.5">
-            <Text variant="medium" className="text-sm text-brand">Weight (g)</Text>
+            <Text variant="medium" className="text-sm text-brand">{t("seller.productForm.weight")}</Text>
             <Controller
               control={control}
               name="weight_grams"
               render={({ field: { onChange, value } }) => (
                 <Input
-                  placeholder="e.g. 250"
+                  placeholder={t("seller.productForm.weightPlaceholder")}
                   value={value !== undefined ? String(value) : ""}
                   onChangeText={onChange}
                   keyboardType="numeric"
@@ -394,16 +400,16 @@ export function ProductForm({ initial, onSubmit, submitLabel }: Props) {
         <View className="gap-2">
           <View className="flex-row items-center">
             <Text variant="medium" className="flex-1 text-sm text-brand">
-              Photos ({uploadingImages.length}/7)
+              {t("seller.productForm.photos", { count: uploadingImages.length })}
             </Text>
             {uploadingImages.length < 7 ? (
               <Pressable
                 onPress={pickAndUpload}
                 className="flex-row items-center gap-1.5 rounded-lg px-3 py-1.5"
-                style={{ backgroundColor: "#F5F5F5" }}
+                style={{ backgroundColor: c.brandLight }}
               >
-                <HugeiconsIcon icon={Image01Icon} size={14} color="#0A0A0A" />
-                <Text variant="medium" className="text-xs text-brand">Add Photos</Text>
+                <HugeiconsIcon icon={Image01Icon} size={14} color={c.brand} />
+                <Text variant="medium" className="text-xs text-brand">{t("seller.productForm.addPhotos")}</Text>
               </Pressable>
             ) : null}
           </View>
@@ -427,7 +433,7 @@ export function ProductForm({ initial, onSubmit, submitLabel }: Props) {
                           className="absolute inset-0 items-center justify-center"
                           style={{ backgroundColor: "#00000050" }}
                         >
-                          <ActivityIndicator color="#fff" />
+                          <Spinner size={24} color="#fff" trackColor="rgba(255,255,255,0.3)" strokeWidth={2} />
                         </View>
                       ) : null}
                     </View>
@@ -437,7 +443,7 @@ export function ProductForm({ initial, onSubmit, submitLabel }: Props) {
                         className="absolute bottom-1 left-1 rounded px-1.5 py-0.5"
                         style={{ backgroundColor: "#00000070" }}
                       >
-                        <Text style={{ color: "#fff", fontSize: 9 }}>Primary</Text>
+                        <Text style={{ color: "#fff", fontSize: 9 }}>{t("seller.productForm.primaryBadge")}</Text>
                       </View>
                     ) : null}
 
@@ -458,14 +464,14 @@ export function ProductForm({ initial, onSubmit, submitLabel }: Props) {
             <Pressable
               onPress={pickAndUpload}
               className="items-center justify-center gap-2 rounded-xl border border-dashed py-8"
-              style={{ borderColor: "#D1D5DB" }}
+              style={{ borderColor: c.border }}
             >
-              <HugeiconsIcon icon={Image01Icon} size={32} color="#9CA3AF" />
-              <Text className="text-sm" style={{ color: "#6B7280" }}>
-                Tap to add photos
+              <HugeiconsIcon icon={Image01Icon} size={32} color={c.muted} />
+              <Text className="text-sm" style={{ color: c.secondary }}>
+                {t("seller.productForm.tapToAddPhotos")}
               </Text>
-              <Text className="text-xs" style={{ color: "#9CA3AF" }}>
-                Up to 7 photos · JPEG, PNG, WebP
+              <Text className="text-xs" style={{ color: c.muted }}>
+                {t("seller.productForm.photosHint")}
               </Text>
             </Pressable>
           )}
@@ -474,24 +480,24 @@ export function ProductForm({ initial, onSubmit, submitLabel }: Props) {
         {/* Variants */}
         <View className="gap-2">
           <View className="flex-row items-center">
-            <Text variant="medium" className="flex-1 text-sm text-brand">Variants</Text>
+            <Text variant="medium" className="flex-1 text-sm text-brand">{t("seller.productForm.variants")}</Text>
             <Pressable
               onPress={() =>
-                appendVariant({ size: "", color: "", color_hex: "", price_adjustment: 0, stock: 0 })
+                appendVariant({ size: "", color: "", color_hex: "", image_url: "", price_adjustment: 0, stock: 0 })
               }
               className="flex-row items-center gap-1 rounded-lg px-3 py-1.5"
-              style={{ backgroundColor: "#F5F5F5" }}
+              style={{ backgroundColor: c.brandLight }}
             >
-              <HugeiconsIcon icon={Add01Icon} size={14} color="#0A0A0A" />
-              <Text variant="medium" className="text-xs text-brand">Add variant</Text>
+              <HugeiconsIcon icon={Add01Icon} size={14} color={c.brand} />
+              <Text variant="medium" className="text-xs text-brand">{t("seller.productForm.addVariant")}</Text>
             </Pressable>
           </View>
 
           {variantFields.map((field, i) => (
-            <View key={field.id} className="gap-2 rounded-xl border border-brand-100 bg-white p-3">
+            <View key={field.id} className="gap-2 rounded-xl border border-brand-100 dark:border-[#2A2A2A] bg-white dark:bg-bg-card p-3">
               <View className="flex-row items-center">
                 <Text variant="semibold" className="flex-1 text-xs text-brand">
-                  Variant {i + 1}
+                  {t("seller.productForm.variantLabel", { number: i + 1 })}
                 </Text>
                 <Pressable onPress={() => removeVariant(i)}>
                   <HugeiconsIcon icon={Delete02Icon} size={16} color="#FF4D4F" />
@@ -500,13 +506,13 @@ export function ProductForm({ initial, onSubmit, submitLabel }: Props) {
 
               <View className="flex-row gap-2">
                 <View className="flex-1 gap-1">
-                  <Text className="text-xs" style={{ color: "#6B7280" }}>Size</Text>
+                  <Text className="text-xs" style={{ color: c.secondary }}>{t("seller.productForm.size")}</Text>
                   <Controller
                     control={control}
                     name={`variants.${i}.size`}
                     render={({ field: { onChange, value } }) => (
                       <Input
-                        placeholder="S / M / L"
+                        placeholder={t("seller.productForm.sizePlaceholder")}
                         value={value}
                         onChangeText={onChange}
                         spellCheck={false}
@@ -516,13 +522,13 @@ export function ProductForm({ initial, onSubmit, submitLabel }: Props) {
                   />
                 </View>
                 <View className="flex-1 gap-1">
-                  <Text className="text-xs" style={{ color: "#6B7280" }}>Color</Text>
+                  <Text className="text-xs" style={{ color: c.secondary }}>{t("seller.productForm.colorName")}</Text>
                   <Controller
                     control={control}
                     name={`variants.${i}.color`}
                     render={({ field: { onChange, value } }) => (
                       <Input
-                        placeholder="Red"
+                        placeholder={t("seller.productForm.colorNamePlaceholder")}
                         value={value}
                         onChangeText={onChange}
                         spellCheck={false}
@@ -533,9 +539,96 @@ export function ProductForm({ initial, onSubmit, submitLabel }: Props) {
                 </View>
               </View>
 
+              {/* Color hex + image link — only shown when color is set */}
+              <Controller
+                control={control}
+                name={`variants.${i}.color`}
+                render={({ field: { value: colorValue } }) =>
+                  colorValue ? (
+                    <View className="gap-2">
+                      <View className="flex-row gap-2 items-center">
+                        <Controller
+                          control={control}
+                          name={`variants.${i}.color_hex`}
+                          render={({ field: { onChange, value } }) => (
+                            <View className="flex-row items-center gap-2 flex-1">
+                              <View
+                                className="h-8 w-8 rounded-full border border-brand-100 dark:border-[#3A3A3A]"
+                                style={{ backgroundColor: value || "#ddd" }}
+                              />
+                              <View className="flex-1">
+                                <Input
+                                  placeholder="#FF0000"
+                                  value={value}
+                                  onChangeText={onChange}
+                                  autoCapitalize="none"
+                                  spellCheck={false}
+                                  autoCorrect={false}
+                                />
+                              </View>
+                            </View>
+                          )}
+                        />
+                      </View>
+
+                      {uploadingImages.filter((img) => img.url).length > 0 ? (
+                        <Controller
+                          control={control}
+                          name={`variants.${i}.image_url`}
+                          render={({ field: { onChange, value } }) => (
+                            <View className="gap-1">
+                              <Text className="text-xs" style={{ color: c.secondary }}>
+                                {t("seller.productForm.linkImage")}
+                              </Text>
+                              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                                <View className="flex-row gap-2">
+                                  {uploadingImages
+                                    .filter((img) => img.url)
+                                    .map((img) => {
+                                      const isSelected = value === img.url;
+                                      return (
+                                        <Pressable
+                                          key={img.url}
+                                          onPress={() => onChange(isSelected ? "" : img.url)}
+                                        >
+                                          <View
+                                            className="h-16 w-16 overflow-hidden rounded-xl"
+                                            style={{
+                                              borderWidth: isSelected ? 2 : 1,
+                                              borderColor: isSelected ? c.brand : c.border,
+                                            }}
+                                          >
+                                            <Image
+                                              source={{ uri: img.url }}
+                                              style={{ flex: 1 }}
+                                              contentFit="cover"
+                                            />
+                                          </View>
+                                          {isSelected ? (
+                                            <View
+                                              className="absolute right-1 top-1 h-4 w-4 items-center justify-center rounded-full"
+                                              style={{ backgroundColor: c.brand }}
+                                            >
+                                              <HugeiconsIcon icon={Tick01Icon} size={10} color="#fff" />
+                                            </View>
+                                          ) : null}
+                                        </Pressable>
+                                      );
+                                    })}
+                                </View>
+                              </ScrollView>
+                            </View>
+                          )}
+                        />
+                      ) : null}
+                    </View>
+                  ) : <></>
+                }
+              />
+
               <View className="flex-row gap-2">
                 <View className="flex-1 gap-1">
-                  <Text className="text-xs" style={{ color: "#6B7280" }}>Price adj. (JOD)</Text>
+                  <Text className="text-xs" style={{ color: c.secondary }}>{t("seller.productForm.priceAdj")}</Text>
                   <Controller
                     control={control}
                     name={`variants.${i}.price_adjustment`}
@@ -550,7 +643,7 @@ export function ProductForm({ initial, onSubmit, submitLabel }: Props) {
                   />
                 </View>
                 <View className="flex-1 gap-1">
-                  <Text className="text-xs" style={{ color: "#6B7280" }}>Stock *</Text>
+                  <Text className="text-xs" style={{ color: c.secondary }}>{t("seller.productForm.variantStock")}</Text>
                   <Controller
                     control={control}
                     name={`variants.${i}.stock`}
@@ -565,7 +658,7 @@ export function ProductForm({ initial, onSubmit, submitLabel }: Props) {
                   />
                   {errors.variants?.[i]?.stock ? (
                     <Text className="text-xs" style={{ color: "#FF4D4F" }}>
-                      Required
+                      {t("seller.productForm.required")}
                     </Text>
                   ) : null}
                 </View>
@@ -582,7 +675,7 @@ export function ProductForm({ initial, onSubmit, submitLabel }: Props) {
           style={{ opacity: submitting ? 0.6 : 1 }}
         >
           {submitting ? (
-            <ActivityIndicator size="small" color="#fff" />
+            <Spinner size={20} color="#fff" trackColor="rgba(255,255,255,0.3)" strokeWidth={2} />
           ) : (
             <HugeiconsIcon icon={Tick01Icon} size={18} color="#fff" />
           )}
@@ -594,12 +687,12 @@ export function ProductForm({ initial, onSubmit, submitLabel }: Props) {
 
       {/* Category picker modal */}
       <Modal visible={catPickerOpen} animationType="slide" presentationStyle="pageSheet">
-        <View className="flex-1 bg-bg-light">
+        <View className="flex-1 bg-bg-light dark:bg-bg-dark">
           <View className="flex-row items-center justify-between px-6 py-5">
-            <Text variant="bold" className="text-lg text-brand">Select Category</Text>
+            <Text variant="bold" className="text-lg text-brand">{t("seller.productForm.selectCategory")}</Text>
             <Pressable onPress={() => setCatPickerOpen(false)}>
               <Text variant="medium" className="text-sm" style={{ color: "#FF4D4F" }}>
-                Close
+                {t("seller.productForm.close")}
               </Text>
             </Pressable>
           </View>
@@ -619,20 +712,20 @@ export function ProductForm({ initial, onSubmit, submitLabel }: Props) {
                     paddingLeft: cat.indent ? 40 : 24,
                     paddingRight: 24,
                     borderBottomWidth: 1,
-                    borderBottomColor: "#F3F4F6",
+                    borderBottomColor: c.border,
                   }}
                 >
                   <Text
                     variant={isSelected ? "bold" : cat.indent ? "regular" : "semibold"}
                     className="flex-1 text-sm"
                     style={{
-                      color: isSelected ? "#0A0A0A" : cat.indent ? "#374151" : "#111827",
+                      color: isSelected ? c.brand : c.secondary,
                     }}
                   >
                     {cat.name}
                   </Text>
                   {isSelected ? (
-                    <HugeiconsIcon icon={Tick01Icon} size={18} color="#0A0A0A" />
+                    <HugeiconsIcon icon={Tick01Icon} size={18} color={c.brand} />
                   ) : null}
                 </Pressable>
               );

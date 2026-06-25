@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ProgressBar } from "@/components/onboarding/progress-bar";
 import { useOnboardingStore, type Role } from "@/stores/onboarding-store";
+import { useThemeColors } from "@/lib/theme";
 
 const schema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -32,6 +33,7 @@ const ROLES: { id: Role; icon: any; disabled?: boolean }[] = [
 export default function ProfileStep() {
   const { t } = useTranslation();
   const router = useRouter();
+  const c = useThemeColors();
   const { name: storedName, role: storedRole, setName, setRole } = useOnboardingStore();
   const [selectedRole, setSelectedRole] = useState<Role | null>(storedRole);
 
@@ -51,7 +53,7 @@ export default function ProfileStep() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-bg-light">
+    <SafeAreaView className="flex-1 bg-bg-light dark:bg-bg-dark">
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         className="flex-1"
@@ -68,7 +70,7 @@ export default function ProfileStep() {
               <Text variant="bold" className="text-3xl text-brand">
                 {t("onboarding.profile.title")}
               </Text>
-              <Text className="mt-2 text-base" style={{ color: "#6B7280" }}>
+              <Text className="mt-2 text-base" style={{ color: c.secondary }}>
                 {t("onboarding.profile.subtitle")}
               </Text>
             </Animated.View>
@@ -87,7 +89,7 @@ export default function ProfileStep() {
                     value={value}
                     onChangeText={onChange}
                     error={errors.name?.message}
-                    leftIcon={<HugeiconsIcon icon={UserIcon} size={22} color="#0A0A0A" />}
+                    leftIcon={<HugeiconsIcon icon={UserIcon} size={22} color={c.brand} />}
                   />
                 )}
               />
@@ -107,18 +109,18 @@ export default function ProfileStep() {
                     key={r.id}
                     disabled={r.disabled}
                     onPress={() => setSelectedRole(r.id)}
-                    className={`flex-row items-center rounded-md border bg-white p-4 ${
-                      isSelected ? "border-brand" : "border-brand-100"
+                    className={`flex-row items-center rounded-md border bg-white dark:bg-bg-card p-4 ${
+                      isSelected ? "border-brand" : "border-brand-100 dark:border-[#2A2A2A]"
                     } ${r.disabled ? "opacity-50" : ""}`}
                   >
-                    <View className="h-12 w-12 items-center justify-center rounded-md bg-brand-50">
-                      <HugeiconsIcon icon={r.icon} size={24} color="#0A0A0A" />
+                    <View className="h-12 w-12 items-center justify-center rounded-md bg-brand-50 dark:bg-[#2A2A2A]">
+                      <HugeiconsIcon icon={r.icon} size={24} color={c.brand} />
                     </View>
                     <View className="ml-4 flex-1">
                       <Text variant="semibold" className="text-base text-brand">
                         {t(`onboarding.profile.roles.${r.id}`)}
                       </Text>
-                      <Text className="text-xs" style={{ color: "#6B7280" }}>
+                      <Text className="text-xs" style={{ color: c.secondary }}>
                         {t(`onboarding.profile.roles.${r.id}Desc`)}
                       </Text>
                     </View>

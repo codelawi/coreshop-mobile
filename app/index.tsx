@@ -6,6 +6,10 @@ export default function Index() {
 
   if (!token || !user) return <Redirect href={"/(auth)/sign-in" as any} />;
 
+  if (user.status === "suspended") {
+    return <Redirect href={"/banned" as any} />;
+  }
+
   if (!user.email_verified_at) {
     return <Redirect href={"/(auth)/verify-email" as any} />;
   }

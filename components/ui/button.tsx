@@ -1,6 +1,8 @@
-import { ActivityIndicator, Pressable, PressableProps, View } from "react-native";
+import { Pressable, PressableProps, View } from "react-native";
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 import { Text } from "./text";
+import { Spinner } from "./spinner";
+import { useColorScheme } from "nativewind";
 
 type Variant = "primary" | "secondary" | "outline" | "ghost";
 type Size = "sm" | "md" | "lg";
@@ -15,20 +17,6 @@ interface Props extends Omit<PressableProps, "children"> {
   fullWidth?: boolean;
   className?: string;
 }
-
-const variantBg: Record<Variant, string> = {
-  primary: "bg-brand",
-  secondary: "bg-brand-50",
-  outline: "bg-transparent border border-brand",
-  ghost: "bg-transparent",
-};
-
-const variantTextColor: Record<Variant, string> = {
-  primary: "#FFFFFF",
-  secondary: "#0A0A0A",
-  outline: "#0A0A0A",
-  ghost: "#0A0A0A",
-};
 
 const sizeStyles: Record<Size, string> = {
   sm: "h-10 px-4",
@@ -50,8 +38,24 @@ export function Button({
   className,
   ...props
 }: Props) {
+  const { colorScheme } = useColorScheme();
+  const isDark = colorScheme === "dark";
   const scale = useSharedValue(1);
   const opacity = useSharedValue(1);
+
+  const variantBg: Record<Variant, string> = {
+    primary: isDark ? "bg-white" : "bg-brand",
+    secondary: isDark ? "bg-[#2A2A2A]" : "bg-brand-50",
+    outline: "bg-transparent border border-brand dark:border-white",
+    ghost: "bg-transparent",
+  };
+
+  const variantTextColor: Record<Variant, string> = {
+    primary: isDark ? "#0A0A0A" : "#FFFFFF",
+    secondary: isDark ? "#FFFFFF" : "#0A0A0A",
+    outline: isDark ? "#FFFFFF" : "#0A0A0A",
+    ghost: isDark ? "#FFFFFF" : "#0A0A0A",
+  };
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
@@ -74,9 +78,9 @@ export function Button({
       {...props}
     >
       {loading ? (
-        <ActivityIndicator color={variantTextColor[variant]} />
+        <Spinner size={22} color={variantTextColor[variant]} trackColor={`${variantTextColor[variant]}40`} strokeWidth={2} />
       ) : (
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+        <View style={{ flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 }}>
           {leftIcon}
           <Text variant="semibold" style={{ color: variantTextColor[variant], fontSize: 16, textAlign: "center" }}>
             {label}

@@ -29,6 +29,8 @@ import { useAuthStore } from "@/stores/auth-store";
 import { useLanguageStore } from "@/stores/language-store";
 import { useCartStore } from "@/stores/cart-store";
 import { useWishlistStore } from "@/stores/wishlist-store";
+import { useThemeStore } from "@/stores/theme-store";
+import { useColorScheme } from "nativewind";
 import { registerForPushNotifications, setupNotificationListeners } from "@/lib/notifications";
 
 const queryClient = new QueryClient({
@@ -53,14 +55,21 @@ export default function RootLayout() {
   const hydrateLang = useLanguageStore((s) => s.hydrate);
   const hydrateCart = useCartStore((s) => s.hydrate);
   const hydrateWishlist = useWishlistStore((s) => s.hydrate);
+  const hydrateTheme = useThemeStore((s) => s.hydrate);
+  const themeMode = useThemeStore((s) => s.mode);
+  const { colorScheme, setColorScheme } = useColorScheme();
   const token = useAuthStore((s) => s.token);
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    Promise.all([hydrateAuth(), hydrateLang(), hydrateCart(), hydrateWishlist()]).then(() =>
-      setHydrated(true)
+    Promise.all([hydrateAuth(), hydrateLang(), hydrateCart(), hydrateWishlist(), hydrateTheme()]).then(
+      () => setHydrated(true)
     );
-  }, [hydrateAuth, hydrateLang, hydrateCart, hydrateWishlist]);
+  }, [hydrateAuth, hydrateLang, hydrateCart, hydrateWishlist, hydrateTheme]);
+
+  useEffect(() => {
+    setColorScheme(themeMode);
+  }, [themeMode, setColorScheme]);
 
   // Register push token whenever the user is authenticated
   useEffect(() => {
@@ -76,14 +85,14 @@ export default function RootLayout() {
   }, []);
 
   if (!loaded || !hydrated) {
-    return <View className="flex-1 bg-bg-light" />;
+    return <View className="flex-1 bg-bg-light dark:bg-bg-dark" />;
   }
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <QueryClientProvider client={queryClient}>
         <SafeAreaProvider>
-          <StatusBar style="auto" />
+          <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
           <Stack screenOptions={{ headerShown: false }} />
           <Toaster position="top-center" />
         </SafeAreaProvider>

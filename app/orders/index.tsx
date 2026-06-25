@@ -1,27 +1,18 @@
-import { View, ScrollView, Pressable, ActivityIndicator } from "react-native";
+import { View, ScrollView, Pressable, RefreshControl } from "react-native";
 import { Image } from "expo-image";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { HugeiconsIcon } from "@hugeicons/react-native";
 import { ArrowLeft01Icon, PackageIcon } from "@hugeicons/core-free-icons";
+import { useTranslation } from "react-i18next";
 
 import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
 import { useOrders } from "@/lib/queries/orders";
-
-const STATUS_LABEL: Record<string, string> = {
-  pending: "Pending",
-  approved: "Approved",
-  preparing: "Preparing",
-  ready_for_pickup: "Ready",
-  assigned: "Driver assigned",
-  out_for_delivery: "Out for delivery",
-  delivered: "Delivered",
-  completed: "Completed",
-  cancelled: "Cancelled",
-  refunded: "Refunded",
-};
+import { useThemeColors } from "@/lib/theme";
+import { SkeletonOrderRow } from "@/components/ui/skeleton";
+import { Spinner } from "@/components/ui/spinner";
 
 const STATUS_COLOR: Record<string, string> = {
   pending: "#F59E0B",
@@ -38,36 +29,38 @@ const STATUS_COLOR: Record<string, string> = {
 
 export default function OrdersList() {
   const router = useRouter();
-  const { data: orders, isLoading } = useOrders();
+  const c = useThemeColors();
+  const { t } = useTranslation();
+  const { data: orders, isLoading, isRefetching, refetch } = useOrders();
 
   return (
-    <SafeAreaView className="flex-1 bg-bg-light">
+    <SafeAreaView className="flex-1 bg-bg-light dark:bg-bg-dark">
       <View className="flex-row items-center gap-3 px-4 pb-3 pt-2">
         <Pressable
           onPress={() => router.back()}
-          className="h-10 w-10 items-center justify-center rounded-full bg-white"
+          className="h-10 w-10 items-center justify-center rounded-full bg-white dark:bg-bg-card"
         >
-          <HugeiconsIcon icon={ArrowLeft01Icon} size={22} color="#0A0A0A" />
+          <HugeiconsIcon icon={ArrowLeft01Icon} size={22} color={c.brand} />
         </Pressable>
-        <Text variant="bold" className="text-xl text-brand">My Orders</Text>
+        <Text variant="bold" className="text-xl text-brand dark:text-white">{t("orders.title")}</Text>
       </View>
 
       {isLoading ? (
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator color="#0A0A0A" />
+        <View className="flex-1 px-6 pt-4">
+          {[0, 1, 2, 3, 4].map((i) => <SkeletonOrderRow key={i} />)}
         </View>
       ) : !orders || orders.length === 0 ? (
         <View className="flex-1 items-center justify-center px-6">
-          <View className="h-24 w-24 items-center justify-center rounded-full bg-brand-50">
-            <HugeiconsIcon icon={PackageIcon} size={40} color="#0A0A0A" />
+          <View className="h-24 w-24 items-center justify-center rounded-full bg-brand-50 dark:bg-[#2A2A2A]">
+            <HugeiconsIcon icon={PackageIcon} size={40} color={c.brand} />
           </View>
-          <Text variant="bold" className="mt-4 text-lg text-brand">No orders yet</Text>
-          <Text className="mt-1 text-center text-sm" style={{ color: "#6B7280" }}>
-            Start shopping to place your first order
+          <Text variant="bold" className="mt-4 text-lg text-brand dark:text-white">{t("orders.empty")}</Text>
+          <Text className="mt-1 text-center text-sm" style={{ color: c.secondary }}>
+            {t("orders.emptyDesc")}
           </Text>
           <View className="mt-6 w-full">
             <Button
-              label="Browse Products"
+              label={t("orders.browseProducts")}
               onPress={() => router.push("/(tabs)/home" as any)}
               fullWidth
               size="lg"
@@ -78,10 +71,24 @@ export default function OrdersList() {
         <ScrollView
           contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
           showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={false}
+              onRefresh={refetch}
+              tintColor="transparent"
+              colors={["transparent"]}
+              progressBackgroundColor="transparent"
+            />
+          }
         >
+          {isRefetching ? (
+            <View style={{ alignItems: "center", paddingBottom: 12 }}>
+              <Spinner size={28} strokeWidth={2.5} />
+            </View>
+          ) : null}
           {orders.map((order, i) => {
             const color = STATUS_COLOR[order.status] ?? "#6B7280";
-            const label = STATUS_LABEL[order.status] ?? order.status;
+            const label = t(`orders.status.${order.status}`, { defaultValue: order.status });
             const firstItem = order.items?.[0];
             const itemsCount = order.items_count ?? order.items?.length ?? 0;
 
@@ -92,14 +99,14 @@ export default function OrdersList() {
               >
                 <Pressable
                   onPress={() => router.push(`/orders/${order.id}` as any)}
-                  className="mb-3 rounded-md bg-white p-4"
+                  className="mb-3 rounded-md bg-white dark:bg-bg-card p-4"
                 >
                   <View className="flex-row items-start justify-between">
                     <View className="flex-1">
-                      <Text variant="semibold" className="text-sm text-brand">
-                        {order.store?.name ?? "Order"}
+                      <Text variant="semibold" className="text-sm text-brand dark:text-white">
+                        {order.store?.name ?? t("orders.detail.order")}
                       </Text>
-                      <Text className="mt-0.5 text-xs" style={{ color: "#6B7280" }}>
+                      <Text className="mt-0.5 text-xs" style={{ color: c.secondary }}>
                         #{order.id} · {new Date(order.created_at).toLocaleDateString()}
                       </Text>
                     </View>
@@ -115,7 +122,7 @@ export default function OrdersList() {
 
                   {firstItem && (
                     <View className="mt-3 flex-row items-center gap-3">
-                      <View className="h-12 w-12 overflow-hidden rounded-md bg-brand-50">
+                      <View className="h-12 w-12 overflow-hidden rounded-md bg-brand-50 dark:bg-[#2A2A2A]">
                         {firstItem.product_image ? (
                           <Image
                             source={{ uri: firstItem.product_image }}
@@ -125,16 +132,16 @@ export default function OrdersList() {
                         ) : null}
                       </View>
                       <View className="flex-1">
-                        <Text variant="medium" numberOfLines={1} className="text-sm text-brand">
+                        <Text variant="medium" numberOfLines={1} className="text-sm text-brand dark:text-white">
                           {firstItem.product_name}
                         </Text>
                         {itemsCount > 1 ? (
-                          <Text className="text-xs" style={{ color: "#6B7280" }}>
-                            +{itemsCount - 1} more item{itemsCount > 2 ? "s" : ""}
+                          <Text className="text-xs" style={{ color: c.secondary }}>
+                            {t("orders.moreItems_other", { count: itemsCount - 1 })}
                           </Text>
                         ) : null}
                       </View>
-                      <Text variant="bold" className="text-base text-brand">
+                      <Text variant="bold" className="text-base text-brand dark:text-white">
                         JOD {parseFloat(order.total).toFixed(2)}
                       </Text>
                     </View>

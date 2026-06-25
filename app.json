@@ -17,7 +17,14 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.coreshop.mobile",
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "Allow CoreShop to use your location to show nearby stores."
+        "NSLocationWhenInUseUsageDescription": "Allow CoreShop to use your location to show nearby stores.",
+        "CFBundleURLTypes": [
+          {
+            "CFBundleURLSchemes": [
+              "com.googleusercontent.apps.626063460740-tpasknjfe5ml4eu3nkevkf3di5ao4htq"
+            ]
+          }
+        ]
       }
     },
     "android": {

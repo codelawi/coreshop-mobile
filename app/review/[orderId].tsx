@@ -3,7 +3,6 @@ import {
   ScrollView,
   Pressable,
   TextInput,
-  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
@@ -17,12 +16,15 @@ import { toast } from "sonner-native";
 
 import { Text } from "@/components/ui/text";
 import { useSubmitReview, useOrderReviewStatus } from "@/lib/queries/orders";
+import { useThemeColors } from "@/lib/theme";
+import { Spinner } from "@/components/ui/spinner";
 
 const RATING_LABELS = ["", "Poor", "Fair", "Good", "Great", "Excellent"];
 
 export default function ReviewScreen() {
   const { orderId } = useLocalSearchParams<{ orderId: string }>();
   const router = useRouter();
+  const c = useThemeColors();
   const id = Number(orderId);
 
   const { data: reviewStatus, isLoading } = useOrderReviewStatus(id);
@@ -52,8 +54,8 @@ export default function ReviewScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView className="flex-1 items-center justify-center bg-bg-light">
-        <ActivityIndicator color="#0A0A0A" />
+      <SafeAreaView className="flex-1 items-center justify-center bg-bg-light dark:bg-bg-dark">
+        <Spinner size={44} />
       </SafeAreaView>
     );
   }
@@ -61,34 +63,34 @@ export default function ReviewScreen() {
   // Already reviewed — show submitted state
   if (reviewStatus?.reviewed) {
     return (
-      <SafeAreaView className="flex-1 bg-bg-light">
+      <SafeAreaView className="flex-1 bg-bg-light dark:bg-bg-dark">
         <View className="flex-row items-center gap-3 px-4 pb-3 pt-2">
           <Pressable
             onPress={() => router.back()}
-            className="h-10 w-10 items-center justify-center rounded-full bg-white"
+            className="h-10 w-10 items-center justify-center rounded-full bg-white dark:bg-bg-card"
           >
-            <HugeiconsIcon icon={ArrowLeft01Icon} size={22} color="#0A0A0A" />
+            <HugeiconsIcon icon={ArrowLeft01Icon} size={22} color={c.brand} />
           </Pressable>
-          <Text variant="bold" className="text-xl text-brand">Review</Text>
+          <Text variant="bold" className="text-xl text-brand dark:text-white">Review</Text>
         </View>
 
         <View className="flex-1 items-center justify-center px-8 gap-4">
           <View className="h-20 w-20 items-center justify-center rounded-full bg-brand">
             <HugeiconsIcon icon={Tick02Icon} size={36} color="#fff" />
           </View>
-          <Text variant="bold" className="text-xl text-brand">Already reviewed</Text>
+          <Text variant="bold" className="text-xl text-brand dark:text-white">Already reviewed</Text>
           <View className="flex-row gap-1">
             {[1, 2, 3, 4, 5].map((s) => (
               <HugeiconsIcon
                 key={s}
                 icon={StarIcon}
                 size={28}
-                color={s <= (reviewStatus.rating ?? 0) ? "#F59E0B" : "#E5E7EB"}
+                color={s <= (reviewStatus.rating ?? 0) ? "#F59E0B" : c.border}
               />
             ))}
           </View>
           {reviewStatus.comment ? (
-            <Text className="text-center text-sm leading-5" style={{ color: "#6B7280" }}>
+            <Text className="text-center text-sm leading-5" style={{ color: c.secondary }}>
               "{reviewStatus.comment}"
             </Text>
           ) : null}
@@ -98,15 +100,15 @@ export default function ReviewScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-bg-light">
+    <SafeAreaView className="flex-1 bg-bg-light dark:bg-bg-dark">
       <View className="flex-row items-center gap-3 px-4 pb-3 pt-2">
         <Pressable
           onPress={() => router.back()}
-          className="h-10 w-10 items-center justify-center rounded-full bg-white"
+          className="h-10 w-10 items-center justify-center rounded-full bg-white dark:bg-bg-card"
         >
-          <HugeiconsIcon icon={ArrowLeft01Icon} size={22} color="#0A0A0A" />
+          <HugeiconsIcon icon={ArrowLeft01Icon} size={22} color={c.brand} />
         </Pressable>
-        <Text variant="bold" className="text-xl text-brand">Leave a Review</Text>
+        <Text variant="bold" className="text-xl text-brand dark:text-white">Leave a Review</Text>
       </View>
 
       <KeyboardAvoidingView
@@ -120,7 +122,7 @@ export default function ReviewScreen() {
         >
           {/* Star picker */}
           <Animated.View entering={FadeInDown.duration(400)} className="mt-6 items-center gap-4">
-            <Text variant="semibold" className="text-base text-brand">
+            <Text variant="semibold" className="text-base text-brand dark:text-white">
               How was your experience?
             </Text>
 
@@ -130,7 +132,7 @@ export default function ReviewScreen() {
                   <HugeiconsIcon
                     icon={StarIcon}
                     size={48}
-                    color={s <= rating ? "#F59E0B" : "#E5E7EB"}
+                    color={s <= rating ? "#F59E0B" : c.border}
                   />
                 </Pressable>
               ))}
@@ -141,7 +143,7 @@ export default function ReviewScreen() {
                 {RATING_LABELS[rating]}
               </Text>
             ) : (
-              <Text className="text-sm" style={{ color: "#9CA3AF" }}>
+              <Text className="text-sm" style={{ color: c.muted }}>
                 Tap a star to rate
               </Text>
             )}
@@ -149,23 +151,34 @@ export default function ReviewScreen() {
 
           {/* Comment */}
           <Animated.View entering={FadeInDown.duration(400).delay(80)} className="mt-8 gap-2">
-            <Text variant="medium" className="text-sm text-brand">
-              Comment <Text style={{ color: "#9CA3AF" }}>(optional)</Text>
+            <Text variant="medium" className="text-sm text-brand dark:text-white">
+              Comment <Text style={{ color: c.muted }}>(optional)</Text>
             </Text>
             <TextInput
               value={comment}
               onChangeText={setComment}
               placeholder="Tell us about your order, delivery, and store..."
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor={c.placeholder}
               multiline
               numberOfLines={5}
               spellCheck={false}
               autoCorrect={false}
               maxLength={1000}
-              className="rounded-xl border border-brand-100 bg-white px-4 py-3 text-sm text-brand"
-              style={{ minHeight: 120, textAlignVertical: "top", fontFamily: "Manrope_400Regular" }}
+              style={{
+                minHeight: 120,
+                textAlignVertical: "top",
+                fontFamily: "Manrope_400Regular",
+                borderRadius: 12,
+                borderWidth: 1,
+                borderColor: c.inputBorder,
+                backgroundColor: c.card,
+                color: c.brand,
+                paddingHorizontal: 16,
+                paddingVertical: 12,
+                fontSize: 14,
+              }}
             />
-            <Text className="text-right text-xs" style={{ color: "#9CA3AF" }}>
+            <Text className="text-right text-xs" style={{ color: c.muted }}>
               {comment.length}/1000
             </Text>
           </Animated.View>
@@ -179,7 +192,7 @@ export default function ReviewScreen() {
               style={{ opacity: submitMutation.isPending || rating === 0 ? 0.5 : 1 }}
             >
               {submitMutation.isPending ? (
-                <ActivityIndicator size="small" color="#fff" />
+                <Spinner size={20} color="#fff" trackColor="rgba(255,255,255,0.3)" strokeWidth={2} />
               ) : (
                 <HugeiconsIcon icon={StarIcon} size={18} color="#fff" />
               )}

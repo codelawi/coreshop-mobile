@@ -6,7 +6,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   Switch,
-  ActivityIndicator,
 } from "react-native";
 import { Image } from "expo-image";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -35,6 +34,8 @@ import { Text } from "@/components/ui/text";
 import { Input } from "@/components/ui/input";
 import type { WorkingHours } from "@/lib/queries/seller";
 import { useCreateStore, useUpdateStore, useSellerStore } from "@/lib/queries/seller";
+import { useThemeColors } from "@/lib/theme";
+import { Spinner } from "@/components/ui/spinner";
 import { API_URL } from "@/lib/api";
 
 const DAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"] as const;
@@ -88,6 +89,7 @@ async function uploadStoreImage(
 
 export default function SellerSetup() {
   const router = useRouter();
+  const c = useThemeColors();
   const { data: existingStore } = useSellerStore();
   const createStore = useCreateStore();
   const updateStore = useUpdateStore();
@@ -248,17 +250,17 @@ export default function SellerSetup() {
   const submitting = createStore.isPending || updateStore.isPending;
 
   return (
-    <SafeAreaView className="flex-1 bg-bg-light">
+    <SafeAreaView className="flex-1 bg-bg-light dark:bg-bg-dark">
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} className="flex-1">
         {/* Header */}
         <View className="flex-row items-center gap-3 px-6 py-4">
           <Pressable onPress={() => (step > 0 ? setStep(step - 1) : router.back())}>
-            <HugeiconsIcon icon={ArrowLeft01Icon} size={24} color="#0A0A0A" />
+            <HugeiconsIcon icon={ArrowLeft01Icon} size={24} color={c.brand} />
           </Pressable>
           <Text variant="bold" className="flex-1 text-xl text-brand">
             {isEditing ? "Edit Store" : "Set Up Store"}
           </Text>
-          <Text className="text-sm" style={{ color: "#6B7280" }}>{step + 1} / {TOTAL_STEPS}</Text>
+          <Text className="text-sm" style={{ color: c.secondary }}>{step + 1} / {TOTAL_STEPS}</Text>
         </View>
 
         {/* Progress */}
@@ -267,7 +269,7 @@ export default function SellerSetup() {
             <View
               key={i}
               className="h-1 flex-1 rounded-full"
-              style={{ backgroundColor: i <= step ? "#0A0A0A" : "#E5E7EB" }}
+              style={{ backgroundColor: i <= step ? c.brand : c.border }}
             />
           ))}
         </View>
@@ -315,9 +317,9 @@ export default function SellerSetup() {
                       numberOfLines={4}
                       spellCheck={false}
                       autoCorrect={false}
-                      className="rounded-xl border border-brand-100 bg-white px-4 py-3 text-sm text-brand"
+                      className="rounded-xl border border-brand-100 dark:border-[#2A2A2A] bg-white dark:bg-bg-card px-4 py-3 text-sm text-brand dark:text-white"
                       style={{ minHeight: 100, textAlignVertical: "top" }}
-                      placeholderTextColor="#9CA3AF"
+                      placeholderTextColor={c.placeholder}
                     />
                   )}
                 />
@@ -381,7 +383,7 @@ export default function SellerSetup() {
               showsVerticalScrollIndicator={false}
             >
               <Text variant="bold" className="text-lg text-brand">Store location</Text>
-              <Text className="text-sm" style={{ color: "#6B7280" }}>
+              <Text className="text-sm" style={{ color: c.secondary }}>
                 Pin your store on the map so clients can see how far you are.
               </Text>
 
@@ -414,12 +416,12 @@ export default function SellerSetup() {
               <Pressable
                 onPress={detectGps}
                 disabled={gpsLoading}
-                className="flex-row items-center gap-2 self-start rounded-lg bg-white px-4 py-2.5"
+                className="flex-row items-center gap-2 self-start rounded-lg bg-white dark:bg-bg-card px-4 py-2.5"
               >
                 {gpsLoading ? (
-                  <ActivityIndicator size="small" color="#0A0A0A" />
+                  <Spinner size={18} strokeWidth={2} />
                 ) : (
-                  <HugeiconsIcon icon={Location01Icon} size={18} color="#0A0A0A" />
+                  <HugeiconsIcon icon={Location01Icon} size={18} color={c.brand} />
                 )}
                 <Text variant="medium" className="text-sm text-brand">Use my location</Text>
               </Pressable>
@@ -450,7 +452,7 @@ export default function SellerSetup() {
             <View className="flex-row gap-3 px-6 pb-8 pt-4">
               <Pressable
                 onPress={() => setStep(0)}
-                className="flex-1 items-center rounded-xl border border-brand-100 py-4"
+                className="flex-1 items-center rounded-xl border border-brand-100 dark:border-[#2A2A2A] py-4"
               >
                 <Text variant="bold" className="text-brand">Back</Text>
               </Pressable>
@@ -474,7 +476,7 @@ export default function SellerSetup() {
             >
               <View>
                 <Text variant="bold" className="text-lg text-brand">Store images</Text>
-                <Text className="mt-1 text-sm" style={{ color: "#6B7280" }}>
+                <Text className="mt-1 text-sm" style={{ color: c.secondary }}>
                   Optional — you can add or update these later.
                 </Text>
               </View>
@@ -485,10 +487,10 @@ export default function SellerSetup() {
                 <View className="flex-row items-center gap-4">
                   <Pressable onPress={pickLogo} disabled={logoLoading}>
                     <View
-                      className="h-24 w-24 items-center justify-center overflow-hidden rounded-2xl bg-white"
+                      className="h-24 w-24 items-center justify-center overflow-hidden rounded-2xl bg-white dark:bg-bg-card"
                       style={{
                         borderWidth: 2,
-                        borderColor: logoUrl ? "#0A0A0A" : "#E5E7EB",
+                        borderColor: logoUrl ? c.brand : c.border,
                         borderStyle: "dashed",
                       }}
                     >
@@ -504,7 +506,7 @@ export default function SellerSetup() {
                               className="absolute inset-0 items-center justify-center rounded-2xl"
                               style={{ backgroundColor: "rgba(0,0,0,0.45)" }}
                             >
-                              <ActivityIndicator color="#fff" />
+                              <Spinner size={24} color="#fff" trackColor="rgba(255,255,255,0.3)" strokeWidth={2} />
                             </View>
                           ) : null}
                         </>
@@ -517,7 +519,7 @@ export default function SellerSetup() {
                     <Text variant="medium" className="text-sm text-brand">
                       {logoLoading ? "Uploading…" : logoUrl ? "Logo uploaded" : "Tap to upload"}
                     </Text>
-                    <Text className="text-xs" style={{ color: "#9CA3AF" }}>
+                    <Text className="text-xs" style={{ color: c.muted }}>
                       Square image · JPG, PNG, WebP
                     </Text>
                   </View>
@@ -529,11 +531,11 @@ export default function SellerSetup() {
                 <Text variant="medium" className="text-sm text-brand">Store banner</Text>
                 <Pressable onPress={pickBanner} disabled={bannerLoading}>
                   <View
-                    className="w-full items-center justify-center overflow-hidden rounded-xl bg-white"
+                    className="w-full items-center justify-center overflow-hidden rounded-xl bg-white dark:bg-bg-card"
                     style={{
                       height: 140,
                       borderWidth: 2,
-                      borderColor: bannerUrl ? "#0A0A0A" : "#E5E7EB",
+                      borderColor: bannerUrl ? c.brand : c.border,
                       borderStyle: "dashed",
                     }}
                   >
@@ -549,17 +551,17 @@ export default function SellerSetup() {
                             className="absolute inset-0 items-center justify-center rounded-xl"
                             style={{ backgroundColor: "rgba(0,0,0,0.45)" }}
                           >
-                            <ActivityIndicator color="#fff" size="large" />
+                            <Spinner size={36} color="#fff" trackColor="rgba(255,255,255,0.3)" strokeWidth={3} />
                           </View>
                         ) : null}
                       </>
                     ) : (
                       <View className="items-center gap-2">
                         <HugeiconsIcon icon={ImageUpload01Icon} size={32} color="#D1D5DB" />
-                        <Text className="text-sm" style={{ color: "#9CA3AF" }}>
+                        <Text className="text-sm" style={{ color: c.muted }}>
                           {bannerLoading ? "Uploading…" : "Tap to upload banner"}
                         </Text>
-                        <Text className="text-xs" style={{ color: "#D1D5DB" }}>
+                        <Text className="text-xs" style={{ color: c.border }}>
                           Landscape · 16:5 ratio recommended
                         </Text>
                       </View>
@@ -567,7 +569,7 @@ export default function SellerSetup() {
                   </View>
                 </Pressable>
                 {bannerUrl ? (
-                  <Text className="text-xs" style={{ color: "#6B7280" }}>Banner uploaded</Text>
+                  <Text className="text-xs" style={{ color: c.secondary }}>Banner uploaded</Text>
                 ) : null}
               </View>
             </ScrollView>
@@ -575,7 +577,7 @@ export default function SellerSetup() {
             <View className="flex-row gap-3 px-6 pb-8 pt-4">
               <Pressable
                 onPress={() => setStep(1)}
-                className="flex-1 items-center rounded-xl border border-brand-100 py-4"
+                className="flex-1 items-center rounded-xl border border-brand-100 dark:border-[#2A2A2A] py-4"
               >
                 <Text variant="bold" className="text-brand">Back</Text>
               </Pressable>
@@ -604,7 +606,7 @@ export default function SellerSetup() {
               {DAYS.map((day) => {
                 const h = hours[day];
                 return (
-                  <View key={day} className="rounded-xl bg-white px-4 py-3 mb-2">
+                  <View key={day} className="rounded-xl bg-white dark:bg-bg-card px-4 py-3 mb-2">
                     <View className="flex-row items-center">
                       <Text variant="semibold" className="flex-1 text-sm text-brand capitalize">
                         {DAY_LABELS[day]}
@@ -612,7 +614,7 @@ export default function SellerSetup() {
                       <Switch
                         value={h.open}
                         onValueChange={(val) => setDayOpen(day, val)}
-                        trackColor={{ false: "#E5E7EB", true: "#0A0A0A" }}
+                        trackColor={{ false: c.border, true: c.brand }}
                         thumbColor="#fff"
                       />
                     </View>
@@ -620,28 +622,28 @@ export default function SellerSetup() {
                     {h.open ? (
                       <View className="mt-3 flex-row gap-3">
                         <View className="flex-1 gap-1">
-                          <Text className="text-xs" style={{ color: "#6B7280" }}>From</Text>
+                          <Text className="text-xs" style={{ color: c.secondary }}>From</Text>
                           <TextInput
                             value={h.from}
                             onChangeText={(val) => setDayTime(day, "from", val)}
                             placeholder="09:00"
-                            className="rounded-lg border border-brand-100 bg-bg-light px-3 py-2 text-sm text-brand"
-                            placeholderTextColor="#9CA3AF"
+                            className="rounded-lg border border-brand-100 dark:border-[#2A2A2A] bg-bg-light dark:bg-[#2A2A2A] px-3 py-2 text-sm text-brand dark:text-white"
+                            placeholderTextColor={c.placeholder}
                           />
                         </View>
                         <View className="flex-1 gap-1">
-                          <Text className="text-xs" style={{ color: "#6B7280" }}>To</Text>
+                          <Text className="text-xs" style={{ color: c.secondary }}>To</Text>
                           <TextInput
                             value={h.to}
                             onChangeText={(val) => setDayTime(day, "to", val)}
                             placeholder="22:00"
-                            className="rounded-lg border border-brand-100 bg-bg-light px-3 py-2 text-sm text-brand"
-                            placeholderTextColor="#9CA3AF"
+                            className="rounded-lg border border-brand-100 dark:border-[#2A2A2A] bg-bg-light dark:bg-[#2A2A2A] px-3 py-2 text-sm text-brand dark:text-white"
+                            placeholderTextColor={c.placeholder}
                           />
                         </View>
                       </View>
                     ) : (
-                      <Text className="mt-1 text-xs" style={{ color: "#9CA3AF" }}>Closed</Text>
+                      <Text className="mt-1 text-xs" style={{ color: c.muted }}>Closed</Text>
                     )}
                   </View>
                 );
@@ -651,7 +653,7 @@ export default function SellerSetup() {
             <View className="flex-row gap-3 px-6 pb-8 pt-4">
               <Pressable
                 onPress={() => setStep(2)}
-                className="flex-1 items-center rounded-xl border border-brand-100 py-4"
+                className="flex-1 items-center rounded-xl border border-brand-100 dark:border-[#2A2A2A] py-4"
               >
                 <Text variant="bold" className="text-brand">Back</Text>
               </Pressable>
@@ -662,7 +664,7 @@ export default function SellerSetup() {
                 style={{ opacity: submitting ? 0.6 : 1 }}
               >
                 {submitting ? (
-                  <ActivityIndicator size="small" color="#fff" />
+                  <Spinner size={20} color="#fff" trackColor="rgba(255,255,255,0.3)" strokeWidth={2} />
                 ) : (
                   <HugeiconsIcon icon={Tick01Icon} size={18} color="#fff" />
                 )}

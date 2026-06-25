@@ -15,6 +15,7 @@ import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { api } from "@/lib/api";
+import { useThemeColors } from "@/lib/theme";
 
 const schema = z.object({
   email: z.string().email("Invalid email"),
@@ -24,6 +25,7 @@ type FormData = z.infer<typeof schema>;
 
 export default function ForgotPassword() {
   const router = useRouter();
+  const c = useThemeColors();
   const [sent, setSent] = useState(false);
   const [sentEmail, setSentEmail] = useState("");
 
@@ -52,21 +54,21 @@ export default function ForgotPassword() {
 
   if (sent) {
     return (
-      <SafeAreaView className="flex-1 bg-bg-light">
+      <SafeAreaView className="flex-1 bg-bg-light dark:bg-bg-dark">
         <View className="flex-1 items-center justify-center px-8">
           <Animated.View entering={FadeInDown.duration(500)} className="items-center gap-5">
-            <View className="h-24 w-24 items-center justify-center rounded-full bg-white">
-              <HugeiconsIcon icon={CheckmarkCircle01Icon} size={48} color="#0A0A0A" />
+            <View className="h-24 w-24 items-center justify-center rounded-full bg-white dark:bg-bg-card">
+              <HugeiconsIcon icon={CheckmarkCircle01Icon} size={48} color={c.brand} />
             </View>
 
             <View className="items-center gap-2">
-              <Text variant="bold" className="text-center text-2xl text-brand">
+              <Text variant="bold" className="text-center text-2xl text-brand dark:text-white">
                 Check your email
               </Text>
-              <Text className="text-center text-sm leading-5" style={{ color: "#6B7280" }}>
+              <Text className="text-center text-sm leading-5" style={{ color: c.secondary }}>
                 We sent a password reset link to
               </Text>
-              <Text variant="semibold" className="text-center text-sm text-brand">
+              <Text variant="semibold" className="text-center text-sm text-brand dark:text-white">
                 {sentEmail}
               </Text>
             </View>
@@ -84,7 +86,7 @@ export default function ForgotPassword() {
             entering={FadeInUp.duration(500).delay(200)}
             className="absolute bottom-10 items-center"
           >
-            <Text className="text-xs text-center leading-4" style={{ color: "#9CA3AF" }}>
+            <Text className="text-xs text-center leading-4" style={{ color: c.muted }}>
               Didn't get it? Check your spam folder.{"\n"}The link expires in 60 minutes.
             </Text>
           </Animated.View>
@@ -94,7 +96,7 @@ export default function ForgotPassword() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-bg-light">
+    <SafeAreaView className="flex-1 bg-bg-light dark:bg-bg-dark">
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         className="flex-1"
@@ -111,13 +113,13 @@ export default function ForgotPassword() {
                 variant="ghost"
                 size="sm"
                 onPress={() => router.back()}
-                leftIcon={<HugeiconsIcon icon={ArrowLeft01Icon} size={18} color="#0A0A0A" />}
+                leftIcon={<HugeiconsIcon icon={ArrowLeft01Icon} size={18} color={c.brand} />}
                 className="self-start -ml-2 mb-6"
               />
-              <Text variant="bold" className="text-4xl text-brand">
+              <Text variant="bold" className="text-4xl text-brand dark:text-white">
                 Forgot password?
               </Text>
-              <Text className="mt-2 text-base" style={{ color: "#6B7280" }}>
+              <Text className="mt-2 text-base" style={{ color: c.secondary }}>
                 Enter your email and we'll send you a reset link.
               </Text>
             </Animated.View>
@@ -139,7 +141,7 @@ export default function ForgotPassword() {
                     value={value}
                     onChangeText={onChange}
                     error={errors.email?.message}
-                    leftIcon={<HugeiconsIcon icon={Mail01Icon} size={22} color="#0A0A0A" />}
+                    leftIcon={<HugeiconsIcon icon={Mail01Icon} size={22} color={c.brand} />}
                   />
                 )}
               />

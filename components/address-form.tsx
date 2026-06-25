@@ -2,7 +2,6 @@ import {
   View,
   ScrollView,
   Pressable,
-  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   Switch,
@@ -26,6 +25,8 @@ import { toast } from "sonner-native";
 import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useThemeColors } from "@/lib/theme";
+import { Spinner } from "@/components/ui/spinner";
 import type { Address, AddressInput } from "@/lib/queries/addresses";
 
 const DEFAULT_REGION: Region = {
@@ -58,6 +59,7 @@ interface Props {
 
 export function AddressForm({ title, initialAddress, onSave, isSaving }: Props) {
   const router = useRouter();
+  const c = useThemeColors();
   const mapRef = useRef<MapView>(null);
 
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(
@@ -166,15 +168,15 @@ export function AddressForm({ title, initialAddress, onSave, isSaving }: Props) 
       : DEFAULT_REGION;
 
   return (
-    <SafeAreaView className="flex-1 bg-bg-light">
+    <SafeAreaView className="flex-1 bg-bg-light dark:bg-bg-dark">
       <View className="flex-row items-center gap-3 px-4 pb-3 pt-2">
         <Pressable
           onPress={() => router.back()}
-          className="h-10 w-10 items-center justify-center rounded-full bg-white"
+          className="h-10 w-10 items-center justify-center rounded-full bg-white dark:bg-bg-card"
         >
-          <HugeiconsIcon icon={ArrowLeft01Icon} size={22} color="#0A0A0A" />
+          <HugeiconsIcon icon={ArrowLeft01Icon} size={22} color={c.brand} />
         </Pressable>
-        <Text variant="bold" className="text-xl text-brand">
+        <Text variant="bold" className="text-xl text-brand dark:text-white">
           {title}
         </Text>
       </View>
@@ -189,7 +191,7 @@ export function AddressForm({ title, initialAddress, onSave, isSaving }: Props) 
           showsVerticalScrollIndicator={false}
         >
           {/* Map picker */}
-          <View className="h-64 overflow-hidden border-b border-brand-100">
+          <View className="h-64 overflow-hidden border-b border-brand-100 dark:border-[#2A2A2A]">
             <MapView
               ref={mapRef}
               provider={PROVIDER_DEFAULT}
@@ -209,26 +211,26 @@ export function AddressForm({ title, initialAddress, onSave, isSaving }: Props) 
             </View>
 
             {mapLoading && (
-              <View className="absolute inset-0 items-center justify-center bg-white/70">
-                <ActivityIndicator size="large" color="#0A0A0A" />
+              <View className="absolute inset-0 items-center justify-center bg-white/70 dark:bg-black/70">
+                <Spinner size={40} />
               </View>
             )}
 
             <Pressable
               onPress={detectGPS}
-              className="absolute bottom-3 right-3 h-11 w-11 items-center justify-center rounded-full bg-white shadow"
+              className="absolute bottom-3 right-3 h-11 w-11 items-center justify-center rounded-full bg-white dark:bg-bg-card shadow"
             >
-              <HugeiconsIcon icon={MapsLocation02Icon} size={20} color="#0A0A0A" />
+              <HugeiconsIcon icon={MapsLocation02Icon} size={20} color={c.brand} />
             </Pressable>
           </View>
 
           {/* Detected city */}
-          <View className="flex-row items-center gap-2 border-b border-brand-100 bg-white px-4 py-3">
-            <HugeiconsIcon icon={Location01Icon} size={16} color="#6B7280" />
-            <Text className="text-sm" style={{ color: "#6B7280" }}>
+          <View className="flex-row items-center gap-2 border-b border-brand-100 dark:border-[#2A2A2A] bg-white dark:bg-bg-card px-4 py-3">
+            <HugeiconsIcon icon={Location01Icon} size={16} color={c.secondary} />
+            <Text className="text-sm" style={{ color: c.secondary }}>
               City:
             </Text>
-            <Text variant="semibold" className="text-sm text-brand">
+            <Text variant="semibold" className="text-sm text-brand dark:text-white">
               {city || "Drag the map to detect"}
             </Text>
           </View>
@@ -355,16 +357,16 @@ export function AddressForm({ title, initialAddress, onSave, isSaving }: Props) 
               control={control}
               name="is_default"
               render={({ field: { onChange, value } }) => (
-                <View className="flex-row items-center justify-between rounded-md border border-brand-100 bg-white px-4 py-4">
-                  <Text variant="medium" className="text-sm text-brand">
+                <View className="flex-row items-center justify-between rounded-md border border-brand-100 dark:border-[#3A3A3A] bg-white dark:bg-bg-card px-4 py-4">
+                  <Text variant="medium" className="text-sm text-brand dark:text-white">
                     Set as default address
                   </Text>
                   <Switch
                     value={value}
                     onValueChange={onChange}
-                    trackColor={{ false: "#E5E7EB", true: "#0A0A0A" }}
+                    trackColor={{ false: c.border, true: c.brand }}
                     thumbColor="#FFFFFF"
-                    ios_backgroundColor="#E5E7EB"
+                    ios_backgroundColor={c.border}
                   />
                 </View>
               )}

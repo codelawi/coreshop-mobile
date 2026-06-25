@@ -28,6 +28,7 @@ import { Button } from "@/components/ui/button";
 import { ProgressBar } from "@/components/onboarding/progress-bar";
 import { useOnboardingStore } from "@/stores/onboarding-store";
 import { useAuthStore } from "@/stores/auth-store";
+import { useThemeColors } from "@/lib/theme";
 import { api } from "@/lib/api";
 
 const CATEGORIES = [
@@ -48,6 +49,7 @@ const CATEGORIES = [
 export default function InterestsStep() {
   const { t } = useTranslation();
   const router = useRouter();
+  const colors = useThemeColors();
   const onboarding = useOnboardingStore();
   const setUser = useAuthStore((s) => s.setUser);
   const [selected, setSelected] = useState<string[]>(onboarding.interests);
@@ -92,7 +94,7 @@ export default function InterestsStep() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-bg-light">
+    <SafeAreaView className="flex-1 bg-bg-light dark:bg-bg-dark">
       <View className="flex-1 px-6 pt-4">
         <ProgressBar current={5} total={5} />
 
@@ -100,7 +102,7 @@ export default function InterestsStep() {
           <Text variant="bold" className="text-3xl text-brand">
             {t("onboarding.interests.title")}
           </Text>
-          <Text className="mt-2 text-base" style={{ color: "#6B7280" }}>
+          <Text className="mt-2 text-base" style={{ color: colors.secondary }}>
             {t("onboarding.interests.subtitle")}
           </Text>
           <Text variant="medium" className="mt-2 text-sm" style={{ color: "#FF4D4F" }}>
@@ -120,8 +122,8 @@ export default function InterestsStep() {
                   key={c.id}
                   onPress={() => toggle(c.id)}
                   style={{ width: "31.5%" }}
-                  className={`mb-3 items-center justify-center rounded-md border bg-white p-4 ${
-                    isSelected ? "border-brand" : "border-brand-100"
+                  className={`mb-3 items-center justify-center rounded-md border bg-white dark:bg-bg-card p-4 ${
+                    isSelected ? "border-brand" : "border-brand-100 dark:border-[#2A2A2A]"
                   }`}
                 >
                   <View
@@ -132,12 +134,12 @@ export default function InterestsStep() {
                     <HugeiconsIcon
                       icon={c.icon}
                       size={24}
-                      color={isSelected ? "#FFFFFF" : "#0A0A0A"}
+                      color={isSelected ? "#FFFFFF" : colors.brand}
                     />
                   </View>
                   <Text
                     variant="semibold"
-                    className="mt-2 text-center text-xs text-brand"
+                    className="mt-2 text-center text-xs text-brand dark:text-white"
                   >
                     {c.label}
                   </Text>

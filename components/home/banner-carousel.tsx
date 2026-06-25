@@ -1,14 +1,42 @@
 import { View, ScrollView, Pressable, Dimensions } from "react-native";
 import { Image } from "expo-image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+} from "react-native-reanimated";
 import { Text } from "@/components/ui/text";
 import type { Banner } from "@/lib/queries/home";
+import { useThemeColors } from "@/lib/theme";
 
 const { width } = Dimensions.get("window");
 const BANNER_WIDTH = width - 48;
 
+function Dot({ active, activeColor, color }: { active: boolean; activeColor: string; color: string }) {
+  const w = useSharedValue(active ? 16 : 6);
+  const opacity = useSharedValue(active ? 1 : 0.5);
+
+  useEffect(() => {
+    w.value = withTiming(active ? 16 : 6, { duration: 250 });
+    opacity.value = withTiming(active ? 1 : 0.5, { duration: 250 });
+  }, [active]);
+
+  const style = useAnimatedStyle(() => ({
+    width: w.value,
+    opacity: opacity.value,
+  }));
+
+  return (
+    <Animated.View
+      style={[style, { height: 6, borderRadius: 999, backgroundColor: active ? activeColor : color }]}
+    />
+  );
+}
+
 export function BannerCarousel({ banners }: { banners: Banner[] }) {
   const [index, setIndex] = useState(0);
+  const c = useThemeColors();
 
   return (
     <View>
@@ -43,14 +71,7 @@ export function BannerCarousel({ banners }: { banners: Banner[] }) {
       </ScrollView>
       <View className="mt-2 flex-row items-center justify-center gap-1.5">
         {banners.map((_, i) => (
-          <View
-            key={i}
-            className="h-1.5 rounded-full"
-            style={{
-              width: i === index ? 16 : 6,
-              backgroundColor: i === index ? "#0A0A0A" : "#D1D5DB",
-            }}
-          />
+          <Dot key={i} active={i === index} activeColor={c.brand} color={c.border} />
         ))}
       </View>
     </View>

@@ -14,6 +14,7 @@ export interface Banner {
 export interface HomeCategory {
   id: number;
   name: string;
+  name_ar: string | null;
   slug: string;
   image: string | null;
   icon: string | null;
@@ -75,6 +76,7 @@ export interface ProductVariant {
   size: string | null;
   color: string | null;
   color_hex: string | null;
+  image_url: string | null;
   stock: number;
   price_adjustment: string;
 }
@@ -155,6 +157,7 @@ export function useProducts(filters: ProductFilters, enabled = true) {
 export interface CategoryNode {
   id: number;
   name: string;
+  name_ar: string | null;
   slug: string;
   image: string | null;
   icon: string | null;
@@ -190,6 +193,19 @@ export interface StoreDetail {
   sales_count: number;
   is_open: boolean;
   products: HomeProduct[];
+}
+
+export function useStoresList(search?: string) {
+  return useQuery({
+    queryKey: ["stores-list", search ?? ""],
+    queryFn: async () => {
+      const res = await api.get<{ success: boolean; data: HomeStore[] }>(
+        "/stores",
+        { params: { per_page: 100, search: search || undefined } },
+      );
+      return res.data.data;
+    },
+  });
 }
 
 export function useStore(id: number | string) {

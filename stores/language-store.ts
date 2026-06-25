@@ -17,10 +17,8 @@ export const useLanguageStore = create<LanguageState>((set) => ({
     await SecureStore.setItemAsync("app_language", lang);
     await i18n.changeLanguage(lang);
     const shouldBeRTL = lang === "ar";
-    if (I18nManager.isRTL !== shouldBeRTL) {
-      I18nManager.allowRTL(shouldBeRTL);
-      I18nManager.forceRTL(shouldBeRTL);
-    }
+    I18nManager.allowRTL(shouldBeRTL);
+    I18nManager.forceRTL(shouldBeRTL);
     set({ language: lang });
   },
   hydrate: async () => {
@@ -28,8 +26,9 @@ export const useLanguageStore = create<LanguageState>((set) => ({
     const lang = stored ?? (i18n.language.startsWith("ar") ? "ar" : "en");
     await i18n.changeLanguage(lang);
     const shouldBeRTL = lang === "ar";
+    I18nManager.allowRTL(shouldBeRTL);
     if (I18nManager.isRTL !== shouldBeRTL) {
-      I18nManager.allowRTL(shouldBeRTL);
+      I18nManager.forceRTL(shouldBeRTL);
     }
     set({ language: lang });
   },

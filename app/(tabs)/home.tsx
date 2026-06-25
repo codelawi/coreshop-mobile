@@ -1,6 +1,7 @@
-import { View, ScrollView, RefreshControl, ActivityIndicator, Pressable } from "react-native";
+import { View, ScrollView, RefreshControl, Pressable } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
+import { useTranslation } from "react-i18next";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 import { HugeiconsIcon } from "@hugeicons/react-native";
 import { Search01Icon, ShoppingCart01Icon, Notification03Icon } from "@hugeicons/core-free-icons";
@@ -8,62 +9,105 @@ import { Search01Icon, ShoppingCart01Icon, Notification03Icon } from "@hugeicons
 import { Text } from "@/components/ui/text";
 import { useHome } from "@/lib/queries/home";
 import { useAuthStore } from "@/stores/auth-store";
+import { useUnreadCount } from "@/lib/queries/notifications";
 import { BannerCarousel } from "@/components/home/banner-carousel";
 import { CategoryCircle } from "@/components/home/category-circle";
 import { ProductCard } from "@/components/product/product-card";
 import { StoreCard } from "@/components/home/store-card";
 import { SectionHeader } from "@/components/home/section-header";
+import { useThemeColors } from "@/lib/theme";
+import { Skeleton, SkeletonProductCard, SkeletonHomeSection } from "@/components/ui/skeleton";
+import { Spinner } from "@/components/ui/spinner";
 
 export default function Home() {
+  const { t } = useTranslation();
   const router = useRouter();
+  const c = useThemeColors();
   const user = useAuthStore((s) => s.user);
   const { data, isLoading, isRefetching, refetch } = useHome();
+  const { data: unreadCount = 0 } = useUnreadCount();
 
   if (isLoading) {
     return (
-      <SafeAreaView className="flex-1 bg-bg-light">
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator color="#0A0A0A" />
+      <SafeAreaView className="flex-1 bg-bg-light dark:bg-bg-dark" edges={["top"]}>
+        <View style={{ paddingHorizontal: 24, paddingTop: 16, gap: 24 }}>
+          <Skeleton width="55%" height={20} />
+          <Skeleton width="100%" height={160} radius={10} />
+          <View style={{ flexDirection: "row", gap: 14 }}>
+            {[0, 1, 2, 3, 4].map((i) => (
+              <View key={i} style={{ alignItems: "center", gap: 6 }}>
+                <Skeleton width={60} height={60} radius={30} />
+                <Skeleton width={48} height={10} />
+              </View>
+            ))}
+          </View>
+          <SkeletonHomeSection />
         </View>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-bg-light" edges={["top"]}>
+    <SafeAreaView className="flex-1 bg-bg-light dark:bg-bg-dark" edges={["top"]}>
       <Animated.View entering={FadeInDown.duration(400)} className="flex-row items-center gap-3 px-6 pb-3 pt-2">
         <View className="flex-1">
-          <Text className="text-xs" style={{ color: "#6B7280" }}>Hello,</Text>
-          <Text variant="bold" className="text-lg text-brand" numberOfLines={1}>
-            {user?.name ?? "Welcome"}
+          <Text className="text-xs" style={{ color: c.secondary }}>{t("home.hello")}</Text>
+          <Text variant="bold" className="text-lg text-brand dark:text-white" numberOfLines={1}>
+            {user?.name ?? t("home.welcome")}
           </Text>
         </View>
-        <Pressable className="h-10 w-10 items-center justify-center rounded-full bg-white">
-          <HugeiconsIcon icon={Notification03Icon} size={22} color="#0A0A0A" />
+        <Pressable
+          onPress={() => router.push("/notifications" as any)}
+          className="h-10 w-10 items-center justify-center rounded-full bg-white dark:bg-bg-card"
+        >
+          <HugeiconsIcon icon={Notification03Icon} size={22} color={c.brand} />
+          {unreadCount > 0 ? (
+            <View
+              className="absolute right-0.5 top-0.5 h-4 min-w-[16px] items-center justify-center rounded-full px-0.5"
+              style={{ backgroundColor: "#FF4D4F" }}
+            >
+              <Text variant="bold" style={{ color: "#fff", fontSize: 8 }}>
+                {unreadCount > 9 ? "9+" : unreadCount}
+              </Text>
+            </View>
+          ) : null}
         </Pressable>
         <Pressable
           onPress={() => router.push("/(tabs)/cart" as any)}
-          className="h-10 w-10 items-center justify-center rounded-full bg-white"
+          className="h-10 w-10 items-center justify-center rounded-full bg-white dark:bg-bg-card"
         >
-          <HugeiconsIcon icon={ShoppingCart01Icon} size={22} color="#0A0A0A" />
+          <HugeiconsIcon icon={ShoppingCart01Icon} size={22} color={c.brand} />
         </Pressable>
       </Animated.View>
 
       <Animated.View entering={FadeInDown.duration(400).delay(80)} className="px-6 pb-3">
         <Pressable
           onPress={() => router.push("/(tabs)/search" as any)}
-          className="h-12 flex-row items-center rounded-md bg-white px-4"
+          className="h-12 flex-row items-center rounded-md bg-white dark:bg-bg-card px-4"
         >
-          <HugeiconsIcon icon={Search01Icon} size={20} color="#6B7280" />
-          <Text className="ml-3 text-sm" style={{ color: "#9CA3AF" }}>Search products, stores...</Text>
+          <HugeiconsIcon icon={Search01Icon} size={20} color={c.secondary} />
+          <Text className="ml-3 text-sm" style={{ color: c.muted }}>{t("home.searchPlaceholder")}</Text>
         </Pressable>
       </Animated.View>
 
       <ScrollView
         contentContainerStyle={{ paddingBottom: 32 }}
         showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#0A0A0A" />}
+        refreshControl={
+          <RefreshControl
+            refreshing={false}
+            onRefresh={refetch}
+            tintColor="transparent"
+            colors={["transparent"]}
+            progressBackgroundColor="transparent"
+          />
+        }
       >
+        {isRefetching ? (
+          <View style={{ alignItems: "center", paddingVertical: 8 }}>
+            <Spinner size={30} strokeWidth={2.5} />
+          </View>
+        ) : null}
         {data?.banners && data.banners.length > 0 ? (
           <Animated.View entering={FadeInUp.duration(500).delay(150)} className="px-6">
             <BannerCarousel banners={data.banners} />
@@ -72,10 +116,14 @@ export default function Home() {
 
         {data?.categories && data.categories.length > 0 ? (
           <Animated.View entering={FadeInUp.duration(500).delay(200)} className="mt-6 px-6">
-            <SectionHeader title="Categories" action="See all" onActionPress={() => router.push("/(tabs)/categories" as any)} />
+            <SectionHeader
+              title={t("home.categories")}
+              action={t("common.seeAll")}
+              onActionPress={() => router.push("/(tabs)/categories" as any)}
+            />
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
-              {data.categories.map((c) => (
-                <CategoryCircle key={c.id} category={c} />
+              {data.categories.map((cat) => (
+                <CategoryCircle key={cat.id} category={cat} />
               ))}
             </ScrollView>
           </Animated.View>
@@ -83,7 +131,7 @@ export default function Home() {
 
         {data?.flash_deals && data.flash_deals.length > 0 ? (
           <Animated.View entering={FadeInUp.duration(500).delay(250)} className="mt-6 px-6">
-            <SectionHeader title="Flash Deals" action="See all" />
+            <SectionHeader title={t("home.flashDeals")} action={t("common.seeAll")} />
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12 }}>
               {data.flash_deals.map((p) => (
                 <View key={p.id} style={{ width: 160 }}>
@@ -96,7 +144,7 @@ export default function Home() {
 
         {data?.top_stores && data.top_stores.length > 0 ? (
           <Animated.View entering={FadeInUp.duration(500).delay(300)} className="mt-6 px-6">
-            <SectionHeader title="Top Stores" action="See all" />
+            <SectionHeader title={t("home.topStores")} action={t("common.seeAll")} />
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
               {data.top_stores.map((s) => (
                 <StoreCard key={s.id} store={s} />
@@ -107,7 +155,7 @@ export default function Home() {
 
         {data?.trending && data.trending.length > 0 ? (
           <Animated.View entering={FadeInUp.duration(500).delay(350)} className="mt-6 px-6">
-            <SectionHeader title="Trending Now" />
+            <SectionHeader title={t("home.trending")} />
             <View className="flex-row flex-wrap justify-between">
               {data.trending.map((p) => (
                 <ProductCard key={p.id} product={p} />
@@ -118,7 +166,7 @@ export default function Home() {
 
         {data?.featured && data.featured.length > 0 ? (
           <Animated.View entering={FadeInUp.duration(500).delay(400)} className="mt-6 px-6">
-            <SectionHeader title="Featured" />
+            <SectionHeader title={t("home.featured")} />
             <View className="flex-row flex-wrap justify-between">
               {data.featured.map((p) => (
                 <ProductCard key={p.id} product={p} />

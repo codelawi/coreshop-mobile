@@ -1,7 +1,8 @@
-import { View, FlatList, Pressable } from "react-native";
+import { View, FlatList, Pressable, RefreshControl } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { HugeiconsIcon } from "@hugeicons/react-native";
 import { ArrowLeft01Icon, FavouriteIcon } from "@hugeicons/core-free-icons";
 import Animated, { FadeInDown } from "react-native-reanimated";
@@ -10,6 +11,7 @@ import { Text } from "@/components/ui/text";
 import { ProductCard } from "@/components/product/product-card";
 import { api } from "@/lib/api";
 import { useWishlistStore } from "@/stores/wishlist-store";
+import { useThemeColors } from "@/lib/theme";
 import type { HomeProduct } from "@/lib/queries/home";
 
 function useWishlistProducts() {
@@ -25,21 +27,23 @@ function useWishlistProducts() {
 }
 
 export default function Wishlist() {
+  const { t } = useTranslation();
   const router = useRouter();
-  const { data: products = [], isLoading } = useWishlistProducts();
+  const c = useThemeColors();
+  const { data: products = [], isLoading, isRefetching, refetch } = useWishlistProducts();
 
   return (
-    <SafeAreaView className="flex-1 bg-bg-light" edges={["top"]}>
+    <SafeAreaView className="flex-1 bg-bg-light dark:bg-bg-dark" edges={["top"]}>
       <View className="flex-row items-center gap-3 px-4 py-3">
         <Pressable onPress={() => router.back()} hitSlop={10}>
-          <HugeiconsIcon icon={ArrowLeft01Icon} size={22} color="#0A0A0A" />
+          <HugeiconsIcon icon={ArrowLeft01Icon} size={22} color={c.brand} />
         </Pressable>
-        <Text variant="bold" className="text-xl text-brand">
-          Wishlist
+        <Text variant="bold" className="text-xl text-brand dark:text-white">
+          {t("wishlist.title")}
         </Text>
         {products.length > 0 && (
-          <Text className="ml-auto text-sm" style={{ color: "#6B7280" }}>
-            {products.length} {products.length === 1 ? "item" : "items"}
+          <Text className="ml-auto text-sm" style={{ color: c.secondary }}>
+            {products.length} {products.length === 1 ? t("common.item") : t("common.items")}
           </Text>
         )}
       </View>
@@ -49,14 +53,14 @@ export default function Wishlist() {
           entering={FadeInDown.duration(400)}
           className="flex-1 items-center justify-center gap-4 px-8"
         >
-          <View className="h-20 w-20 items-center justify-center rounded-full bg-white">
-            <HugeiconsIcon icon={FavouriteIcon} size={36} color="#D1D5DB" />
+          <View className="h-20 w-20 items-center justify-center rounded-full bg-white dark:bg-bg-card">
+            <HugeiconsIcon icon={FavouriteIcon} size={36} color={c.border} />
           </View>
-          <Text variant="bold" className="text-center text-xl text-brand">
-            No saved items yet
+          <Text variant="bold" className="text-center text-xl text-brand dark:text-white">
+            {t("wishlist.empty")}
           </Text>
-          <Text className="text-center text-sm leading-5" style={{ color: "#6B7280" }}>
-            Tap the heart on any product to save it here for later.
+          <Text className="text-center text-sm leading-5" style={{ color: c.secondary }}>
+            {t("wishlist.emptyDesc")}
           </Text>
         </Animated.View>
       ) : (
@@ -67,6 +71,15 @@ export default function Wishlist() {
           contentContainerStyle={{ padding: 12, paddingTop: 4 }}
           columnWrapperStyle={{ gap: 8 }}
           showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={false}
+              onRefresh={refetch}
+              tintColor="transparent"
+              colors={["transparent"]}
+              progressBackgroundColor="transparent"
+            />
+          }
           renderItem={({ item, index }) => (
             <Animated.View
               entering={FadeInDown.duration(400).delay(index * 40)}

@@ -5,7 +5,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   TextInput,
-  ActivityIndicator,
 } from "react-native";
 import { Image } from "expo-image";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -31,6 +30,8 @@ import { useAddresses } from "@/lib/queries/addresses";
 import type { Address } from "@/lib/queries/addresses";
 import { useStore } from "@/lib/queries/home";
 import { usePlaceOrder } from "@/lib/queries/orders";
+import { useThemeColors } from "@/lib/theme";
+import { Spinner } from "@/components/ui/spinner";
 import { api } from "@/lib/api";
 
 interface AppliedCoupon {
@@ -57,6 +58,7 @@ function deliveryFeeFor(distanceKm: number): number {
 
 export default function Checkout() {
   const router = useRouter();
+  const c = useThemeColors();
   const items = useCartStore((s) => s.items);
   const storeName = useCartStore((s) => s.storeName);
   const storeId = useCartStore((s) => s.storeId);
@@ -161,9 +163,9 @@ export default function Checkout() {
 
   if (items.length === 0) {
     return (
-      <SafeAreaView className="flex-1 items-center justify-center bg-bg-light">
-        <HugeiconsIcon icon={ShoppingCart01Icon} size={48} color="#D1D5DB" />
-        <Text variant="semibold" className="mt-4 text-brand">Cart is empty</Text>
+      <SafeAreaView className="flex-1 items-center justify-center bg-bg-light dark:bg-bg-dark">
+        <HugeiconsIcon icon={ShoppingCart01Icon} size={48} color={c.border} />
+        <Text variant="semibold" className="mt-4 text-brand dark:text-white">Cart is empty</Text>
         <Pressable onPress={() => router.back()} className="mt-3">
           <Text className="text-sm" style={{ color: "#FF4D4F" }}>Go back</Text>
         </Pressable>
@@ -172,15 +174,15 @@ export default function Checkout() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-bg-light">
+    <SafeAreaView className="flex-1 bg-bg-light dark:bg-bg-dark">
       <View className="flex-row items-center gap-3 px-4 pb-3 pt-2">
         <Pressable
           onPress={() => router.back()}
-          className="h-10 w-10 items-center justify-center rounded-full bg-white"
+          className="h-10 w-10 items-center justify-center rounded-full bg-white dark:bg-bg-card"
         >
-          <HugeiconsIcon icon={ArrowLeft01Icon} size={22} color="#0A0A0A" />
+          <HugeiconsIcon icon={ArrowLeft01Icon} size={22} color={c.brand} />
         </Pressable>
-        <Text variant="bold" className="text-xl text-brand">Checkout</Text>
+        <Text variant="bold" className="text-xl text-brand dark:text-white">Checkout</Text>
       </View>
 
       <KeyboardAvoidingView
@@ -195,32 +197,32 @@ export default function Checkout() {
         >
           {/* Deliver to */}
           <Animated.View entering={FadeInDown.duration(400)} className="mx-4 mt-4">
-            <Text variant="semibold" className="mb-2 text-xs uppercase tracking-widest" style={{ color: "#6B7280" }}>
+            <Text variant="semibold" className="mb-2 text-xs uppercase tracking-widest" style={{ color: c.secondary }}>
               Deliver to
             </Text>
 
             {addressesLoading ? (
               <View className="items-center py-6">
-                <ActivityIndicator color="#0A0A0A" />
+                <Spinner size={32} />
               </View>
             ) : !activeAddress ? (
               <Pressable
                 onPress={() => router.push("/addresses/new" as any)}
-                className="flex-row items-center gap-3 rounded-md border border-dashed border-brand-100 bg-white p-4"
+                className="flex-row items-center gap-3 rounded-md border border-dashed border-brand-100 dark:border-[#3A3A3A] bg-white dark:bg-bg-card p-4"
               >
-                <HugeiconsIcon icon={Location01Icon} size={20} color="#9CA3AF" />
-                <Text className="text-sm" style={{ color: "#9CA3AF" }}>Add a delivery address</Text>
+                <HugeiconsIcon icon={Location01Icon} size={20} color={c.muted} />
+                <Text className="text-sm" style={{ color: c.muted }}>Add a delivery address</Text>
               </Pressable>
             ) : (
-              <View className="rounded-md bg-white p-4">
+              <View className="rounded-md bg-white dark:bg-bg-card p-4">
                 <View className="flex-row items-start justify-between">
                   <View className="flex-1 flex-row items-start gap-3">
-                    <View className="mt-0.5 h-8 w-8 items-center justify-center rounded-full bg-brand-50">
-                      <HugeiconsIcon icon={Location01Icon} size={16} color="#0A0A0A" />
+                    <View className="mt-0.5 h-8 w-8 items-center justify-center rounded-full bg-brand-50 dark:bg-[#2A2A2A]">
+                      <HugeiconsIcon icon={Location01Icon} size={16} color={c.brand} />
                     </View>
                     <View className="flex-1">
                       <View className="flex-row items-center gap-2">
-                        <Text variant="semibold" className="text-sm text-brand">
+                        <Text variant="semibold" className="text-sm text-brand dark:text-white">
                           {activeAddress.label}
                         </Text>
                         {activeAddress.is_default && (
@@ -231,13 +233,13 @@ export default function Checkout() {
                           </View>
                         )}
                       </View>
-                      <Text variant="medium" className="mt-0.5 text-sm text-brand">
+                      <Text variant="medium" className="mt-0.5 text-sm text-brand dark:text-white">
                         {activeAddress.recipient_name}
                       </Text>
-                      <Text className="mt-0.5 text-xs" style={{ color: "#6B7280" }}>
+                      <Text className="mt-0.5 text-xs" style={{ color: c.secondary }}>
                         {activeAddress.address_line}, {activeAddress.city}
                       </Text>
-                      <Text className="text-xs" style={{ color: "#9CA3AF" }}>
+                      <Text className="text-xs" style={{ color: c.muted }}>
                         {activeAddress.phone}
                       </Text>
                     </View>
@@ -250,7 +252,7 @@ export default function Checkout() {
                 </View>
 
                 {showAddressPicker && addresses && addresses.length > 1 && (
-                  <View className="mt-3 border-t border-brand-100 pt-3">
+                  <View className="mt-3 border-t border-brand-100 dark:border-[#2A2A2A] pt-3">
                     {addresses
                       .filter((a) => a.id !== activeAddress.id)
                       .map((a) => (
@@ -259,12 +261,12 @@ export default function Checkout() {
                           onPress={() => { setSelectedAddress(a); setShowAddressPicker(false); }}
                           className="flex-row items-center gap-3 py-2"
                         >
-                          <View className="h-6 w-6 items-center justify-center rounded-full border border-brand-100">
-                            <View className="h-3 w-3 rounded-full bg-brand-50" />
+                          <View className="h-6 w-6 items-center justify-center rounded-full border border-brand-100 dark:border-[#3A3A3A]">
+                            <View className="h-3 w-3 rounded-full bg-brand-50 dark:bg-[#2A2A2A]" />
                           </View>
                           <View className="flex-1">
-                            <Text variant="semibold" className="text-sm text-brand">{a.label}</Text>
-                            <Text className="text-xs" style={{ color: "#6B7280" }}>
+                            <Text variant="semibold" className="text-sm text-brand dark:text-white">{a.label}</Text>
+                            <Text className="text-xs" style={{ color: c.secondary }}>
                               {a.address_line}, {a.city}
                             </Text>
                           </View>
@@ -278,30 +280,30 @@ export default function Checkout() {
 
           {/* Order summary */}
           <Animated.View entering={FadeInDown.duration(400).delay(80)} className="mx-4 mt-4">
-            <Text variant="semibold" className="mb-2 text-xs uppercase tracking-widest" style={{ color: "#6B7280" }}>
+            <Text variant="semibold" className="mb-2 text-xs uppercase tracking-widest" style={{ color: c.secondary }}>
               Order from {storeName}
             </Text>
-            <View className="rounded-md bg-white">
+            <View className="rounded-md bg-white dark:bg-bg-card">
               {items.map((item, i) => (
                 <View
                   key={item.id}
-                  className={`flex-row gap-3 p-3 ${i < items.length - 1 ? "border-b border-brand-100" : ""}`}
+                  className={`flex-row gap-3 p-3 ${i < items.length - 1 ? "border-b border-brand-100 dark:border-[#2A2A2A]" : ""}`}
                 >
-                  <View className="h-14 w-14 overflow-hidden rounded-md bg-brand-50">
+                  <View className="h-14 w-14 overflow-hidden rounded-md bg-brand-50 dark:bg-[#2A2A2A]">
                     {item.image ? (
                       <Image source={{ uri: item.image }} style={{ flex: 1 }} contentFit="cover" />
                     ) : null}
                   </View>
                   <View className="flex-1">
-                    <Text variant="medium" numberOfLines={1} className="text-sm text-brand">
+                    <Text variant="medium" numberOfLines={1} className="text-sm text-brand dark:text-white">
                       {item.name}
                     </Text>
                     {item.variant_label ? (
-                      <Text className="text-xs" style={{ color: "#6B7280" }}>{item.variant_label}</Text>
+                      <Text className="text-xs" style={{ color: c.secondary }}>{item.variant_label}</Text>
                     ) : null}
                     <View className="mt-1 flex-row items-center justify-between">
-                      <Text className="text-xs" style={{ color: "#9CA3AF" }}>x{item.quantity}</Text>
-                      <Text variant="semibold" className="text-sm text-brand">
+                      <Text className="text-xs" style={{ color: c.muted }}>x{item.quantity}</Text>
+                      <Text variant="semibold" className="text-sm text-brand dark:text-white">
                         JOD {(item.price * item.quantity).toFixed(2)}
                       </Text>
                     </View>
@@ -313,22 +315,22 @@ export default function Checkout() {
 
           {/* Delivery */}
           <Animated.View entering={FadeInDown.duration(400).delay(160)} className="mx-4 mt-4">
-            <Text variant="semibold" className="mb-2 text-xs uppercase tracking-widest" style={{ color: "#6B7280" }}>
+            <Text variant="semibold" className="mb-2 text-xs uppercase tracking-widest" style={{ color: c.secondary }}>
               Delivery
             </Text>
-            <View className="flex-row items-center gap-3 rounded-md bg-white p-4">
-              <View className="h-9 w-9 items-center justify-center rounded-full bg-brand-50">
-                <HugeiconsIcon icon={DeliveryTruck02Icon} size={18} color="#0A0A0A" />
+            <View className="flex-row items-center gap-3 rounded-md bg-white dark:bg-bg-card p-4">
+              <View className="h-9 w-9 items-center justify-center rounded-full bg-brand-50 dark:bg-[#2A2A2A]">
+                <HugeiconsIcon icon={DeliveryTruck02Icon} size={18} color={c.brand} />
               </View>
               <View className="flex-1">
-                <Text variant="medium" className="text-sm text-brand">Cash on Delivery</Text>
+                <Text variant="medium" className="text-sm text-brand dark:text-white">Cash on Delivery</Text>
                 {distanceKm != null && (
-                  <Text className="text-xs" style={{ color: "#6B7280" }}>
+                  <Text className="text-xs" style={{ color: c.secondary }}>
                     ~{distanceKm.toFixed(1)} km away
                   </Text>
                 )}
               </View>
-              <Text variant="bold" className="text-base text-brand">
+              <Text variant="bold" className="text-base text-brand dark:text-white">
                 {deliveryFee != null ? `JOD ${deliveryFee.toFixed(2)}` : "—"}
               </Text>
             </View>
@@ -336,24 +338,24 @@ export default function Checkout() {
 
           {/* Payment */}
           <Animated.View entering={FadeInDown.duration(400).delay(220)} className="mx-4 mt-4">
-            <Text variant="semibold" className="mb-2 text-xs uppercase tracking-widest" style={{ color: "#6B7280" }}>
+            <Text variant="semibold" className="mb-2 text-xs uppercase tracking-widest" style={{ color: c.secondary }}>
               Payment
             </Text>
-            <View className="rounded-md bg-white">
-              <View className="flex-row items-center gap-3 border-b border-brand-100 p-4">
+            <View className="rounded-md bg-white dark:bg-bg-card">
+              <View className="flex-row items-center gap-3 border-b border-brand-100 dark:border-[#2A2A2A] p-4">
                 <View className="h-5 w-5 items-center justify-center rounded-full border-2 border-brand bg-brand">
                   <HugeiconsIcon icon={Tick02Icon} size={12} color="#fff" />
                 </View>
-                <Text variant="semibold" className="flex-1 text-sm text-brand">Cash on Delivery</Text>
+                <Text variant="semibold" className="flex-1 text-sm text-brand dark:text-white">Cash on Delivery</Text>
               </View>
               <View className="flex-row items-center gap-3 p-4" style={{ opacity: 0.4 }}>
-                <View className="h-5 w-5 rounded-full border-2 border-brand-100" />
-                <HugeiconsIcon icon={CreditCardIcon} size={18} color="#6B7280" />
-                <Text variant="medium" className="flex-1 text-sm" style={{ color: "#6B7280" }}>
+                <View className="h-5 w-5 rounded-full border-2 border-brand-100 dark:border-[#3A3A3A]" />
+                <HugeiconsIcon icon={CreditCardIcon} size={18} color={c.secondary} />
+                <Text variant="medium" className="flex-1 text-sm" style={{ color: c.secondary }}>
                   Credit / Debit Card
                 </Text>
-                <View className="rounded-full bg-brand-50 px-2 py-0.5">
-                  <Text style={{ fontSize: 9, color: "#6B7280", fontFamily: "Manrope_600SemiBold" }}>SOON</Text>
+                <View className="rounded-full bg-brand-50 dark:bg-[#2A2A2A] px-2 py-0.5">
+                  <Text style={{ fontSize: 9, color: c.secondary, fontFamily: "Manrope_600SemiBold" }}>SOON</Text>
                 </View>
               </View>
             </View>
@@ -361,30 +363,32 @@ export default function Checkout() {
 
           {/* Notes */}
           <Animated.View entering={FadeInDown.duration(400).delay(280)} className="mx-4 mt-4">
-            <Text variant="semibold" className="mb-2 text-xs uppercase tracking-widest" style={{ color: "#6B7280" }}>
+            <Text variant="semibold" className="mb-2 text-xs uppercase tracking-widest" style={{ color: c.secondary }}>
               Notes (optional)
             </Text>
-            <View className="h-14 flex-row items-center rounded-md border border-brand-100 bg-white px-4">
+            <View
+              className="h-14 flex-row items-center rounded-md border px-4"
+              style={{ borderColor: c.inputBorder, backgroundColor: c.card }}
+            >
               <TextInput
                 value={notes}
                 onChangeText={setNotes}
                 placeholder="Any instructions for the seller?"
-                placeholderTextColor="#9CA3AF"
+                placeholderTextColor={c.placeholder}
                 spellCheck={false}
                 autoCorrect={false}
-                style={{ flex: 1, fontFamily: "Manrope_400Regular", color: "#0A0A0A", fontSize: 14 }}
+                style={{ flex: 1, fontFamily: "Manrope_400Regular", color: c.brand, fontSize: 14 }}
               />
             </View>
           </Animated.View>
 
           {/* Coupon */}
           <Animated.View entering={FadeInDown.duration(400).delay(320)} className="mx-4 mt-4">
-            <Text variant="semibold" className="mb-2 text-xs uppercase tracking-widest" style={{ color: "#6B7280" }}>
+            <Text variant="semibold" className="mb-2 text-xs uppercase tracking-widest" style={{ color: c.secondary }}>
               Coupon (optional)
             </Text>
 
             {appliedCoupon ? (
-              /* Applied state */
               <View className="flex-row items-center gap-3 rounded-md border border-green-200 bg-green-50 px-4 py-3">
                 <View className="h-6 w-6 items-center justify-center rounded-full bg-green-500">
                   <HugeiconsIcon icon={Tick02Icon} size={13} color="#fff" />
@@ -398,17 +402,17 @@ export default function Checkout() {
                   </Text>
                 </View>
                 <Pressable onPress={removeCoupon} hitSlop={8}>
-                  <HugeiconsIcon icon={Cancel01Icon} size={18} color="#6B7280" />
+                  <HugeiconsIcon icon={Cancel01Icon} size={18} color={c.secondary} />
                 </Pressable>
               </View>
             ) : (
-              /* Input state */
               <View className="gap-2">
                 <View className="flex-row gap-2">
                   <View
-                    className="flex-1 flex-row items-center rounded-md border bg-white px-4"
+                    className="flex-1 flex-row items-center rounded-md border px-4"
                     style={{
-                      borderColor: couponError ? "#FF4D4F" : "#E5E7EB",
+                      borderColor: couponError ? "#FF4D4F" : c.inputBorder,
+                      backgroundColor: c.card,
                       height: 48,
                     }}
                   >
@@ -416,13 +420,13 @@ export default function Checkout() {
                       value={couponCode}
                       onChangeText={(t) => { setCouponCode(t); setCouponError(null); }}
                       placeholder="WELCOME20"
-                      placeholderTextColor="#9CA3AF"
+                      placeholderTextColor={c.placeholder}
                       autoCapitalize="characters"
                       spellCheck={false}
                       autoCorrect={false}
                       returnKeyType="done"
                       onSubmitEditing={applyCoupon}
-                      style={{ flex: 1, fontFamily: "Manrope_500Medium", color: "#0A0A0A", fontSize: 14 }}
+                      style={{ flex: 1, fontFamily: "Manrope_500Medium", color: c.brand, fontSize: 14 }}
                     />
                   </View>
                   <Pressable
@@ -432,7 +436,7 @@ export default function Checkout() {
                     style={{ height: 48, opacity: !couponCode.trim() ? 0.4 : 1 }}
                   >
                     {couponLoading ? (
-                      <ActivityIndicator size="small" color="#fff" />
+                      <Spinner size={20} color="#fff" trackColor="rgba(255,255,255,0.3)" strokeWidth={2} />
                     ) : (
                       <Text variant="semibold" style={{ color: "#fff", fontSize: 14 }}>Apply</Text>
                     )}
@@ -450,11 +454,11 @@ export default function Checkout() {
         </ScrollView>
 
         {/* Sticky footer */}
-        <SafeAreaView edges={["bottom"]} className="absolute bottom-0 left-0 right-0 bg-white">
-          <View className="border-t border-brand-100 px-6 py-4">
+        <SafeAreaView edges={["bottom"]} className="absolute bottom-0 left-0 right-0 bg-white dark:bg-bg-card">
+          <View className="border-t border-brand-100 dark:border-[#2A2A2A] px-6 py-4">
             <View className="mb-1 flex-row justify-between">
-              <Text className="text-sm" style={{ color: "#6B7280" }}>Subtotal</Text>
-              <Text variant="medium" className="text-sm text-brand">JOD {subtotal.toFixed(2)}</Text>
+              <Text className="text-sm" style={{ color: c.secondary }}>Subtotal</Text>
+              <Text variant="medium" className="text-sm text-brand dark:text-white">JOD {subtotal.toFixed(2)}</Text>
             </View>
             {appliedCoupon && (
               <View className="mb-1 flex-row justify-between">
@@ -467,14 +471,14 @@ export default function Checkout() {
               </View>
             )}
             <View className="mb-3 flex-row justify-between">
-              <Text className="text-sm" style={{ color: "#6B7280" }}>Delivery</Text>
-              <Text variant="medium" className="text-sm text-brand">
+              <Text className="text-sm" style={{ color: c.secondary }}>Delivery</Text>
+              <Text variant="medium" className="text-sm text-brand dark:text-white">
                 {deliveryFee != null ? `JOD ${deliveryFee.toFixed(2)}` : "—"}
               </Text>
             </View>
-            <View className="mb-4 flex-row justify-between border-t border-brand-100 pt-3">
-              <Text variant="bold" className="text-base text-brand">Total</Text>
-              <Text variant="bold" className="text-xl text-brand">JOD {total.toFixed(2)}</Text>
+            <View className="mb-4 flex-row justify-between border-t border-brand-100 dark:border-[#2A2A2A] pt-3">
+              <Text variant="bold" className="text-base text-brand dark:text-white">Total</Text>
+              <Text variant="bold" className="text-xl text-brand dark:text-white">JOD {total.toFixed(2)}</Text>
             </View>
             <Button
               label="Place Order"

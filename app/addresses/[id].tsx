@@ -1,14 +1,17 @@
 import { useEffect } from "react";
-import { View, ActivityIndicator } from "react-native";
+import { View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { toast } from "sonner-native";
+import { useTranslation } from "react-i18next";
 
 import { AddressForm } from "@/components/address-form";
 import { useAddresses, useUpdateAddress } from "@/lib/queries/addresses";
 import type { AddressInput } from "@/lib/queries/addresses";
+import { Spinner } from "@/components/ui/spinner";
 
 export default function EditAddress() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data: addresses, isLoading } = useAddresses();
   const updateMutation = useUpdateAddress();
@@ -23,8 +26,8 @@ export default function EditAddress() {
 
   if (isLoading || !address) {
     return (
-      <View className="flex-1 items-center justify-center bg-bg-light">
-        <ActivityIndicator color="#0A0A0A" />
+      <View className="flex-1 items-center justify-center bg-bg-light dark:bg-bg-dark">
+        <Spinner size={44} />
       </View>
     );
   }
@@ -34,17 +37,17 @@ export default function EditAddress() {
       { id: Number(id), data },
       {
         onSuccess: () => {
-          toast.success("Address updated");
+          toast.success(t("addresses.toastUpdated"));
           router.back();
         },
-        onError: () => toast.error("Could not update address"),
+        onError: () => toast.error(t("addresses.toastUpdateError")),
       },
     );
   };
 
   return (
     <AddressForm
-      title="Edit Address"
+      title={t("addresses.editTitle")}
       initialAddress={address}
       onSave={handleSave}
       isSaving={updateMutation.isPending}

@@ -13,6 +13,7 @@ import { registerForPushNotifications } from "@/lib/notifications";
 import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
 import { ProgressBar } from "@/components/onboarding/progress-bar";
+import { useThemeColors } from "@/lib/theme";
 
 interface PermissionCardProps {
   icon: any;
@@ -26,29 +27,30 @@ interface PermissionCardProps {
 }
 
 function PermissionCard({ icon, title, desc, granted, onPress, delay, allowLabel, allowedLabel }: PermissionCardProps) {
+  const c = useThemeColors();
   return (
     <Animated.View entering={FadeInUp.duration(500).delay(delay)}>
-      <View className="flex-row items-center rounded-md border border-brand-100 bg-white p-4">
-        <View className="h-12 w-12 items-center justify-center rounded-md bg-brand-50">
-          <HugeiconsIcon icon={icon} size={24} color="#0A0A0A" />
+      <View className="flex-row items-center rounded-md border border-brand-100 dark:border-[#2A2A2A] bg-white dark:bg-bg-card p-4">
+        <View className="h-12 w-12 items-center justify-center rounded-md bg-brand-50 dark:bg-[#2A2A2A]">
+          <HugeiconsIcon icon={icon} size={24} color={c.brand} />
         </View>
         <View className="ml-4 flex-1">
           <Text variant="semibold" className="text-base text-brand">{title}</Text>
-          <Text className="text-xs" style={{ color: "#6B7280" }}>{desc}</Text>
+          <Text className="text-xs" style={{ color: c.secondary }}>{desc}</Text>
         </View>
         <Pressable
           onPress={onPress}
           disabled={granted}
           className={`h-9 flex-row items-center justify-center rounded-md px-4 ${
-            granted ? "bg-brand-50" : "bg-brand"
+            granted ? "bg-brand-50 dark:bg-[#2A2A2A]" : "bg-brand"
           }`}
         >
           {granted && (
-            <HugeiconsIcon icon={Tick02Icon} size={14} color="#0A0A0A" style={{ marginRight: 4 }} />
+            <HugeiconsIcon icon={Tick02Icon} size={14} color={c.brand} style={{ marginRight: 4 }} />
           )}
           <Text
             variant="semibold"
-            style={{ color: granted ? "#0A0A0A" : "#FFFFFF", fontSize: 13 }}
+            style={{ color: granted ? c.brand : "#FFFFFF", fontSize: 13 }}
           >
             {granted ? allowedLabel : allowLabel}
           </Text>
@@ -61,6 +63,7 @@ function PermissionCard({ icon, title, desc, granted, onPress, delay, allowLabel
 export default function PermissionsStep() {
   const { t } = useTranslation();
   const router = useRouter();
+  const c = useThemeColors();
   const [notif, setNotif] = useState(false);
   const [media, setMedia] = useState(false);
 
@@ -79,7 +82,7 @@ export default function PermissionsStep() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-bg-light">
+    <SafeAreaView className="flex-1 bg-bg-light dark:bg-bg-dark">
       <View className="flex-1 px-6 pt-4">
         <ProgressBar current={4} total={5} />
 
@@ -87,7 +90,7 @@ export default function PermissionsStep() {
           <Text variant="bold" className="text-3xl text-brand">
             {t("onboarding.permissions.title")}
           </Text>
-          <Text className="mt-2 text-base" style={{ color: "#6B7280" }}>
+          <Text className="mt-2 text-base" style={{ color: c.secondary }}>
             {t("onboarding.permissions.subtitle")}
           </Text>
         </Animated.View>

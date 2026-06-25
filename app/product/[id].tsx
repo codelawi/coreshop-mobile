@@ -3,14 +3,20 @@ import {
   ScrollView,
   Pressable,
   Dimensions,
-  ActivityIndicator,
   Alert,
 } from "react-native";
+import { useRef } from "react";
 import { Image } from "expo-image";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useState } from "react";
-import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
+import { useState, useEffect } from "react";
+import Animated, {
+  FadeInDown,
+  FadeInUp,
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+} from "react-native-reanimated";
 import { HugeiconsIcon } from "@hugeicons/react-native";
 import {
   ArrowLeft01Icon,
@@ -25,31 +31,59 @@ import {
   Tick02Icon,
 } from "@hugeicons/core-free-icons";
 import { toast } from "sonner-native";
+import { useTranslation } from "react-i18next";
 
 import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
-import { useProduct, type ProductVariant } from "@/lib/queries/home";
+import { ProductCard } from "@/components/product/product-card";
+import { useProduct, useProducts, type ProductVariant } from "@/lib/queries/home";
 import { useCartStore } from "@/stores/cart-store";
+import { useWishlistStore } from "@/stores/wishlist-store";
+import { useThemeColors } from "@/lib/theme";
+import { Spinner } from "@/components/ui/spinner";
 
 const { width } = Dimensions.get("window");
+
+function AnimatedDot({ active, color, activeColor }: { active: boolean; color: string; activeColor: string }) {
+  const w = useSharedValue(active ? 16 : 6);
+  useEffect(() => {
+    w.value = withTiming(active ? 16 : 6, { duration: 250 });
+  }, [active]);
+  const style = useAnimatedStyle(() => ({ width: w.value }));
+  return (
+    <Animated.View
+      style={[style, { height: 6, borderRadius: 999, backgroundColor: active ? activeColor : color }]}
+    />
+  );
+}
 
 export default function ProductDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const c = useThemeColors();
+  const { t } = useTranslation();
   const { data: product, isLoading } = useProduct(id);
   const [imageIndex, setImageIndex] = useState(0);
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
   const [qty, setQty] = useState(1);
+  const imageScrollRef = useRef<ScrollView>(null);
 
   const cartAdd = useCartStore((s) => s.add);
   const cartForceAdd = useCartStore((s) => s.forceAdd);
   const cartStoreName = useCartStore((s) => s.storeName);
+  const isWishlisted = useWishlistStore((s) => s.isWishlisted(Number(id)));
+  const wishlistToggle = useWishlistStore((s) => s.toggle);
+
+  const { data: relatedRaw } = useProducts(
+    { category_id: product?.category?.id, per_page: 10 },
+    !!product?.category?.id,
+  );
 
   if (isLoading || !product) {
     return (
-      <SafeAreaView className="flex-1 bg-bg-light">
+      <SafeAreaView className="flex-1 bg-bg-light dark:bg-bg-dark">
         <View className="flex-1 items-center justify-center">
-          <ActivityIndicator color="#0A0A0A" />
+          <Spinner size={44} />
         </View>
       </SafeAreaView>
     );
@@ -67,43 +101,55 @@ export default function ProductDetail() {
     (selectedVariant ? parseFloat(selectedVariant.price_adjustment) : 0);
   const stock = selectedVariant ? selectedVariant.stock : product.stock;
 
+  const selectColorVariant = (v: ProductVariant) => {
+    setSelectedVariant(v);
+    if (v.image_url) {
+      const idx = images.findIndex((img) => img.url === v.image_url);
+      if (idx >= 0) {
+        setImageIndex(idx);
+        imageScrollRef.current?.scrollTo({ x: idx * width, animated: true });
+      }
+    }
+  };
+
   const onAddToCart = () => {
     if (hasVariants && !selectedVariant) {
-      toast.error("Please select a variant");
+      toast.error(t("product.selectVariant"));
       return;
     }
     if (stock <= 0) {
-      toast.error("Out of stock");
+      toast.error(t("product.outOfStock"));
       return;
     }
 
     const result = cartAdd(product, selectedVariant, qty);
     if (result === "needs_clear") {
       Alert.alert(
-        "Clear cart?",
-        `Your cart has items from ${cartStoreName}. You can only order from one store at a time. Clear and add from ${product.store.name}?`,
+        t("product.clearCartTitle"),
+        t("product.clearCartDesc", { store: cartStoreName, newStore: product.store.name }),
         [
-          { text: "Cancel", style: "cancel" },
+          { text: t("common.cancel"), style: "cancel" },
           {
-            text: "Clear & Add",
+            text: t("product.clearAndAdd"),
             style: "destructive",
             onPress: () => {
               cartForceAdd(product, selectedVariant, qty);
-              toast.success("Added to cart");
+              toast.success(t("product.toastAdded"));
             },
           },
         ]
       );
     } else {
-      toast.success("Added to cart");
+      toast.success(t("product.toastAdded"));
     }
   };
 
   return (
-    <View className="flex-1 bg-bg-light">
+    <View className="flex-1 bg-bg-light dark:bg-bg-dark">
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
         <View>
           <ScrollView
+            ref={imageScrollRef}
             horizontal
             pagingEnabled
             showsHorizontalScrollIndicator={false}
@@ -113,7 +159,7 @@ export default function ProductDetail() {
             }}
           >
             {images.map((img) => (
-              <View key={img.id} style={{ width, height: width }} className="bg-brand-50">
+              <View key={img.id} style={{ width, height: width }} className="bg-brand-50 dark:bg-[#2A2A2A]">
                 {img.url ? (
                   <Image source={{ uri: img.url }} style={{ flex: 1 }} contentFit="cover" transition={200} />
                 ) : null}
@@ -125,16 +171,16 @@ export default function ProductDetail() {
             <View className="flex-row items-center justify-between px-4 pt-2">
               <Pressable
                 onPress={() => router.back()}
-                className="h-10 w-10 items-center justify-center rounded-full bg-white"
+                className="h-10 w-10 items-center justify-center rounded-full bg-white dark:bg-bg-card"
               >
-                <HugeiconsIcon icon={ArrowLeft01Icon} size={22} color="#0A0A0A" />
+                <HugeiconsIcon icon={ArrowLeft01Icon} size={22} color={c.brand} />
               </Pressable>
               <View className="flex-row gap-2">
-                <Pressable className="h-10 w-10 items-center justify-center rounded-full bg-white">
-                  <HugeiconsIcon icon={Share01Icon} size={20} color="#0A0A0A" />
+                <Pressable className="h-10 w-10 items-center justify-center rounded-full bg-white dark:bg-bg-card">
+                  <HugeiconsIcon icon={Share01Icon} size={20} color={c.brand} />
                 </Pressable>
-                <Pressable className="h-10 w-10 items-center justify-center rounded-full bg-white">
-                  <HugeiconsIcon icon={FavouriteIcon} size={20} color="#0A0A0A" />
+                <Pressable className="h-10 w-10 items-center justify-center rounded-full bg-white dark:bg-bg-card">
+                  <HugeiconsIcon icon={FavouriteIcon} size={20} color={c.brand} />
                 </Pressable>
               </View>
             </View>
@@ -143,98 +189,87 @@ export default function ProductDetail() {
           {images.length > 1 ? (
             <View className="absolute bottom-3 left-0 right-0 flex-row items-center justify-center gap-1.5">
               {images.map((_, i) => (
-                <View
-                  key={i}
-                  className="h-1.5 rounded-full"
-                  style={{
-                    width: i === imageIndex ? 16 : 6,
-                    backgroundColor: i === imageIndex ? "#0A0A0A" : "#D1D5DB",
-                  }}
-                />
+                <AnimatedDot key={i} active={i === imageIndex} color={c.border} activeColor={c.brand} />
               ))}
-            </View>
-          ) : null}
-
-          {product.discount_percent ? (
-            <View
-              className="absolute right-3 top-16 rounded-md px-3 py-1"
-              style={{ backgroundColor: "#FF4D4F" }}
-            >
-              <Text variant="bold" style={{ color: "#fff", fontSize: 13 }}>
-                -{product.discount_percent}%
-              </Text>
             </View>
           ) : null}
         </View>
 
-        <Animated.View entering={FadeInUp.duration(400)} className="bg-white px-5 py-4">
-          <View className="flex-row items-baseline gap-2">
-            <Text variant="bold" className="text-2xl text-brand">
+        <Animated.View entering={FadeInUp.duration(400)} className="bg-white dark:bg-bg-card px-5 py-4">
+          <View className="flex-row items-center gap-2 flex-wrap">
+            <Text variant="bold" className="text-2xl text-brand dark:text-white">
               JOD {effectivePrice.toFixed(2)}
             </Text>
             {product.original_price ? (
-              <Text className="text-base" style={{ color: "#9CA3AF", textDecorationLine: "line-through" }}>
+              <Text className="text-base" style={{ color: c.muted, textDecorationLine: "line-through" }}>
                 {parseFloat(product.original_price).toFixed(2)}
               </Text>
             ) : null}
+            {product.discount_percent ? (
+              <View className="rounded-full px-2 py-0.5" style={{ backgroundColor: "#FF4D4F18" }}>
+                <Text variant="semibold" style={{ color: "#FF4D4F", fontSize: 12 }}>
+                  -{product.discount_percent}%
+                </Text>
+              </View>
+            ) : null}
           </View>
-          <Text variant="semibold" className="mt-2 text-lg text-brand">
+          <Text variant="semibold" className="mt-2 text-lg text-brand dark:text-white">
             {product.name}
           </Text>
           <View className="mt-2 flex-row items-center gap-3">
             <View className="flex-row items-center gap-1">
               <HugeiconsIcon icon={StarIcon} size={14} color="#F59E0B" />
-              <Text variant="semibold" className="text-sm text-brand">
+              <Text variant="semibold" className="text-sm text-brand dark:text-white">
                 {parseFloat(product.rating).toFixed(1)}
               </Text>
-              <Text className="text-sm" style={{ color: "#6B7280" }}>
+              <Text className="text-sm" style={{ color: c.secondary }}>
                 ({product.reviews_count})
               </Text>
             </View>
-            <View className="h-3 w-px bg-brand-100" />
-            <Text className="text-sm" style={{ color: "#6B7280" }}>
-              {product.sales_count} sold
+            <View className="h-3 w-px bg-brand-100 dark:bg-[#2A2A2A]" />
+            <Text className="text-sm" style={{ color: c.secondary }}>
+              {product.sales_count} {t("product.sold")}
             </Text>
-            <View className="h-3 w-px bg-brand-100" />
+            <View className="h-3 w-px bg-brand-100 dark:bg-[#2A2A2A]" />
             <Text className="text-sm" style={{ color: stock > 0 ? "#16A34A" : "#FF4D4F" }}>
-              {stock > 0 ? `${stock} in stock` : "Out of stock"}
+              {stock > 0 ? t("product.inStock", { count: stock }) : t("product.outOfStock")}
             </Text>
           </View>
         </Animated.View>
 
-        <Animated.View entering={FadeInUp.duration(400).delay(80)} className="mt-2 bg-white">
+        <Animated.View entering={FadeInUp.duration(400).delay(80)} className="mt-2 bg-white dark:bg-bg-card">
           <Pressable
             onPress={() => router.push(`/store/${product.store.id}` as any)}
             className="flex-row items-center gap-3 px-5 py-4"
           >
-            <View className="h-12 w-12 overflow-hidden rounded-full bg-brand-50">
+            <View className="h-12 w-12 overflow-hidden rounded-full bg-brand-50 dark:bg-[#2A2A2A]">
               {product.store.logo ? (
                 <Image source={{ uri: product.store.logo }} style={{ flex: 1 }} contentFit="cover" />
               ) : (
                 <View className="flex-1 items-center justify-center">
-                  <HugeiconsIcon icon={Store01Icon} size={20} color="#0A0A0A" />
+                  <HugeiconsIcon icon={Store01Icon} size={20} color={c.brand} />
                 </View>
               )}
             </View>
             <View className="flex-1">
-              <Text variant="semibold" className="text-sm text-brand">{product.store.name}</Text>
+              <Text variant="semibold" className="text-sm text-brand dark:text-white">{product.store.name}</Text>
               <View className="flex-row items-center gap-1">
                 <HugeiconsIcon icon={StarIcon} size={12} color="#F59E0B" />
-                <Text variant="medium" className="text-xs text-brand">
+                <Text variant="medium" className="text-xs text-brand dark:text-white">
                   {parseFloat(product.store.rating).toFixed(1)}
                 </Text>
-                <Text className="text-xs" style={{ color: "#6B7280" }}>
+                <Text className="text-xs" style={{ color: c.secondary }}>
                   · {product.store.city ?? ""}
                 </Text>
               </View>
             </View>
-            <HugeiconsIcon icon={ArrowRight01Icon} size={18} color="#6B7280" />
+            <HugeiconsIcon icon={ArrowRight01Icon} size={18} color={c.secondary} />
           </Pressable>
         </Animated.View>
 
         {sizes.length > 0 ? (
-          <Animated.View entering={FadeInUp.duration(400).delay(120)} className="mt-2 bg-white px-5 py-4">
-            <Text variant="semibold" className="text-sm text-brand">Size</Text>
+          <Animated.View entering={FadeInUp.duration(400).delay(120)} className="mt-2 bg-white dark:bg-bg-card px-5 py-4">
+            <Text variant="semibold" className="text-sm text-brand dark:text-white">{t("product.size")}</Text>
             <View className="mt-3 flex-row flex-wrap gap-2">
               {sizes.map((v) => {
                 const active = selectedVariant?.id === v.id;
@@ -245,12 +280,12 @@ export default function ProductDetail() {
                     disabled={disabled}
                     onPress={() => setSelectedVariant(v)}
                     className={`min-w-[48px] items-center justify-center rounded-md border px-3 py-2 ${
-                      active ? "border-brand bg-brand" : "border-brand-100 bg-white"
+                      active ? "border-brand bg-brand" : "border-brand-100 dark:border-[#3A3A3A] bg-white dark:bg-[#2A2A2A]"
                     } ${disabled ? "opacity-40" : ""}`}
                   >
                     <Text
                       variant="semibold"
-                      style={{ color: active ? "#fff" : "#0A0A0A", fontSize: 13 }}
+                      style={{ color: active ? "#fff" : c.brand, fontSize: 13 }}
                     >
                       {v.size}
                     </Text>
@@ -262,17 +297,17 @@ export default function ProductDetail() {
         ) : null}
 
         {colors.length > 0 ? (
-          <Animated.View entering={FadeInUp.duration(400).delay(140)} className="mt-2 bg-white px-5 py-4">
-            <Text variant="semibold" className="text-sm text-brand">Color</Text>
+          <Animated.View entering={FadeInUp.duration(400).delay(140)} className="mt-2 bg-white dark:bg-bg-card px-5 py-4">
+            <Text variant="semibold" className="text-sm text-brand dark:text-white">{t("product.color")}</Text>
             <View className="mt-3 flex-row flex-wrap gap-2">
               {colors.map((v) => {
                 const active = selectedVariant?.id === v.id;
                 return (
                   <Pressable
                     key={v.id}
-                    onPress={() => setSelectedVariant(v)}
+                    onPress={() => selectColorVariant(v)}
                     className={`h-10 w-10 items-center justify-center rounded-full border-2 ${
-                      active ? "border-brand" : "border-brand-100"
+                      active ? "border-brand" : "border-brand-100 dark:border-[#3A3A3A]"
                     }`}
                     style={{ backgroundColor: v.color_hex ?? "#ddd" }}
                   >
@@ -284,70 +319,70 @@ export default function ProductDetail() {
           </Animated.View>
         ) : null}
 
-        <Animated.View entering={FadeInUp.duration(400).delay(160)} className="mt-2 bg-white px-5 py-4">
-          <Text variant="semibold" className="text-sm text-brand">Quantity</Text>
+        <Animated.View entering={FadeInUp.duration(400).delay(160)} className="mt-2 bg-white dark:bg-bg-card px-5 py-4">
+          <Text variant="semibold" className="text-sm text-brand dark:text-white">{t("product.quantity")}</Text>
           <View className="mt-3 flex-row items-center gap-3">
             <Pressable
               onPress={() => setQty(Math.max(1, qty - 1))}
-              className="h-10 w-10 items-center justify-center rounded-md border border-brand-100 bg-white"
+              className="h-10 w-10 items-center justify-center rounded-md border border-brand-100 dark:border-[#3A3A3A] bg-white dark:bg-[#2A2A2A]"
             >
-              <HugeiconsIcon icon={MinusSignIcon} size={16} color="#0A0A0A" />
+              <HugeiconsIcon icon={MinusSignIcon} size={16} color={c.brand} />
             </Pressable>
-            <Text variant="bold" className="min-w-[32px] text-center text-base text-brand">
+            <Text variant="bold" className="min-w-[32px] text-center text-base text-brand dark:text-white">
               {qty}
             </Text>
             <Pressable
               onPress={() => setQty(Math.min(stock, qty + 1))}
-              className="h-10 w-10 items-center justify-center rounded-md border border-brand-100 bg-white"
+              className="h-10 w-10 items-center justify-center rounded-md border border-brand-100 dark:border-[#3A3A3A] bg-white dark:bg-[#2A2A2A]"
             >
-              <HugeiconsIcon icon={PlusSignIcon} size={16} color="#0A0A0A" />
+              <HugeiconsIcon icon={PlusSignIcon} size={16} color={c.brand} />
             </Pressable>
           </View>
         </Animated.View>
 
-        <Animated.View entering={FadeInUp.duration(400).delay(180)} className="mt-2 bg-white px-5 py-4">
-          <Text variant="semibold" className="text-sm text-brand">Description</Text>
-          <Text className="mt-2 text-sm leading-5" style={{ color: "#374151" }}>
+        <Animated.View entering={FadeInUp.duration(400).delay(180)} className="mt-2 bg-white dark:bg-bg-card px-5 py-4">
+          <Text variant="semibold" className="text-sm text-brand dark:text-white">{t("product.description")}</Text>
+          <Text className="mt-2 text-sm leading-5" style={{ color: c.secondary }}>
             {product.description}
           </Text>
         </Animated.View>
 
         {product.reviews.length > 0 ? (
-          <Animated.View entering={FadeInUp.duration(400).delay(200)} className="mt-2 bg-white px-5 py-4">
+          <Animated.View entering={FadeInUp.duration(400).delay(200)} className="mt-2 bg-white dark:bg-bg-card px-5 py-4">
             <View className="flex-row items-center justify-between">
-              <Text variant="semibold" className="text-sm text-brand">
-                Reviews ({product.reviews_count})
+              <Text variant="semibold" className="text-sm text-brand dark:text-white">
+                {t("product.reviews", { count: product.reviews_count })}
               </Text>
               <Pressable hitSlop={6}>
-                <Text variant="medium" className="text-sm" style={{ color: "#6B7280" }}>
-                  See all
+                <Text variant="medium" className="text-sm" style={{ color: c.secondary }}>
+                  {t("common.seeAll")}
                 </Text>
               </Pressable>
             </View>
             {product.reviews.map((r) => (
-              <View key={r.id} className="mt-4 border-t border-brand-100 pt-4">
+              <View key={r.id} className="mt-4 border-t border-brand-100 dark:border-[#2A2A2A] pt-4">
                 <View className="flex-row items-center gap-2">
-                  <View className="h-8 w-8 overflow-hidden rounded-full bg-brand-50">
+                  <View className="h-8 w-8 overflow-hidden rounded-full bg-brand-50 dark:bg-[#2A2A2A]">
                     {r.user.avatar ? (
                       <Image source={{ uri: r.user.avatar }} style={{ flex: 1 }} contentFit="cover" />
                     ) : null}
                   </View>
                   <View className="flex-1">
-                    <Text variant="semibold" className="text-xs text-brand">{r.user.name}</Text>
+                    <Text variant="semibold" className="text-xs text-brand dark:text-white">{r.user.name}</Text>
                     <View className="flex-row items-center gap-1">
                       {Array.from({ length: 5 }).map((_, i) => (
                         <HugeiconsIcon
                           key={i}
                           icon={StarIcon}
                           size={11}
-                          color={i < r.rating ? "#F59E0B" : "#E5E5E5"}
+                          color={i < r.rating ? "#F59E0B" : c.border}
                         />
                       ))}
                     </View>
                   </View>
                 </View>
                 {r.comment ? (
-                  <Text className="mt-2 text-sm" style={{ color: "#374151" }}>
+                  <Text className="mt-2 text-sm" style={{ color: c.secondary }}>
                     {r.comment}
                   </Text>
                 ) : null}
@@ -355,16 +390,43 @@ export default function ProductDetail() {
             ))}
           </Animated.View>
         ) : null}
+
+        {(() => {
+          const related = relatedRaw?.filter((p) => p.id !== Number(id)) ?? [];
+          if (related.length === 0) { return null; }
+          return (
+            <Animated.View entering={FadeInUp.duration(400).delay(220)} className="mt-2 bg-white dark:bg-bg-card py-4">
+              <Text variant="semibold" className="px-5 text-sm text-brand dark:text-white">
+                {t("product.youMightAlsoLike")}
+              </Text>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 12, gap: 12 }}
+              >
+                {related.map((p) => (
+                  <View key={p.id} style={{ width: 155 }}>
+                    <ProductCard product={p} width="100%" />
+                  </View>
+                ))}
+              </ScrollView>
+            </Animated.View>
+          );
+        })()}
       </ScrollView>
 
-      <SafeAreaView edges={["bottom"]} className="absolute bottom-0 left-0 right-0 bg-white">
-        <Animated.View entering={FadeInDown.duration(500)} className="flex-row items-center gap-3 border-t border-brand-100 px-5 py-3">
-          <Pressable className="h-12 w-12 items-center justify-center rounded-md border border-brand-100">
-            <HugeiconsIcon icon={FavouriteIcon} size={22} color="#0A0A0A" />
+      <SafeAreaView edges={["bottom"]} className="absolute bottom-0 left-0 right-0 bg-white dark:bg-bg-card">
+        <Animated.View entering={FadeInDown.duration(500)} className="flex-row items-center gap-3 border-t border-brand-100 dark:border-[#2A2A2A] px-5 py-3">
+          <Pressable
+            onPress={() => wishlistToggle(Number(id))}
+            className="h-12 w-12 items-center justify-center rounded-md border border-brand-100 dark:border-[#3A3A3A]"
+            style={{ backgroundColor: isWishlisted ? "#FF4D4F" : undefined }}
+          >
+            <HugeiconsIcon icon={FavouriteIcon} size={22} color={isWishlisted ? "#fff" : c.brand} />
           </Pressable>
           <View className="flex-1">
             <Button
-              label="Add to Cart"
+              label={t("product.addToCart")}
               onPress={onAddToCart}
               fullWidth
               size="lg"

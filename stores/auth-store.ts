@@ -9,6 +9,7 @@ export interface User {
   name: string;
   email: string;
   role: Role;
+  status: "active" | "inactive" | "suspended";
   avatar?: string | null;
   email_verified_at?: string | null;
   onboarding_completed?: boolean;

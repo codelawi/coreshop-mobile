@@ -1,4 +1,4 @@
-import { View, ScrollView, Pressable, Switch, ActivityIndicator } from "react-native";
+import { View, ScrollView, Pressable, Switch, RefreshControl } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
@@ -15,9 +15,12 @@ import {
   MoneyReceive02Icon,
 } from "@hugeicons/core-free-icons";
 import { toast } from "sonner-native";
+import { useTranslation } from "react-i18next";
 
 import { Text } from "@/components/ui/text";
 import { useSellerStore, useToggleStoreOpen } from "@/lib/queries/seller";
+import { useThemeColors } from "@/lib/theme";
+import { Spinner } from "@/components/ui/spinner";
 
 interface StatCardProps {
   label: string;
@@ -27,16 +30,17 @@ interface StatCardProps {
 }
 
 function StatCard({ label, value, icon, color = "#0A0A0A" }: StatCardProps) {
+  const c = useThemeColors();
   return (
-    <View className="flex-1 rounded-xl bg-white p-4">
+    <View className="flex-1 rounded-xl bg-white dark:bg-bg-card p-4">
       <View
         className="mb-3 h-10 w-10 items-center justify-center rounded-lg"
         style={{ backgroundColor: color + "15" }}
       >
         <HugeiconsIcon icon={icon} size={20} color={color} />
       </View>
-      <Text variant="bold" className="text-xl text-brand">{value}</Text>
-      <Text className="mt-0.5 text-xs" style={{ color: "#6B7280" }}>{label}</Text>
+      <Text variant="bold" className="text-xl text-brand dark:text-white">{value}</Text>
+      <Text className="mt-0.5 text-xs" style={{ color: c.secondary }}>{label}</Text>
     </View>
   );
 }
@@ -49,14 +53,15 @@ interface QuickActionProps {
 }
 
 function QuickAction({ icon, label, onPress, badge }: QuickActionProps) {
+  const c = useThemeColors();
   return (
     <Pressable
       onPress={onPress}
-      className="flex-1 items-center gap-2 rounded-xl bg-white py-4"
+      className="flex-1 items-center gap-2 rounded-xl bg-white dark:bg-bg-card py-4"
     >
       <View className="relative">
-        <View className="h-12 w-12 items-center justify-center rounded-full bg-brand-50">
-          <HugeiconsIcon icon={icon} size={24} color="#0A0A0A" />
+        <View className="h-12 w-12 items-center justify-center rounded-full bg-brand-50 dark:bg-[#2A2A2A]">
+          <HugeiconsIcon icon={icon} size={24} color={c.brand} />
         </View>
         {badge ? (
           <View
@@ -67,52 +72,54 @@ function QuickAction({ icon, label, onPress, badge }: QuickActionProps) {
           </View>
         ) : null}
       </View>
-      <Text variant="medium" className="text-xs text-brand">{label}</Text>
+      <Text variant="medium" className="text-xs text-brand dark:text-white">{label}</Text>
     </Pressable>
   );
 }
 
 export default function SellerHome() {
   const router = useRouter();
-  const { data: store, isLoading } = useSellerStore();
+  const c = useThemeColors();
+  const { t } = useTranslation();
+  const { data: store, isLoading, isRefetching, refetch } = useSellerStore();
   const toggleOpen = useToggleStoreOpen();
 
   if (isLoading) {
     return (
-      <SafeAreaView className="flex-1 items-center justify-center bg-bg-light">
-        <ActivityIndicator size="large" color="#0A0A0A" />
+      <SafeAreaView className="flex-1 items-center justify-center bg-bg-light dark:bg-bg-dark">
+        <Spinner size={44} />
       </SafeAreaView>
     );
   }
 
   if (!store) {
     return (
-      <SafeAreaView className="flex-1 bg-bg-light">
+      <SafeAreaView className="flex-1 bg-bg-light dark:bg-bg-dark">
         <View className="flex-row items-center gap-3 px-6 py-4">
           <Pressable onPress={() => router.back()}>
-            <HugeiconsIcon icon={ArrowLeft01Icon} size={24} color="#0A0A0A" />
+            <HugeiconsIcon icon={ArrowLeft01Icon} size={24} color={c.brand} />
           </Pressable>
-          <Text variant="bold" className="text-xl text-brand">Seller Hub</Text>
+          <Text variant="bold" className="text-xl text-brand dark:text-white">{t("seller.hub")}</Text>
         </View>
 
         <Animated.View
           entering={FadeInDown.duration(500)}
           className="flex-1 items-center justify-center px-8"
         >
-          <View className="mb-6 h-24 w-24 items-center justify-center rounded-full bg-white">
-            <HugeiconsIcon icon={Store01Icon} size={48} color="#0A0A0A" />
+          <View className="mb-6 h-24 w-24 items-center justify-center rounded-full bg-white dark:bg-bg-card">
+            <HugeiconsIcon icon={Store01Icon} size={48} color={c.brand} />
           </View>
-          <Text variant="bold" className="mb-2 text-center text-2xl text-brand">
-            Set up your store
+          <Text variant="bold" className="mb-2 text-center text-2xl text-brand dark:text-white">
+            {t("seller.setupTitle")}
           </Text>
-          <Text className="mb-8 text-center text-sm leading-5" style={{ color: "#6B7280" }}>
-            Start selling on CoreShop by creating your store. It takes just a few minutes.
+          <Text className="mb-8 text-center text-sm leading-5" style={{ color: c.secondary }}>
+            {t("seller.setupDesc")}
           </Text>
           <Pressable
             onPress={() => router.push("/seller/setup" as any)}
             className="w-full items-center rounded-xl bg-brand py-4"
           >
-            <Text variant="bold" style={{ color: "#fff" }}>Create My Store</Text>
+            <Text variant="bold" style={{ color: "#fff" }}>{t("seller.createStore")}</Text>
           </Pressable>
         </Animated.View>
       </SafeAreaView>
@@ -125,44 +132,61 @@ export default function SellerHome() {
     "#F59E0B";
 
   const statusLabel =
-    store.status === "active" ? "Active" :
-    store.status === "suspended" ? "Suspended" :
-    store.status === "pending" ? "Pending Review" : "Closed";
+    store.status === "active" ? t("seller.status.active") :
+    store.status === "suspended" ? t("seller.status.suspended") :
+    store.status === "pending" ? t("seller.status.pending") : t("seller.status.closed");
 
   const handleToggleOpen = () => {
     toggleOpen.mutate(undefined, {
       onSuccess: ({ is_open }) => {
-        toast.success(is_open ? "Store is now open" : "Store is now closed");
+        toast.success(is_open ? t("seller.storeNowOpen") : t("seller.storeNowClosed"));
       },
-      onError: () => toast.error("Failed to update store"),
+      onError: () => toast.error(t("seller.updateStoreFailed")),
     });
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-bg-light">
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 32 }}>
+    <SafeAreaView className="flex-1 bg-bg-light dark:bg-bg-dark">
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 32 }}
+        refreshControl={
+          <RefreshControl
+            refreshing={false}
+            onRefresh={refetch}
+            tintColor="transparent"
+            colors={["transparent"]}
+            progressBackgroundColor="transparent"
+          />
+        }
+      >
+        {isRefetching ? (
+          <View style={{ alignItems: "center", paddingBottom: 8 }}>
+            <Spinner size={28} strokeWidth={2.5} />
+          </View>
+        ) : null}
         {/* Header */}
         <View className="flex-row items-center gap-3 px-6 py-4">
           <Pressable onPress={() => router.back()}>
-            <HugeiconsIcon icon={ArrowLeft01Icon} size={24} color="#0A0A0A" />
+            <HugeiconsIcon icon={ArrowLeft01Icon} size={24} color={c.brand} />
           </Pressable>
-          <Text variant="bold" className="flex-1 text-xl text-brand">Seller Hub</Text>
+          <Text variant="bold" className="flex-1 text-xl text-brand dark:text-white">{t("seller.hub")}</Text>
           <Pressable onPress={() => router.push("/seller/setup" as any)}>
-            <HugeiconsIcon icon={Settings02Icon} size={22} color="#0A0A0A" />
+            <HugeiconsIcon icon={Settings02Icon} size={22} color={c.brand} />
           </Pressable>
         </View>
 
         {/* Store card */}
         <Animated.View
           entering={FadeInDown.duration(400)}
-          className="mx-6 rounded-xl bg-white p-5"
+          className="mx-6 rounded-xl bg-white dark:bg-bg-card p-5"
         >
           <View className="flex-row items-center gap-3">
-            <View className="h-14 w-14 items-center justify-center overflow-hidden rounded-xl bg-brand-50">
-              <HugeiconsIcon icon={Store01Icon} size={28} color="#0A0A0A" />
+            <View className="h-14 w-14 items-center justify-center overflow-hidden rounded-xl bg-brand-50 dark:bg-[#2A2A2A]">
+              <HugeiconsIcon icon={Store01Icon} size={28} color={c.brand} />
             </View>
             <View className="flex-1">
-              <Text variant="bold" className="text-base text-brand">{store.name}</Text>
+              <Text variant="bold" className="text-base text-brand dark:text-white">{store.name}</Text>
               <View className="mt-1 flex-row items-center gap-1.5">
                 <View
                   className="h-2 w-2 rounded-full"
@@ -172,14 +196,14 @@ export default function SellerHome() {
               </View>
             </View>
             <View className="items-end gap-1">
-              <Text className="text-xs" style={{ color: "#6B7280" }}>
-                {store.is_open ? "Open" : "Closed"}
+              <Text className="text-xs" style={{ color: c.secondary }}>
+                {store.is_open ? t("seller.storeOpen") : t("seller.storeClosed")}
               </Text>
               <Switch
                 value={store.is_open}
                 onValueChange={handleToggleOpen}
                 disabled={store.status !== "active" || toggleOpen.isPending}
-                trackColor={{ false: "#E5E7EB", true: "#0A0A0A" }}
+                trackColor={{ false: c.border, true: c.brand }}
                 thumbColor="#fff"
               />
             </View>
@@ -188,7 +212,7 @@ export default function SellerHome() {
           {store.status === "pending" ? (
             <View className="mt-4 rounded-lg px-3 py-2.5" style={{ backgroundColor: "#FEF3C7" }}>
               <Text className="text-xs" style={{ color: "#92400E" }}>
-                Your store is under review. You can set it up while waiting for approval.
+                {t("seller.storeUnderReview")}
               </Text>
             </View>
           ) : null}
@@ -200,19 +224,19 @@ export default function SellerHome() {
           className="mx-6 mt-4 flex-row gap-3"
         >
           <StatCard
-            label="Products"
+            label={t("seller.stats.products")}
             value={store.products_count}
             icon={Package01Icon}
             color="#6366F1"
           />
           <StatCard
-            label="Total Sales"
+            label={t("seller.stats.totalSales")}
             value={store.sales_count}
             icon={ChartLineData02Icon}
             color="#22C55E"
           />
           <StatCard
-            label="Rating"
+            label={t("seller.stats.rating")}
             value={Number(store.rating).toFixed(1)}
             icon={StarIcon}
             color="#F59E0B"
@@ -221,34 +245,34 @@ export default function SellerHome() {
 
         {/* Quick actions */}
         <Animated.View entering={FadeInDown.duration(400).delay(160)} className="mx-6 mt-4">
-          <Text variant="semibold" className="mb-3 text-sm text-brand">Quick Actions</Text>
+          <Text variant="semibold" className="mb-3 text-sm text-brand dark:text-white">{t("seller.actions.products")}</Text>
           <View className="flex-row gap-3">
             <QuickAction
               icon={Package01Icon}
-              label="Products"
+              label={t("seller.actions.products")}
               onPress={() => router.push("/seller/products" as any)}
             />
             <QuickAction
               icon={ShoppingCart01Icon}
-              label="Orders"
+              label={t("seller.actions.orders")}
               onPress={() => router.push("/seller/orders" as any)}
               badge={store.pending_orders_count > 0 ? store.pending_orders_count : undefined}
             />
             <QuickAction
               icon={Add01Icon}
-              label="Add Product"
+              label={t("seller.actions.addProduct")}
               onPress={() => router.push("/seller/products/new" as any)}
             />
           </View>
           <View className="mt-3 flex-row gap-3">
             <QuickAction
               icon={ChartLineData02Icon}
-              label="Analytics"
+              label={t("seller.actions.analytics")}
               onPress={() => router.push("/seller/analytics" as any)}
             />
             <QuickAction
               icon={MoneyReceive02Icon}
-              label="Payouts"
+              label={t("seller.actions.payouts")}
               onPress={() => router.push("/seller/payouts" as any)}
             />
             <View className="flex-1" />
@@ -258,28 +282,28 @@ export default function SellerHome() {
         {/* Store details */}
         <Animated.View
           entering={FadeInUp.duration(400).delay(240)}
-          className="mx-6 mt-4 rounded-xl bg-white p-4 gap-3"
+          className="mx-6 mt-4 rounded-xl bg-white dark:bg-bg-card p-4 gap-3"
         >
-          <Text variant="semibold" className="text-sm text-brand">Store Info</Text>
+          <Text variant="semibold" className="text-sm text-brand dark:text-white">Store Info</Text>
           {store.description ? (
-            <Text className="text-sm leading-5" style={{ color: "#374151" }}>{store.description}</Text>
+            <Text className="text-sm leading-5" style={{ color: c.secondary }}>{store.description}</Text>
           ) : null}
           <View className="flex-row gap-4">
             <View className="flex-1">
-              <Text className="text-xs" style={{ color: "#6B7280" }}>City</Text>
-              <Text variant="medium" className="mt-0.5 text-sm text-brand">
+              <Text className="text-xs" style={{ color: c.secondary }}>City</Text>
+              <Text variant="medium" className="mt-0.5 text-sm text-brand dark:text-white">
                 {store.city ?? "—"}
               </Text>
             </View>
             <View className="flex-1">
-              <Text className="text-xs" style={{ color: "#6B7280" }}>Delivery radius</Text>
-              <Text variant="medium" className="mt-0.5 text-sm text-brand">
+              <Text className="text-xs" style={{ color: c.secondary }}>Delivery radius</Text>
+              <Text variant="medium" className="mt-0.5 text-sm text-brand dark:text-white">
                 {store.delivery_radius_km} km
               </Text>
             </View>
             <View className="flex-1">
-              <Text className="text-xs" style={{ color: "#6B7280" }}>Reviews</Text>
-              <Text variant="medium" className="mt-0.5 text-sm text-brand">
+              <Text className="text-xs" style={{ color: c.secondary }}>Reviews</Text>
+              <Text variant="medium" className="mt-0.5 text-sm text-brand dark:text-white">
                 {store.reviews_count}
               </Text>
             </View>

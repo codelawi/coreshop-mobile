@@ -1,4 +1,4 @@
-import { View, ScrollView, Pressable, ActivityIndicator } from "react-native";
+import { View, ScrollView, Pressable } from "react-native";
 import { Image } from "expo-image";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -16,26 +16,29 @@ import {
 import { Text } from "@/components/ui/text";
 import { ProductCard } from "@/components/product/product-card";
 import { useStore } from "@/lib/queries/home";
+import { useThemeColors } from "@/lib/theme";
+import { Spinner } from "@/components/ui/spinner";
 
 export default function StoreProfile() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const c = useThemeColors();
   const { data: store, isLoading } = useStore(id);
 
   if (isLoading || !store) {
     return (
-      <SafeAreaView className="flex-1 bg-bg-light">
+      <SafeAreaView className="flex-1 bg-bg-light dark:bg-bg-dark">
         <View className="flex-1 items-center justify-center">
-          <ActivityIndicator color="#0A0A0A" />
+          <Spinner size={44} />
         </View>
       </SafeAreaView>
     );
   }
 
   return (
-    <View className="flex-1 bg-bg-light">
+    <View className="flex-1 bg-bg-light dark:bg-bg-dark">
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 32 }}>
-        <View className="h-56 w-full bg-brand-50">
+        <View className="h-56 w-full bg-brand-50 dark:bg-[#2A2A2A]">
           {store.banner ? (
             <Image source={{ uri: store.banner }} style={{ flex: 1 }} contentFit="cover" />
           ) : null}
@@ -44,28 +47,31 @@ export default function StoreProfile() {
             <View className="flex-row items-center justify-between px-4 pt-2">
               <Pressable
                 onPress={() => router.back()}
-                className="h-10 w-10 items-center justify-center rounded-full bg-white"
+                className="h-10 w-10 items-center justify-center rounded-full bg-white dark:bg-bg-card"
               >
-                <HugeiconsIcon icon={ArrowLeft01Icon} size={22} color="#0A0A0A" />
+                <HugeiconsIcon icon={ArrowLeft01Icon} size={22} color={c.brand} />
               </Pressable>
-              <Pressable className="h-10 w-10 items-center justify-center rounded-full bg-white">
-                <HugeiconsIcon icon={Share01Icon} size={20} color="#0A0A0A" />
+              <Pressable className="h-10 w-10 items-center justify-center rounded-full bg-white dark:bg-bg-card">
+                <HugeiconsIcon icon={Share01Icon} size={20} color={c.brand} />
               </Pressable>
             </View>
           </SafeAreaView>
         </View>
 
         <Animated.View entering={FadeInUp.duration(400)} className="-mt-16 items-center px-6">
-          <View className="h-28 w-28 overflow-hidden rounded-full border-4 border-bg-light bg-white">
+          <View
+            className="h-28 w-28 overflow-hidden rounded-full border-4 bg-white dark:bg-bg-card"
+            style={{ borderColor: c.bg }}
+          >
             {store.logo ? (
               <Image source={{ uri: store.logo }} style={{ flex: 1 }} contentFit="cover" />
             ) : (
               <View className="flex-1 items-center justify-center">
-                <HugeiconsIcon icon={Store01Icon} size={36} color="#0A0A0A" />
+                <HugeiconsIcon icon={Store01Icon} size={36} color={c.brand} />
               </View>
             )}
           </View>
-          <Text variant="bold" className="mt-3 text-xl text-brand">{store.name}</Text>
+          <Text variant="bold" className="mt-3 text-xl text-brand dark:text-white">{store.name}</Text>
           <View
             className="mt-1.5 rounded-full px-2.5 py-0.5"
             style={{ backgroundColor: store.is_open ? "#16A34A" : "#9CA3AF" }}
@@ -78,37 +84,37 @@ export default function StoreProfile() {
 
         <Animated.View
           entering={FadeInUp.duration(400).delay(80)}
-          className="mx-6 mt-4 flex-row rounded-md bg-white py-3"
+          className="mx-6 mt-4 flex-row rounded-md bg-white dark:bg-bg-card py-3"
         >
           <View className="flex-1 items-center">
             <View className="flex-row items-center gap-1">
               <HugeiconsIcon icon={StarIcon} size={14} color="#F59E0B" />
-              <Text variant="bold" className="text-base text-brand">
+              <Text variant="bold" className="text-base text-brand dark:text-white">
                 {parseFloat(store.rating).toFixed(1)}
               </Text>
             </View>
-            <Text className="text-xs" style={{ color: "#6B7280" }}>
+            <Text className="text-xs" style={{ color: c.secondary }}>
               {store.reviews_count} reviews
             </Text>
           </View>
-          <View className="w-px bg-brand-100" />
+          <View className="w-px bg-brand-100 dark:bg-[#2A2A2A]" />
           <View className="flex-1 items-center">
-            <Text variant="bold" className="text-base text-brand">{store.sales_count}</Text>
-            <Text className="text-xs" style={{ color: "#6B7280" }}>Sales</Text>
+            <Text variant="bold" className="text-base text-brand dark:text-white">{store.sales_count}</Text>
+            <Text className="text-xs" style={{ color: c.secondary }}>Sales</Text>
           </View>
-          <View className="w-px bg-brand-100" />
+          <View className="w-px bg-brand-100 dark:bg-[#2A2A2A]" />
           <View className="flex-1 items-center">
-            <Text variant="bold" className="text-base text-brand">{store.products.length}</Text>
-            <Text className="text-xs" style={{ color: "#6B7280" }}>Products</Text>
+            <Text variant="bold" className="text-base text-brand dark:text-white">{store.products.length}</Text>
+            <Text className="text-xs" style={{ color: c.secondary }}>Products</Text>
           </View>
         </Animated.View>
 
         {store.description ? (
           <Animated.View
             entering={FadeInUp.duration(400).delay(140)}
-            className="mx-6 mt-3 rounded-md bg-white p-4"
+            className="mx-6 mt-3 rounded-md bg-white dark:bg-bg-card p-4"
           >
-            <Text className="text-sm leading-5" style={{ color: "#374151" }}>
+            <Text className="text-sm leading-5" style={{ color: c.secondary }}>
               {store.description}
             </Text>
           </Animated.View>
@@ -116,20 +122,20 @@ export default function StoreProfile() {
 
         <Animated.View
           entering={FadeInUp.duration(400).delay(180)}
-          className="mx-6 mt-3 gap-3 rounded-md bg-white p-4"
+          className="mx-6 mt-3 gap-3 rounded-md bg-white dark:bg-bg-card p-4"
         >
           {store.address ? (
             <View className="flex-row items-center gap-3">
-              <HugeiconsIcon icon={Location01Icon} size={18} color="#0A0A0A" />
-              <Text className="flex-1 text-sm text-brand">
+              <HugeiconsIcon icon={Location01Icon} size={18} color={c.brand} />
+              <Text className="flex-1 text-sm text-brand dark:text-white">
                 {store.address}{store.city ? `, ${store.city}` : ""}
               </Text>
             </View>
           ) : null}
           {store.phone ? (
             <View className="flex-row items-center gap-3">
-              <HugeiconsIcon icon={Call02Icon} size={18} color="#0A0A0A" />
-              <Text className="flex-1 text-sm text-brand">{store.phone}</Text>
+              <HugeiconsIcon icon={Call02Icon} size={18} color={c.brand} />
+              <Text className="flex-1 text-sm text-brand dark:text-white">{store.phone}</Text>
             </View>
           ) : null}
         </Animated.View>
@@ -138,7 +144,7 @@ export default function StoreProfile() {
           entering={FadeInUp.duration(400).delay(220)}
           className="mt-4 px-6"
         >
-          <Text variant="bold" className="text-lg text-brand">Products</Text>
+          <Text variant="bold" className="text-lg text-brand dark:text-white">Products</Text>
           <View className="mt-3 flex-row flex-wrap justify-between">
             {store.products.map((p) => (
               <ProductCard key={p.id} product={p} />

@@ -2,6 +2,7 @@ import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
 import { router } from "expo-router";
 import { api } from "@/lib/api";
+import { useAuthStore } from "@/stores/auth-store"; // zustand store — safe to import outside React
 
 const PROJECT_ID = "ac7a0146-f6aa-4fa3-b939-a8bc4713c03e";
 
@@ -45,6 +46,18 @@ export async function registerForPushNotifications(): Promise<void> {
 }
 
 export function setupNotificationListeners(): () => void {
+  // Handle notification received while app is foregrounded
+  const receivedSub = Notifications.addNotificationReceivedListener((notification) => {
+    const data = notification.request.content.data as { type?: string };
+    if (data?.type === "account_banned") {
+      const user = useAuthStore.getState().user;
+      if (user) {
+        useAuthStore.getState().setUser({ ...user, status: "suspended" });
+        router.replace("/banned" as any);
+      }
+    }
+  });
+
   // Handle tap on notification when app is backgrounded/closed
   const responseSub = Notifications.addNotificationResponseReceivedListener((response) => {
     const data = response.notification.request.content.data as {
@@ -52,7 +65,13 @@ export function setupNotificationListeners(): () => void {
       order_id?: number;
     };
 
-    if (data?.type === "order_status" && data?.order_id) {
+    if (data?.type === "account_banned") {
+      const user = useAuthStore.getState().user;
+      if (user) {
+        useAuthStore.getState().setUser({ ...user, status: "suspended" });
+        router.replace("/banned" as any);
+      }
+    } else if (data?.type === "order_status" && data?.order_id) {
       router.push(`/orders/${data.order_id}` as any);
     } else if (data?.type === "new_order" && data?.order_id) {
       router.push(`/seller/orders` as any);
@@ -60,6 +79,7 @@ export function setupNotificationListeners(): () => void {
   });
 
   return () => {
+    receivedSub.remove();
     responseSub.remove();
   };
 }

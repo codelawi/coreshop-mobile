@@ -1,5 +1,6 @@
 import { Text as RNText, TextProps } from "react-native";
 import { useLanguageStore } from "@/stores/language-store";
+import { useColorScheme } from "nativewind";
 
 type Variant = "regular" | "medium" | "semibold" | "bold";
 
@@ -24,13 +25,15 @@ const fontMap = {
 
 export function Text({ variant = "regular", style, className, ...props }: Props & { className?: string }) {
   const language = useLanguageStore((s) => s.language);
+  const { colorScheme } = useColorScheme();
   const fontFamily = fontMap[language][variant];
   const hasColor = className?.includes("text-");
+  const defaultColor = colorScheme === "dark" ? "#FFFFFF" : "#0A0A0A";
   return (
     <RNText
       {...props}
       className={className}
-      style={[{ fontFamily }, !hasColor && { color: "#0A0A0A" }, style]}
+      style={[{ fontFamily }, !hasColor && { color: defaultColor }, style]}
     />
   );
 }

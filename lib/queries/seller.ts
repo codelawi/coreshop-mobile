@@ -47,6 +47,7 @@ export interface SellerProduct {
     size: string | null;
     color: string | null;
     color_hex: string | null;
+    image_url: string | null;
     sku: string | null;
     price_adjustment: string;
     stock: number;
@@ -118,6 +119,7 @@ export interface CreateProductInput {
     size?: string;
     color?: string;
     color_hex?: string;
+    image_url?: string;
     sku?: string;
     price_adjustment?: number;
     stock: number;
