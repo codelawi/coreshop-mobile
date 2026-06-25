@@ -218,24 +218,28 @@ export default function SignUp() {
                 className="mt-2"
               />
 
-              <View className="my-4 flex-row items-center gap-3">
-                <View className="h-px flex-1 bg-brand-100 dark:bg-[#2A2A2A]" />
-                <Text className="text-xs" style={{ color: c.secondary }}>
-                  OR
-                </Text>
-                <View className="h-px flex-1 bg-brand-100 dark:bg-[#2A2A2A]" />
-              </View>
+              {Platform.OS === "android" && (
+                <>
+                  <View className="my-4 flex-row items-center gap-3">
+                    <View className="h-px flex-1 bg-brand-100 dark:bg-[#2A2A2A]" />
+                    <Text className="text-xs" style={{ color: c.secondary }}>
+                      OR
+                    </Text>
+                    <View className="h-px flex-1 bg-brand-100 dark:bg-[#2A2A2A]" />
+                  </View>
 
-              <Button
-                label={t("auth.continueWithGoogle")}
-                variant="outline"
-                fullWidth
-                size="lg"
-                leftIcon={<GoogleIcon size={20} />}
-                onPress={signInWithGoogle}
-                disabled={!googleReady}
-                loading={googleLoading}
-              />
+                  <Button
+                    label={t("auth.continueWithGoogle")}
+                    variant="outline"
+                    fullWidth
+                    size="lg"
+                    leftIcon={<GoogleIcon size={20} />}
+                    onPress={signInWithGoogle}
+                    disabled={!googleReady}
+                    loading={googleLoading}
+                  />
+                </>
+              )}
             </Animated.View>
 
             <Animated.View

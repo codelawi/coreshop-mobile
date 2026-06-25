@@ -246,7 +246,7 @@ export default function Profile() {
           <View className="ml-16 h-px bg-brand-100 dark:bg-[#2A2A2A]" />
           <Row icon={Moon02Icon} label={t("profile.theme")} value={themeLabels[mode]} onPress={switchTheme} />
           <View className="ml-16 h-px bg-brand-100 dark:bg-[#2A2A2A]" />
-          <Row icon={Settings02Icon} label={t("profile.settings")} onPress={() => toast(t("common.comingSoon"))} />
+          <Row icon={Settings02Icon} label={t("profile.settings")} onPress={() => router.push("/settings" as any)} />
         </Animated.View>
 
         <Animated.View

@@ -1,22 +1,30 @@
 import * as Notifications from "expo-notifications";
+import Constants from "expo-constants";
 import { Platform } from "react-native";
 import { router } from "expo-router";
 import { api } from "@/lib/api";
-import { useAuthStore } from "@/stores/auth-store"; // zustand store — safe to import outside React
+import { useAuthStore } from "@/stores/auth-store";
 
 const PROJECT_ID = "ac7a0146-f6aa-4fa3-b939-a8bc4713c03e";
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
-});
+// expo-notifications remote push was removed from Expo Go in SDK 53
+const isExpoGo = Constants.executionEnvironment === "storeClient";
+
+if (!isExpoGo) {
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowAlert: true,
+      shouldPlaySound: true,
+      shouldSetBadge: true,
+      shouldShowBanner: true,
+      shouldShowList: true,
+    }),
+  });
+}
 
 export async function registerForPushNotifications(): Promise<void> {
+  if (isExpoGo) return;
+
   if (Platform.OS === "android") {
     await Notifications.setNotificationChannelAsync("default", {
       name: "Default",
@@ -46,7 +54,8 @@ export async function registerForPushNotifications(): Promise<void> {
 }
 
 export function setupNotificationListeners(): () => void {
-  // Handle notification received while app is foregrounded
+  if (isExpoGo) return () => {};
+
   const receivedSub = Notifications.addNotificationReceivedListener((notification) => {
     const data = notification.request.content.data as { type?: string };
     if (data?.type === "account_banned") {
@@ -58,7 +67,6 @@ export function setupNotificationListeners(): () => void {
     }
   });
 
-  // Handle tap on notification when app is backgrounded/closed
   const responseSub = Notifications.addNotificationResponseReceivedListener((response) => {
     const data = response.notification.request.content.data as {
       type?: string;

@@ -8,7 +8,10 @@ import { HugeiconsIcon } from "@hugeicons/react-native";
 import { Notification03Icon, Image01Icon, Tick02Icon } from "@hugeicons/core-free-icons";
 import * as Notifications from "expo-notifications";
 import * as ImagePicker from "expo-image-picker";
+import Constants from "expo-constants";
 import { registerForPushNotifications } from "@/lib/notifications";
+
+const isExpoGo = Constants.executionEnvironment === "storeClient";
 
 import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
@@ -68,6 +71,10 @@ export default function PermissionsStep() {
   const [media, setMedia] = useState(false);
 
   const reqNotif = async () => {
+    if (isExpoGo) {
+      setNotif(true);
+      return;
+    }
     const { status } = await Notifications.requestPermissionsAsync();
     const granted = status === "granted";
     setNotif(granted);
