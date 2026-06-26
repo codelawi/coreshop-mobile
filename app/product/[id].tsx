@@ -4,6 +4,7 @@ import {
   Pressable,
   Dimensions,
   Alert,
+  Modal,
 } from "react-native";
 import { useRef } from "react";
 import { Image } from "expo-image";
@@ -65,6 +66,7 @@ export default function ProductDetail() {
   const { data: product, isLoading } = useProduct(id);
   const [imageIndex, setImageIndex] = useState(0);
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
+  const [tooltipVariant, setTooltipVariant] = useState<ProductVariant | null>(null);
   const [qty, setQty] = useState(1);
   const imageScrollRef = useRef<ScrollView>(null);
 
@@ -279,6 +281,8 @@ export default function ProductDetail() {
                     key={v.id}
                     disabled={disabled}
                     onPress={() => setSelectedVariant(v)}
+                    onLongPress={() => v.description ? setTooltipVariant(v) : null}
+                    delayLongPress={300}
                     className={`min-w-[48px] items-center justify-center rounded-md border px-3 py-2 ${
                       active ? "border-brand bg-brand" : "border-brand-100 dark:border-[#3A3A3A] bg-white dark:bg-[#2A2A2A]"
                     } ${disabled ? "opacity-40" : ""}`}
@@ -289,6 +293,12 @@ export default function ProductDetail() {
                     >
                       {v.size}
                     </Text>
+                    {v.description ? (
+                      <View
+                        className="absolute -right-1 -top-1 h-2 w-2 rounded-full"
+                        style={{ backgroundColor: "#6366F1" }}
+                      />
+                    ) : null}
                   </Pressable>
                 );
               })}
@@ -306,12 +316,20 @@ export default function ProductDetail() {
                   <Pressable
                     key={v.id}
                     onPress={() => selectColorVariant(v)}
+                    onLongPress={() => v.description ? setTooltipVariant(v) : null}
+                    delayLongPress={300}
                     className={`h-10 w-10 items-center justify-center rounded-full border-2 ${
                       active ? "border-brand" : "border-brand-100 dark:border-[#3A3A3A]"
                     }`}
                     style={{ backgroundColor: v.color_hex ?? "#ddd" }}
                   >
                     {active ? <HugeiconsIcon icon={Tick02Icon} size={16} color="#fff" /> : null}
+                    {v.description && !active ? (
+                      <View
+                        className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border border-white"
+                        style={{ backgroundColor: "#6366F1" }}
+                      />
+                    ) : null}
                   </Pressable>
                 );
               })}
@@ -414,6 +432,48 @@ export default function ProductDetail() {
           );
         })()}
       </ScrollView>
+
+      {/* Variant description tooltip */}
+      <Modal
+        visible={!!tooltipVariant}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setTooltipVariant(null)}
+      >
+        <Pressable
+          className="flex-1 items-center justify-end"
+          style={{ backgroundColor: "rgba(0,0,0,0.4)" }}
+          onPress={() => setTooltipVariant(null)}
+        >
+          <Pressable
+            className="w-full rounded-t-2xl bg-white dark:bg-bg-card px-6 pb-10 pt-5"
+            onPress={() => {}}
+          >
+            <View className="mb-4 h-1 w-10 self-center rounded-full bg-brand-100 dark:bg-[#3A3A3A]" />
+            {tooltipVariant?.size ? (
+              <Text variant="semibold" className="mb-1 text-xs" style={{ color: c.secondary }}>
+                {t("product.size")}: {tooltipVariant.size}
+              </Text>
+            ) : null}
+            {tooltipVariant?.color ? (
+              <View className="mb-1 flex-row items-center gap-2">
+                {tooltipVariant.color_hex ? (
+                  <View
+                    className="h-4 w-4 rounded-full"
+                    style={{ backgroundColor: tooltipVariant.color_hex }}
+                  />
+                ) : null}
+                <Text variant="semibold" className="text-xs" style={{ color: c.secondary }}>
+                  {tooltipVariant.color}
+                </Text>
+              </View>
+            ) : null}
+            <Text variant="bold" className="mt-2 text-base text-brand dark:text-white">
+              {tooltipVariant?.description}
+            </Text>
+          </Pressable>
+        </Pressable>
+      </Modal>
 
       <SafeAreaView edges={["bottom"]} className="absolute bottom-0 left-0 right-0 bg-white dark:bg-bg-card">
         <Animated.View entering={FadeInDown.duration(500)} className="flex-row items-center gap-3 border-t border-brand-100 dark:border-[#2A2A2A] px-5 py-3">

@@ -7,6 +7,7 @@ import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 import { HugeiconsIcon } from "@hugeicons/react-native";
 import { Mail01Icon, Refresh01Icon, Tick02Icon } from "@hugeicons/core-free-icons";
 import { toast } from "sonner-native";
+import { useTranslation } from "react-i18next";
 
 import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,7 @@ import { useThemeColors } from "@/lib/theme";
 import { Spinner } from "@/components/ui/spinner";
 
 export default function VerifyEmail() {
+  const { t } = useTranslation();
   const router = useRouter();
   const c = useThemeColors();
   const user = useAuthStore((s) => s.user);
@@ -26,9 +28,9 @@ export default function VerifyEmail() {
     mutationFn: async () => {
       await api.post("/auth/email/resend");
     },
-    onSuccess: () => toast.success("Verification email sent"),
+    onSuccess: () => toast.success(t("auth.verificationEmailSent")),
     onError: (err: any) =>
-      toast.error(err?.response?.data?.message ?? "Could not resend email"),
+      toast.error(err?.response?.data?.message ?? t("auth.couldNotResend")),
   });
 
   const checkVerified = async () => {
@@ -38,17 +40,17 @@ export default function VerifyEmail() {
       const freshUser = res.data.data;
       if (freshUser.email_verified_at) {
         setUser(freshUser);
-        toast.success("Email verified!");
+        toast.success(t("auth.emailVerified"));
         if (!freshUser.onboarding_completed) {
           router.replace("/(onboarding)/avatar" as any);
         } else {
           router.replace("/(tabs)/home" as any);
         }
       } else {
-        toast.error("Email not verified yet. Check your inbox.");
+        toast.error(t("auth.emailNotVerifiedYet"));
       }
     } catch {
-      toast.error("Could not check verification status");
+      toast.error(t("auth.couldNotCheckVerification"));
     } finally {
       setChecking(false);
     }
@@ -64,10 +66,10 @@ export default function VerifyEmail() {
 
           <View className="items-center gap-2">
             <Text variant="bold" className="text-center text-2xl text-brand dark:text-white">
-              Check your email
+              {t("auth.checkEmail")}
             </Text>
             <Text className="text-center text-sm leading-5" style={{ color: c.secondary }}>
-              We sent a verification link to
+              {t("auth.verificationSentTo")}
             </Text>
             <Text variant="semibold" className="text-center text-sm text-brand dark:text-white">
               {user?.email}
@@ -76,7 +78,7 @@ export default function VerifyEmail() {
 
           <View className="mt-2 w-full gap-3">
             <Button
-              label="I've verified my email"
+              label={t("auth.iveVerifiedEmail")}
               onPress={checkVerified}
               loading={checking}
               fullWidth
@@ -95,7 +97,7 @@ export default function VerifyEmail() {
                 <HugeiconsIcon icon={Refresh01Icon} size={16} color={c.secondary} />
               )}
               <Text variant="medium" className="text-sm" style={{ color: c.secondary }}>
-                Resend verification email
+                {t("auth.resendEmail")}
               </Text>
             </Pressable>
           </View>
@@ -106,7 +108,7 @@ export default function VerifyEmail() {
           className="absolute bottom-10 items-center"
         >
           <Text className="text-xs text-center leading-4" style={{ color: c.muted }}>
-            Didn't get it? Check your spam folder.{"\n"}The link expires in 60 minutes.
+            {t("auth.didntGetIt")}
           </Text>
         </Animated.View>
       </View>

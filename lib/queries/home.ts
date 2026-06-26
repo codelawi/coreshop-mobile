@@ -76,6 +76,7 @@ export interface ProductVariant {
   size: string | null;
   color: string | null;
   color_hex: string | null;
+  description: string | null;
   image_url: string | null;
   stock: number;
   price_adjustment: string;
@@ -213,10 +214,11 @@ export function useStore(id: number | string) {
     queryKey: ["store", id],
     queryFn: async () => {
       const res = await api.get<{ success: boolean; data: StoreDetail }>(
-        `/stores/${id}`,
+        `/client/stores/${id}`,
       );
       return res.data.data;
     },
     enabled: !!id,
+    retry: 1,
   });
 }

@@ -71,6 +71,7 @@ export default function Checkout() {
 
   const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
   const [showAddressPicker, setShowAddressPicker] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<"cash_on_delivery" | "cliq">("cash_on_delivery");
   const [couponCode, setCouponCode] = useState("");
   const [couponLoading, setCouponLoading] = useState(false);
   const [couponError, setCouponError] = useState<string | null>(null);
@@ -135,6 +136,7 @@ export default function Checkout() {
       {
         address_id: activeAddress.id,
         coupon_code: appliedCoupon?.code,
+        payment_method: paymentMethod,
         notes: notes.trim() || undefined,
         items: items.map((i) => ({
           product_id: i.product_id,
@@ -342,12 +344,76 @@ export default function Checkout() {
               Payment
             </Text>
             <View className="rounded-md bg-white dark:bg-bg-card">
-              <View className="flex-row items-center gap-3 border-b border-brand-100 dark:border-[#2A2A2A] p-4">
-                <View className="h-5 w-5 items-center justify-center rounded-full border-2 border-brand bg-brand">
-                  <HugeiconsIcon icon={Tick02Icon} size={12} color="#fff" />
+              {/* Cash on Delivery */}
+              <Pressable
+                onPress={() => setPaymentMethod("cash_on_delivery")}
+                className="flex-row items-center gap-3 border-b border-brand-100 dark:border-[#2A2A2A] p-4"
+              >
+                <View
+                  className="h-5 w-5 items-center justify-center rounded-full border-2"
+                  style={{
+                    borderColor: paymentMethod === "cash_on_delivery" ? c.brand : c.border,
+                    backgroundColor: paymentMethod === "cash_on_delivery" ? c.brand : "transparent",
+                  }}
+                >
+                  {paymentMethod === "cash_on_delivery" && (
+                    <HugeiconsIcon icon={Tick02Icon} size={12} color="#fff" />
+                  )}
                 </View>
+                <HugeiconsIcon icon={DeliveryTruck02Icon} size={18} color={c.secondary} />
                 <Text variant="semibold" className="flex-1 text-sm text-brand dark:text-white">Cash on Delivery</Text>
-              </View>
+              </Pressable>
+
+              {/* CliQ */}
+              <Pressable
+                onPress={() => setPaymentMethod("cliq")}
+                className="border-b border-brand-100 dark:border-[#2A2A2A]"
+              >
+                <View className="flex-row items-center gap-3 p-4">
+                  <View
+                    className="h-5 w-5 items-center justify-center rounded-full border-2"
+                    style={{
+                      borderColor: paymentMethod === "cliq" ? c.brand : c.border,
+                      backgroundColor: paymentMethod === "cliq" ? c.brand : "transparent",
+                    }}
+                  >
+                    {paymentMethod === "cliq" && (
+                      <HugeiconsIcon icon={Tick02Icon} size={12} color="#fff" />
+                    )}
+                  </View>
+                  <View
+                    className="h-7 w-12 items-center justify-center rounded"
+                    style={{ backgroundColor: "#006B3F" }}
+                  >
+                    <Text variant="bold" style={{ color: "#fff", fontSize: 10 }}>CliQ</Text>
+                  </View>
+                  <Text variant="semibold" className="flex-1 text-sm text-brand dark:text-white">CliQ</Text>
+                </View>
+
+                {paymentMethod === "cliq" && (
+                  <View
+                    className="mx-4 mb-4 flex-row items-center justify-between rounded-lg px-4 py-3"
+                    style={{ backgroundColor: "#E8F5EF" }}
+                  >
+                    <View>
+                      <Text style={{ fontSize: 11, color: "#006B3F", fontFamily: "Manrope_500Medium" }}>
+                        Transfer to CliQ username
+                      </Text>
+                      <Text style={{ fontSize: 18, color: "#006B3F", fontFamily: "Manrope_700Bold", letterSpacing: 0.5 }}>
+                        CORE26
+                      </Text>
+                    </View>
+                    <View
+                      className="rounded px-2 py-1"
+                      style={{ backgroundColor: "#006B3F" }}
+                    >
+                      <Text style={{ color: "#fff", fontSize: 10, fontFamily: "Manrope_600SemiBold" }}>CliQ</Text>
+                    </View>
+                  </View>
+                )}
+              </Pressable>
+
+              {/* Credit / Debit Card — coming soon */}
               <View className="flex-row items-center gap-3 p-4" style={{ opacity: 0.4 }}>
                 <View className="h-5 w-5 rounded-full border-2 border-brand-100 dark:border-[#3A3A3A]" />
                 <HugeiconsIcon icon={CreditCardIcon} size={18} color={c.secondary} />

@@ -44,7 +44,7 @@ export default function ProfileStep() {
 
   const onNext = (data: FormData) => {
     if (!selectedRole) {
-      toast.error("Please select an account type");
+      toast.error(t("onboarding.profile.pleaseSelectRole"));
       return;
     }
     setName(data.name);
@@ -67,7 +67,7 @@ export default function ProfileStep() {
             keyboardShouldPersistTaps="handled"
           >
             <Animated.View entering={FadeInDown.duration(500).springify()}>
-              <Text variant="bold" className="text-3xl text-brand">
+              <Text variant="bold" className="text-3xl text-brand dark:text-white">
                 {t("onboarding.profile.title")}
               </Text>
               <Text className="mt-2 text-base" style={{ color: c.secondary }}>
@@ -99,7 +99,7 @@ export default function ProfileStep() {
               entering={FadeInUp.duration(600).delay(250)}
               className="mt-6 gap-3"
             >
-              <Text variant="medium" className="text-sm text-brand">
+              <Text variant="medium" className="text-sm text-brand dark:text-white">
                 {t("onboarding.profile.role")}
               </Text>
               {ROLES.map((r) => {
@@ -117,7 +117,7 @@ export default function ProfileStep() {
                       <HugeiconsIcon icon={r.icon} size={24} color={c.brand} />
                     </View>
                     <View className="ml-4 flex-1">
-                      <Text variant="semibold" className="text-base text-brand">
+                      <Text variant="semibold" className="text-base text-brand dark:text-white">
                         {t(`onboarding.profile.roles.${r.id}`)}
                       </Text>
                       <Text className="text-xs" style={{ color: c.secondary }}>

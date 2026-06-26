@@ -1,4 +1,4 @@
-import { View, Pressable } from "react-native";
+import { View, Pressable, Platform } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "expo-router";
@@ -96,11 +96,11 @@ export default function LocationStep() {
         <ProgressBar current={3} total={5} />
 
         <Animated.View entering={FadeInDown.duration(500).springify()} className="mt-6">
-          <Text variant="bold" className="text-3xl text-brand">
+          <Text variant="bold" className="text-3xl text-brand dark:text-white">
             {t("onboarding.location.title")}
           </Text>
           <Text className="mt-2 text-base" style={{ color: c.secondary }}>
-            Drag the map to set your exact location
+            {t("onboarding.location.dragToPin")}
           </Text>
         </Animated.View>
 
@@ -108,37 +108,70 @@ export default function LocationStep() {
           entering={FadeInUp.duration(600).delay(150)}
           className="mt-6 flex-1 overflow-hidden rounded-md border border-brand-100 dark:border-[#2A2A2A]"
         >
-          <MapView
-            ref={mapRef}
-            provider={PROVIDER_DEFAULT}
-            style={{ flex: 1 }}
-            initialRegion={DEFAULT_REGION}
-            onRegionChangeComplete={onRegionChangeComplete}
-            showsUserLocation
-            showsMyLocationButton={false}
-          />
-          <View
-            pointerEvents="none"
-            className="absolute inset-0 items-center justify-center"
-          >
-            <View className="-mt-6 h-12 w-12 items-center justify-center rounded-full bg-brand">
-              <HugeiconsIcon icon={Location01Icon} size={24} color="#fff" />
-            </View>
-          </View>
-
-          {loading && (
-            <View className="absolute inset-0 items-center justify-center bg-white/70 dark:bg-black/70">
-              <Spinner size={40} />
-              <Text className="mt-3 text-sm text-brand">Detecting your location...</Text>
+          {Platform.OS === "ios" ? (
+            <>
+              <MapView
+                ref={mapRef}
+                provider={PROVIDER_DEFAULT}
+                style={{ flex: 1 }}
+                initialRegion={DEFAULT_REGION}
+                onRegionChangeComplete={onRegionChangeComplete}
+                showsUserLocation
+                showsMyLocationButton={false}
+              />
+              <View
+                pointerEvents="none"
+                className="absolute inset-0 items-center justify-center"
+              >
+                <View className="-mt-6 h-12 w-12 items-center justify-center rounded-full bg-brand">
+                  <HugeiconsIcon icon={Location01Icon} size={24} color="#fff" />
+                </View>
+              </View>
+              <Pressable
+                onPress={detectLocation}
+                className="absolute bottom-3 right-3 h-11 w-11 items-center justify-center rounded-full bg-white dark:bg-bg-card shadow"
+              >
+                <HugeiconsIcon icon={MapsLocation02Icon} size={20} color={c.brand} />
+              </Pressable>
+            </>
+          ) : (
+            <View className="flex-1 items-center justify-center gap-5 bg-white dark:bg-bg-card px-6">
+              <View className="h-20 w-20 items-center justify-center rounded-full bg-brand">
+                <HugeiconsIcon icon={Location01Icon} size={36} color="#fff" />
+              </View>
+              <View className="items-center gap-1">
+                <Text variant="semibold" className="text-base text-brand dark:text-white">
+                  {coords ? city || t("onboarding.location.locationDetected") : t("onboarding.location.detectingLocation")}
+                </Text>
+                {coords && (
+                  <Text className="text-xs" style={{ color: c.secondary }}>
+                    {coords.lat.toFixed(5)}, {coords.lng.toFixed(5)}
+                  </Text>
+                )}
+              </View>
+              <Pressable
+                onPress={detectLocation}
+                disabled={loading}
+                className="flex-row items-center gap-2 rounded-xl bg-brand px-6 py-3"
+              >
+                {loading ? (
+                  <Spinner size={18} color="#fff" />
+                ) : (
+                  <HugeiconsIcon icon={MapsLocation02Icon} size={18} color="#fff" />
+                )}
+                <Text variant="semibold" className="text-sm text-white">
+                  {loading ? t("onboarding.location.detecting") : t("onboarding.location.detectBtn")}
+                </Text>
+              </Pressable>
             </View>
           )}
 
-          <Pressable
-            onPress={detectLocation}
-            className="absolute bottom-3 right-3 h-11 w-11 items-center justify-center rounded-full bg-white dark:bg-bg-card shadow"
-          >
-            <HugeiconsIcon icon={MapsLocation02Icon} size={20} color={c.brand} />
-          </Pressable>
+          {Platform.OS === "ios" && loading && (
+            <View className="absolute inset-0 items-center justify-center bg-white/70 dark:bg-black/70">
+              <Spinner size={40} />
+              <Text className="mt-3 text-sm text-brand dark:text-white">{t("onboarding.location.detectingLocation")}</Text>
+            </View>
+          )}
         </Animated.View>
 
         <Animated.View
@@ -150,7 +183,7 @@ export default function LocationStep() {
             <Text variant="medium" className="text-xs" style={{ color: c.secondary }}>
               {t("onboarding.location.city")}
             </Text>
-            <Text variant="semibold" className="text-base text-brand">
+            <Text variant="semibold" className="text-base text-brand dark:text-white">
               {city || "—"}
             </Text>
           </View>

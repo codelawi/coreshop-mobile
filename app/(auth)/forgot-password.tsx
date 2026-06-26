@@ -7,6 +7,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { toast } from "sonner-native";
+import { useTranslation } from "react-i18next";
 import { HugeiconsIcon } from "@hugeicons/react-native";
 import { Mail01Icon, ArrowLeft01Icon, CheckmarkCircle01Icon } from "@hugeicons/core-free-icons";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
@@ -24,6 +25,7 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>;
 
 export default function ForgotPassword() {
+  const { t } = useTranslation();
   const router = useRouter();
   const c = useThemeColors();
   const [sent, setSent] = useState(false);
@@ -48,7 +50,7 @@ export default function ForgotPassword() {
       setSent(true);
     },
     onError: () => {
-      toast.error("Something went wrong. Please try again.");
+      toast.error(t("auth.somethingWentWrong"));
     },
   });
 
@@ -63,10 +65,10 @@ export default function ForgotPassword() {
 
             <View className="items-center gap-2">
               <Text variant="bold" className="text-center text-2xl text-brand dark:text-white">
-                Check your email
+                {t("auth.checkEmail")}
               </Text>
               <Text className="text-center text-sm leading-5" style={{ color: c.secondary }}>
-                We sent a password reset link to
+                {t("auth.resetLinkSentTo")}
               </Text>
               <Text variant="semibold" className="text-center text-sm text-brand dark:text-white">
                 {sentEmail}
@@ -74,7 +76,7 @@ export default function ForgotPassword() {
             </View>
 
             <Button
-              label="Back to sign in"
+              label={t("auth.backToSignIn")}
               onPress={() => router.replace("/(auth)/sign-in" as any)}
               variant="outline"
               fullWidth
@@ -87,7 +89,7 @@ export default function ForgotPassword() {
             className="absolute bottom-10 items-center"
           >
             <Text className="text-xs text-center leading-4" style={{ color: c.muted }}>
-              Didn't get it? Check your spam folder.{"\n"}The link expires in 60 minutes.
+              {t("auth.didntGetIt")}
             </Text>
           </Animated.View>
         </View>
@@ -109,7 +111,7 @@ export default function ForgotPassword() {
           <View className="flex-1 justify-center px-6 py-8">
             <Animated.View entering={FadeInDown.duration(600).springify()} className="mb-10">
               <Button
-                label="Back"
+                label={t("common.back")}
                 variant="ghost"
                 size="sm"
                 onPress={() => router.back()}
@@ -117,10 +119,10 @@ export default function ForgotPassword() {
                 className="self-start -ml-2 mb-6"
               />
               <Text variant="bold" className="text-4xl text-brand dark:text-white">
-                Forgot password?
+                {t("auth.forgotPassword")}
               </Text>
               <Text className="mt-2 text-base" style={{ color: c.secondary }}>
-                Enter your email and we'll send you a reset link.
+                {t("auth.forgotPasswordSubtitle")}
               </Text>
             </Animated.View>
 
@@ -133,7 +135,7 @@ export default function ForgotPassword() {
                 name="email"
                 render={({ field: { onChange, value } }) => (
                   <Input
-                    label="Email"
+                    label={t("auth.email")}
                     placeholder="you@example.com"
                     keyboardType="email-address"
                     autoCapitalize="none"
@@ -147,7 +149,7 @@ export default function ForgotPassword() {
               />
 
               <Button
-                label="Send reset link"
+                label={t("auth.sendResetLink")}
                 onPress={handleSubmit((data) => mutation.mutate(data))}
                 loading={mutation.isPending}
                 fullWidth

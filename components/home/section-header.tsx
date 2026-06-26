@@ -12,7 +12,7 @@ export function SectionHeader({ title, action, onActionPress }: Props) {
   const c = useThemeColors();
   return (
     <View className="mb-3 flex-row items-center justify-between">
-      <Text variant="bold" className="text-lg text-brand">{title}</Text>
+      <Text variant="bold" className="text-lg text-brand dark:text-white">{title}</Text>
       {action ? (
         <Pressable onPress={onActionPress} hitSlop={6}>
           <Text variant="medium" className="text-sm" style={{ color: c.secondary }}>{action}</Text>

@@ -15,6 +15,7 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import Animated, { FadeInRight } from "react-native-reanimated";
+import { useTranslation } from "react-i18next";
 import { HugeiconsIcon } from "@hugeicons/react-native";
 import {
   ArrowLeft01Icon,
@@ -30,7 +31,10 @@ import * as FileSystem from "expo-file-system/legacy";
 import * as SecureStore from "expo-secure-store";
 import { toast } from "sonner-native";
 
+import { useColorScheme } from "nativewind";
+
 import { Text } from "@/components/ui/text";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { WorkingHours } from "@/lib/queries/seller";
 import { useCreateStore, useUpdateStore, useSellerStore } from "@/lib/queries/seller";
@@ -39,15 +43,6 @@ import { Spinner } from "@/components/ui/spinner";
 import { API_URL } from "@/lib/api";
 
 const DAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"] as const;
-const DAY_LABELS: Record<string, string> = {
-  monday: "Monday",
-  tuesday: "Tuesday",
-  wednesday: "Wednesday",
-  thursday: "Thursday",
-  friday: "Friday",
-  saturday: "Saturday",
-  sunday: "Sunday",
-};
 
 const DEFAULT_HOURS: WorkingHours = Object.fromEntries(
   DAYS.map((d) => [d, { open: d !== "friday", from: "09:00", to: "22:00" }])
@@ -88,8 +83,11 @@ async function uploadStoreImage(
 }
 
 export default function SellerSetup() {
+  const { t } = useTranslation();
   const router = useRouter();
   const c = useThemeColors();
+  const { colorScheme } = useColorScheme();
+  const primaryIconColor = colorScheme === "dark" ? "#0A0A0A" : "#FFFFFF";
   const { data: existingStore } = useSellerStore();
   const createStore = useCreateStore();
   const updateStore = useUpdateStore();
@@ -99,7 +97,7 @@ export default function SellerSetup() {
 
   const [step, setStep] = useState(0);
 
-  // Step 1 — location
+  // Step 0 — location
   const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(
     existingStore?.latitude && existingStore?.longitude
       ? { latitude: Number(existingStore.latitude), longitude: Number(existingStore.longitude) }
@@ -147,7 +145,7 @@ export default function SellerSetup() {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") {
-        toast.error("Location permission denied");
+        toast.error(t("seller.setup.locationPermissionDenied"));
         return;
       }
       const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
@@ -158,7 +156,7 @@ export default function SellerSetup() {
       if (place?.city) { setCity(place.city); }
       if (place?.street) { setAddress(place.street); }
     } catch {
-      toast.error("Could not detect location");
+      toast.error(t("seller.setup.couldNotDetectLocation"));
     } finally {
       setGpsLoading(false);
     }
@@ -170,7 +168,7 @@ export default function SellerSetup() {
 
   const pickLogo = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== "granted") { toast.error("Media permission denied"); return; }
+    if (status !== "granted") { toast.error(t("seller.setup.mediaPermissionDenied")); return; }
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
@@ -185,14 +183,14 @@ export default function SellerSetup() {
       const url = await uploadStoreImage(uri, setLogoLoading);
       setLogoUrl(url);
     } catch (e: any) {
-      toast.error(e?.message ?? "Logo upload failed");
+      toast.error(e?.message ?? t("seller.setup.logoUploadFailed"));
       setLogoUri(null);
     }
   };
 
   const pickBanner = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== "granted") { toast.error("Media permission denied"); return; }
+    if (status !== "granted") { toast.error(t("seller.setup.mediaPermissionDenied")); return; }
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
@@ -207,7 +205,7 @@ export default function SellerSetup() {
       const url = await uploadStoreImage(uri, setBannerLoading);
       setBannerUrl(url);
     } catch (e: any) {
-      toast.error(e?.message ?? "Banner upload failed");
+      toast.error(e?.message ?? t("seller.setup.bannerUploadFailed"));
       setBannerUri(null);
     }
   };
@@ -235,14 +233,14 @@ export default function SellerSetup() {
     try {
       if (isEditing) {
         await updateStore.mutateAsync(payload);
-        toast.success("Store updated");
+        toast.success(t("seller.setup.storeUpdated"));
       } else {
         await createStore.mutateAsync(payload);
-        toast.success("Store created! Pending admin review.");
+        toast.success(t("seller.setup.storeCreated"));
       }
       router.replace("/seller" as any);
     } catch (err: any) {
-      const msg = err?.response?.data?.message ?? "Something went wrong";
+      const msg = err?.response?.data?.message ?? t("seller.setup.somethingWentWrong");
       toast.error(msg);
     }
   };
@@ -257,8 +255,8 @@ export default function SellerSetup() {
           <Pressable onPress={() => (step > 0 ? setStep(step - 1) : router.back())}>
             <HugeiconsIcon icon={ArrowLeft01Icon} size={24} color={c.brand} />
           </Pressable>
-          <Text variant="bold" className="flex-1 text-xl text-brand">
-            {isEditing ? "Edit Store" : "Set Up Store"}
+          <Text variant="bold" className="flex-1 text-xl text-brand dark:text-white">
+            {isEditing ? t("seller.setup.editStore") : t("seller.setup.setupStore")}
           </Text>
           <Text className="text-sm" style={{ color: c.secondary }}>{step + 1} / {TOTAL_STEPS}</Text>
         </View>
@@ -281,16 +279,20 @@ export default function SellerSetup() {
               contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 24, gap: 16 }}
               showsVerticalScrollIndicator={false}
             >
-              <Text variant="bold" className="text-lg text-brand">Store basics</Text>
+              <Text variant="bold" className="text-lg text-brand dark:text-white">
+                {t("seller.setup.basics")}
+              </Text>
 
               <View className="gap-1.5">
-                <Text variant="medium" className="text-sm text-brand">Store name *</Text>
+                <Text variant="medium" className="text-sm text-brand dark:text-white">
+                  {t("seller.setup.storeNameRequired")}
+                </Text>
                 <Controller
                   control={control}
                   name="name"
                   render={({ field: { onChange, value } }) => (
                     <Input
-                      placeholder="e.g. Jordan Fashion Hub"
+                      placeholder={t("seller.setup.storeNamePlaceholder")}
                       value={value}
                       onChangeText={onChange}
                       spellCheck={false}
@@ -304,13 +306,15 @@ export default function SellerSetup() {
               </View>
 
               <View className="gap-1.5">
-                <Text variant="medium" className="text-sm text-brand">Description</Text>
+                <Text variant="medium" className="text-sm text-brand dark:text-white">
+                  {t("seller.setup.descriptionLabel")}
+                </Text>
                 <Controller
                   control={control}
                   name="description"
                   render={({ field: { onChange, value } }) => (
                     <TextInput
-                      placeholder="Tell customers about your store..."
+                      placeholder={t("seller.setup.descriptionPlaceholder")}
                       value={value}
                       onChangeText={onChange}
                       multiline
@@ -326,7 +330,9 @@ export default function SellerSetup() {
               </View>
 
               <View className="gap-1.5">
-                <Text variant="medium" className="text-sm text-brand">Phone</Text>
+                <Text variant="medium" className="text-sm text-brand dark:text-white">
+                  {t("seller.setup.phoneLabel")}
+                </Text>
                 <Controller
                   control={control}
                   name="phone"
@@ -342,7 +348,9 @@ export default function SellerSetup() {
               </View>
 
               <View className="gap-1.5">
-                <Text variant="medium" className="text-sm text-brand">Delivery radius (km)</Text>
+                <Text variant="medium" className="text-sm text-brand dark:text-white">
+                  {t("seller.setup.deliveryRadiusLabel")}
+                </Text>
                 <Controller
                   control={control}
                   name="delivery_radius_km"
@@ -364,13 +372,13 @@ export default function SellerSetup() {
             </ScrollView>
 
             <View className="px-6 pb-8 pt-4">
-              <Pressable
+              <Button
+                label={t("seller.setup.nextLocation")}
                 onPress={handleSubmit(() => setStep(1))}
-                className="flex-row items-center justify-center gap-2 rounded-xl bg-brand py-4"
-              >
-                <Text variant="bold" style={{ color: "#fff" }}>Next: Location</Text>
-                <HugeiconsIcon icon={ArrowRight01Icon} size={18} color="#fff" />
-              </Pressable>
+                fullWidth
+                size="lg"
+                rightIcon={<HugeiconsIcon icon={ArrowRight01Icon} size={18} color={primaryIconColor} />}
+              />
             </View>
           </Animated.View>
         ) : null}
@@ -382,36 +390,57 @@ export default function SellerSetup() {
               contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 24, gap: 16 }}
               showsVerticalScrollIndicator={false}
             >
-              <Text variant="bold" className="text-lg text-brand">Store location</Text>
+              <Text variant="bold" className="text-lg text-brand dark:text-white">
+                {t("seller.setup.location")}
+              </Text>
               <Text className="text-sm" style={{ color: c.secondary }}>
-                Pin your store on the map so clients can see how far you are.
+                {t("seller.setup.locationSubtitle")}
               </Text>
 
-              {/* Map */}
-              <View className="overflow-hidden rounded-xl" style={{ height: 240 }}>
-                <MapView
-                  ref={mapRef}
-                  provider={PROVIDER_DEFAULT}
-                  style={{ flex: 1 }}
-                  initialRegion={DEFAULT_REGION}
-                  onRegionChangeComplete={onMapRegionChange}
-                />
-                {/* Centered pin */}
-                <View
-                  className="absolute left-1/2 top-1/2 items-center"
-                  style={{ marginLeft: -12, marginTop: -28 }}
-                  pointerEvents="none"
-                >
-                  <View
-                    className="h-6 w-6 rounded-full border-2 border-white"
-                    style={{ backgroundColor: "#FF4D4F" }}
+              {Platform.OS === "ios" ? (
+                <View className="overflow-hidden rounded-xl" style={{ height: 240 }}>
+                  <MapView
+                    ref={mapRef}
+                    provider={PROVIDER_DEFAULT}
+                    style={{ flex: 1 }}
+                    initialRegion={DEFAULT_REGION}
+                    onRegionChangeComplete={onMapRegionChange}
                   />
                   <View
-                    className="w-0.5"
-                    style={{ height: 10, backgroundColor: "#FF4D4F" }}
-                  />
+                    className="absolute left-1/2 top-1/2 items-center"
+                    style={{ marginLeft: -12, marginTop: -28 }}
+                    pointerEvents="none"
+                  >
+                    <View
+                      className="h-6 w-6 rounded-full border-2 border-white"
+                      style={{ backgroundColor: "#FF4D4F" }}
+                    />
+                    <View
+                      className="w-0.5"
+                      style={{ height: 10, backgroundColor: "#FF4D4F" }}
+                    />
+                  </View>
                 </View>
-              </View>
+              ) : (
+                <View
+                  className="items-center justify-center gap-4 overflow-hidden rounded-xl bg-white dark:bg-bg-card"
+                  style={{ height: 240 }}
+                >
+                  <View className="h-16 w-16 items-center justify-center rounded-full bg-brand">
+                    <HugeiconsIcon icon={Location01Icon} size={28} color="#fff" />
+                  </View>
+                  <View className="items-center gap-1">
+                    <Text variant="semibold" className="text-sm text-brand dark:text-white">
+                      {coords ? t("seller.setup.locationSet") : t("seller.setup.noLocationSet")}
+                    </Text>
+                    {coords && (
+                      <Text className="text-xs" style={{ color: c.secondary }}>
+                        {coords.latitude.toFixed(5)}, {coords.longitude.toFixed(5)}
+                      </Text>
+                    )}
+                  </View>
+                </View>
+              )}
 
               <Pressable
                 onPress={detectGps}
@@ -423,13 +452,17 @@ export default function SellerSetup() {
                 ) : (
                   <HugeiconsIcon icon={Location01Icon} size={18} color={c.brand} />
                 )}
-                <Text variant="medium" className="text-sm text-brand">Use my location</Text>
+                <Text variant="medium" className="text-sm text-brand dark:text-white">
+                  {t("seller.setup.useMyLocation")}
+                </Text>
               </Pressable>
 
               <View className="gap-1.5">
-                <Text variant="medium" className="text-sm text-brand">City</Text>
+                <Text variant="medium" className="text-sm text-brand dark:text-white">
+                  {t("seller.setup.cityLabel")}
+                </Text>
                 <Input
-                  placeholder="e.g. Amman"
+                  placeholder={t("seller.setup.cityPlaceholder")}
                   value={city}
                   onChangeText={setCity}
                   spellCheck={false}
@@ -438,9 +471,11 @@ export default function SellerSetup() {
               </View>
 
               <View className="gap-1.5">
-                <Text variant="medium" className="text-sm text-brand">Address</Text>
+                <Text variant="medium" className="text-sm text-brand dark:text-white">
+                  {t("seller.setup.addressLabel")}
+                </Text>
                 <Input
-                  placeholder="Street address"
+                  placeholder={t("seller.setup.addressPlaceholder")}
                   value={address}
                   onChangeText={setAddress}
                   spellCheck={false}
@@ -450,19 +485,20 @@ export default function SellerSetup() {
             </ScrollView>
 
             <View className="flex-row gap-3 px-6 pb-8 pt-4">
-              <Pressable
+              <Button
+                label={t("common.back")}
+                variant="outline"
                 onPress={() => setStep(0)}
-                className="flex-1 items-center rounded-xl border border-brand-100 dark:border-[#2A2A2A] py-4"
-              >
-                <Text variant="bold" className="text-brand">Back</Text>
-              </Pressable>
-              <Pressable
+                className="flex-1"
+                size="lg"
+              />
+              <Button
+                label={t("seller.setup.nextImages")}
                 onPress={() => setStep(2)}
-                className="flex-1 flex-row items-center justify-center gap-2 rounded-xl bg-brand py-4"
-              >
-                <Text variant="bold" style={{ color: "#fff" }}>Next: Images</Text>
-                <HugeiconsIcon icon={ArrowRight01Icon} size={18} color="#fff" />
-              </Pressable>
+                className="flex-1"
+                size="lg"
+                rightIcon={<HugeiconsIcon icon={ArrowRight01Icon} size={18} color={primaryIconColor} />}
+              />
             </View>
           </Animated.View>
         ) : null}
@@ -475,15 +511,19 @@ export default function SellerSetup() {
               showsVerticalScrollIndicator={false}
             >
               <View>
-                <Text variant="bold" className="text-lg text-brand">Store images</Text>
+                <Text variant="bold" className="text-lg text-brand dark:text-white">
+                  {t("seller.setup.images")}
+                </Text>
                 <Text className="mt-1 text-sm" style={{ color: c.secondary }}>
-                  Optional — you can add or update these later.
+                  {t("seller.setup.imagesSubtitle")}
                 </Text>
               </View>
 
               {/* Logo */}
               <View className="gap-2">
-                <Text variant="medium" className="text-sm text-brand">Store logo</Text>
+                <Text variant="medium" className="text-sm text-brand dark:text-white">
+                  {t("seller.setup.logoLabel")}
+                </Text>
                 <View className="flex-row items-center gap-4">
                   <Pressable onPress={pickLogo} disabled={logoLoading}>
                     <View
@@ -516,11 +556,15 @@ export default function SellerSetup() {
                     </View>
                   </Pressable>
                   <View className="flex-1 gap-1">
-                    <Text variant="medium" className="text-sm text-brand">
-                      {logoLoading ? "Uploading…" : logoUrl ? "Logo uploaded" : "Tap to upload"}
+                    <Text variant="medium" className="text-sm text-brand dark:text-white">
+                      {logoLoading
+                        ? t("seller.setup.logoUploading")
+                        : logoUrl
+                          ? t("seller.setup.logoUploaded")
+                          : t("seller.setup.logoTapToUpload")}
                     </Text>
                     <Text className="text-xs" style={{ color: c.muted }}>
-                      Square image · JPG, PNG, WebP
+                      {t("seller.setup.logoHint")}
                     </Text>
                   </View>
                 </View>
@@ -528,7 +572,9 @@ export default function SellerSetup() {
 
               {/* Banner */}
               <View className="gap-2">
-                <Text variant="medium" className="text-sm text-brand">Store banner</Text>
+                <Text variant="medium" className="text-sm text-brand dark:text-white">
+                  {t("seller.setup.bannerLabel")}
+                </Text>
                 <Pressable onPress={pickBanner} disabled={bannerLoading}>
                   <View
                     className="w-full items-center justify-center overflow-hidden rounded-xl bg-white dark:bg-bg-card"
@@ -559,37 +605,39 @@ export default function SellerSetup() {
                       <View className="items-center gap-2">
                         <HugeiconsIcon icon={ImageUpload01Icon} size={32} color="#D1D5DB" />
                         <Text className="text-sm" style={{ color: c.muted }}>
-                          {bannerLoading ? "Uploading…" : "Tap to upload banner"}
+                          {bannerLoading ? t("seller.setup.bannerUploading") : t("seller.setup.bannerTapToUpload")}
                         </Text>
                         <Text className="text-xs" style={{ color: c.border }}>
-                          Landscape · 16:5 ratio recommended
+                          {t("seller.setup.bannerHint")}
                         </Text>
                       </View>
                     )}
                   </View>
                 </Pressable>
                 {bannerUrl ? (
-                  <Text className="text-xs" style={{ color: c.secondary }}>Banner uploaded</Text>
+                  <Text className="text-xs" style={{ color: c.secondary }}>
+                    {t("seller.setup.bannerUploaded")}
+                  </Text>
                 ) : null}
               </View>
             </ScrollView>
 
             <View className="flex-row gap-3 px-6 pb-8 pt-4">
-              <Pressable
+              <Button
+                label={t("common.back")}
+                variant="outline"
                 onPress={() => setStep(1)}
-                className="flex-1 items-center rounded-xl border border-brand-100 dark:border-[#2A2A2A] py-4"
-              >
-                <Text variant="bold" className="text-brand">Back</Text>
-              </Pressable>
-              <Pressable
+                className="flex-1"
+                size="lg"
+              />
+              <Button
+                label={t("seller.setup.nextHours")}
                 onPress={() => setStep(3)}
                 disabled={logoLoading || bannerLoading}
-                className="flex-1 flex-row items-center justify-center gap-2 rounded-xl bg-brand py-4"
-                style={{ opacity: logoLoading || bannerLoading ? 0.6 : 1 }}
-              >
-                <Text variant="bold" style={{ color: "#fff" }}>Next: Hours</Text>
-                <HugeiconsIcon icon={ArrowRight01Icon} size={18} color="#fff" />
-              </Pressable>
+                className="flex-1"
+                size="lg"
+                rightIcon={<HugeiconsIcon icon={ArrowRight01Icon} size={18} color={primaryIconColor} />}
+              />
             </View>
           </Animated.View>
         ) : null}
@@ -601,15 +649,17 @@ export default function SellerSetup() {
               contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 24, gap: 4 }}
               showsVerticalScrollIndicator={false}
             >
-              <Text variant="bold" className="mb-2 text-lg text-brand">Working hours</Text>
+              <Text variant="bold" className="mb-2 text-lg text-brand dark:text-white">
+                {t("seller.setup.workingHours")}
+              </Text>
 
               {DAYS.map((day) => {
                 const h = hours[day];
                 return (
                   <View key={day} className="rounded-xl bg-white dark:bg-bg-card px-4 py-3 mb-2">
                     <View className="flex-row items-center">
-                      <Text variant="semibold" className="flex-1 text-sm text-brand capitalize">
-                        {DAY_LABELS[day]}
+                      <Text variant="semibold" className="flex-1 text-sm text-brand dark:text-white">
+                        {t(`seller.setup.days.${day}`)}
                       </Text>
                       <Switch
                         value={h.open}
@@ -622,7 +672,9 @@ export default function SellerSetup() {
                     {h.open ? (
                       <View className="mt-3 flex-row gap-3">
                         <View className="flex-1 gap-1">
-                          <Text className="text-xs" style={{ color: c.secondary }}>From</Text>
+                          <Text className="text-xs" style={{ color: c.secondary }}>
+                            {t("seller.setup.from")}
+                          </Text>
                           <TextInput
                             value={h.from}
                             onChangeText={(val) => setDayTime(day, "from", val)}
@@ -632,7 +684,9 @@ export default function SellerSetup() {
                           />
                         </View>
                         <View className="flex-1 gap-1">
-                          <Text className="text-xs" style={{ color: c.secondary }}>To</Text>
+                          <Text className="text-xs" style={{ color: c.secondary }}>
+                            {t("seller.setup.to")}
+                          </Text>
                           <TextInput
                             value={h.to}
                             onChangeText={(val) => setDayTime(day, "to", val)}
@@ -643,7 +697,9 @@ export default function SellerSetup() {
                         </View>
                       </View>
                     ) : (
-                      <Text className="mt-1 text-xs" style={{ color: c.muted }}>Closed</Text>
+                      <Text className="mt-1 text-xs" style={{ color: c.muted }}>
+                        {t("seller.setup.closed")}
+                      </Text>
                     )}
                   </View>
                 );
@@ -651,27 +707,22 @@ export default function SellerSetup() {
             </ScrollView>
 
             <View className="flex-row gap-3 px-6 pb-8 pt-4">
-              <Pressable
+              <Button
+                label={t("common.back")}
+                variant="outline"
                 onPress={() => setStep(2)}
-                className="flex-1 items-center rounded-xl border border-brand-100 dark:border-[#2A2A2A] py-4"
-              >
-                <Text variant="bold" className="text-brand">Back</Text>
-              </Pressable>
-              <Pressable
+                className="flex-1"
+                size="lg"
+              />
+              <Button
+                label={isEditing ? t("seller.setup.saveChanges") : t("seller.setup.createStore")}
                 onPress={handleSubmit(onSubmit)}
                 disabled={submitting}
-                className="flex-1 flex-row items-center justify-center gap-2 rounded-xl bg-brand py-4"
-                style={{ opacity: submitting ? 0.6 : 1 }}
-              >
-                {submitting ? (
-                  <Spinner size={20} color="#fff" trackColor="rgba(255,255,255,0.3)" strokeWidth={2} />
-                ) : (
-                  <HugeiconsIcon icon={Tick01Icon} size={18} color="#fff" />
-                )}
-                <Text variant="bold" style={{ color: "#fff" }}>
-                  {isEditing ? "Save Changes" : "Create Store"}
-                </Text>
-              </Pressable>
+                loading={submitting}
+                className="flex-1"
+                size="lg"
+                leftIcon={submitting ? undefined : <HugeiconsIcon icon={Tick01Icon} size={18} color={primaryIconColor} />}
+              />
             </View>
           </Animated.View>
         ) : null}

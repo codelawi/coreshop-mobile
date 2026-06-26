@@ -2,9 +2,12 @@ import { Redirect } from "expo-router";
 import { useAuthStore } from "@/stores/auth-store";
 
 export default function Index() {
-  const { token, user } = useAuthStore();
+  const { token, user, isGuest } = useAuthStore();
 
-  if (!token || !user) return <Redirect href={"/(auth)/sign-in" as any} />;
+  if (!token || !user) {
+    if (isGuest) return <Redirect href={"/(tabs)/home" as any} />;
+    return <Redirect href={"/(auth)/sign-in" as any} />;
+  }
 
   if (user.status === "suspended") {
     return <Redirect href={"/banned" as any} />;

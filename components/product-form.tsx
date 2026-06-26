@@ -27,6 +27,7 @@ import { useTranslation } from "react-i18next";
 
 import { Text } from "@/components/ui/text";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { useCategories } from "@/lib/queries/home";
 import { useThemeColors } from "@/lib/theme";
 import { Spinner } from "@/components/ui/spinner";
@@ -40,6 +41,7 @@ const variantSchema = z.object({
   size: z.string().optional(),
   color: z.string().optional(),
   color_hex: z.string().optional(),
+  description: z.string().optional(),
   image_url: z.string().optional(),
   price_adjustment: z.coerce.number().optional(),
   stock: z.coerce.number().int().min(0, "Required"),
@@ -110,6 +112,7 @@ export function ProductForm({ initial, onSubmit, submitLabel }: Props) {
           size: v.size ?? "",
           color: v.color ?? "",
           color_hex: v.color_hex ?? "",
+          description: v.description ?? "",
           image_url: v.image_url ?? "",
           price_adjustment: Number(v.price_adjustment),
           stock: v.stock,
@@ -230,6 +233,7 @@ export function ProductForm({ initial, onSubmit, submitLabel }: Props) {
               size: v.size || undefined,
               color: v.color || undefined,
               color_hex: v.color_hex || undefined,
+              description: v.description || undefined,
               image_url: v.image_url || undefined,
               price_adjustment: v.price_adjustment ?? 0,
               stock: v.stock,
@@ -252,7 +256,7 @@ export function ProductForm({ initial, onSubmit, submitLabel }: Props) {
       >
         {/* Name */}
         <View className="gap-1.5">
-          <Text variant="medium" className="text-sm text-brand">{t("seller.productForm.name")}</Text>
+          <Text variant="medium" className="text-sm text-brand dark:text-white">{t("seller.productForm.name")}</Text>
           <Controller
             control={control}
             name="name"
@@ -275,7 +279,7 @@ export function ProductForm({ initial, onSubmit, submitLabel }: Props) {
 
         {/* Description */}
         <View className="gap-1.5">
-          <Text variant="medium" className="text-sm text-brand">{t("seller.productForm.description")}</Text>
+          <Text variant="medium" className="text-sm text-brand dark:text-white">{t("seller.productForm.description")}</Text>
           <Controller
             control={control}
             name="description"
@@ -298,7 +302,7 @@ export function ProductForm({ initial, onSubmit, submitLabel }: Props) {
 
         {/* Category */}
         <View className="gap-1.5">
-          <Text variant="medium" className="text-sm text-brand">{t("seller.productForm.category")}</Text>
+          <Text variant="medium" className="text-sm text-brand dark:text-white">{t("seller.productForm.category")}</Text>
           <Pressable
             onPress={() => setCatPickerOpen(true)}
             className="flex-row items-center rounded-xl border border-brand-100 dark:border-[#2A2A2A] bg-white dark:bg-bg-card px-4 py-3.5"
@@ -321,7 +325,7 @@ export function ProductForm({ initial, onSubmit, submitLabel }: Props) {
         {/* Pricing */}
         <View className="flex-row gap-3">
           <View className="flex-1 gap-1.5">
-            <Text variant="medium" className="text-sm text-brand">{t("seller.productForm.price")}</Text>
+            <Text variant="medium" className="text-sm text-brand dark:text-white">{t("seller.productForm.price")}</Text>
             <Controller
               control={control}
               name="price"
@@ -341,7 +345,7 @@ export function ProductForm({ initial, onSubmit, submitLabel }: Props) {
             ) : null}
           </View>
           <View className="flex-1 gap-1.5">
-            <Text variant="medium" className="text-sm text-brand">{t("seller.productForm.originalPrice")}</Text>
+            <Text variant="medium" className="text-sm text-brand dark:text-white">{t("seller.productForm.originalPrice")}</Text>
             <Controller
               control={control}
               name="original_price"
@@ -360,7 +364,7 @@ export function ProductForm({ initial, onSubmit, submitLabel }: Props) {
         {/* Stock & weight */}
         <View className="flex-row gap-3">
           <View className="flex-1 gap-1.5">
-            <Text variant="medium" className="text-sm text-brand">{t("seller.productForm.stock")}</Text>
+            <Text variant="medium" className="text-sm text-brand dark:text-white">{t("seller.productForm.stock")}</Text>
             <Controller
               control={control}
               name="stock"
@@ -380,7 +384,7 @@ export function ProductForm({ initial, onSubmit, submitLabel }: Props) {
             ) : null}
           </View>
           <View className="flex-1 gap-1.5">
-            <Text variant="medium" className="text-sm text-brand">{t("seller.productForm.weight")}</Text>
+            <Text variant="medium" className="text-sm text-brand dark:text-white">{t("seller.productForm.weight")}</Text>
             <Controller
               control={control}
               name="weight_grams"
@@ -399,7 +403,7 @@ export function ProductForm({ initial, onSubmit, submitLabel }: Props) {
         {/* Images */}
         <View className="gap-2">
           <View className="flex-row items-center">
-            <Text variant="medium" className="flex-1 text-sm text-brand">
+            <Text variant="medium" className="flex-1 text-sm text-brand dark:text-white">
               {t("seller.productForm.photos", { count: uploadingImages.length })}
             </Text>
             {uploadingImages.length < 7 ? (
@@ -409,7 +413,7 @@ export function ProductForm({ initial, onSubmit, submitLabel }: Props) {
                 style={{ backgroundColor: c.brandLight }}
               >
                 <HugeiconsIcon icon={Image01Icon} size={14} color={c.brand} />
-                <Text variant="medium" className="text-xs text-brand">{t("seller.productForm.addPhotos")}</Text>
+                <Text variant="medium" className="text-xs text-brand dark:text-white">{t("seller.productForm.addPhotos")}</Text>
               </Pressable>
             ) : null}
           </View>
@@ -480,23 +484,23 @@ export function ProductForm({ initial, onSubmit, submitLabel }: Props) {
         {/* Variants */}
         <View className="gap-2">
           <View className="flex-row items-center">
-            <Text variant="medium" className="flex-1 text-sm text-brand">{t("seller.productForm.variants")}</Text>
+            <Text variant="medium" className="flex-1 text-sm text-brand dark:text-white">{t("seller.productForm.variants")}</Text>
             <Pressable
               onPress={() =>
-                appendVariant({ size: "", color: "", color_hex: "", image_url: "", price_adjustment: 0, stock: 0 })
+                appendVariant({ size: "", color: "", color_hex: "", description: "", image_url: "", price_adjustment: 0, stock: 0 })
               }
               className="flex-row items-center gap-1 rounded-lg px-3 py-1.5"
               style={{ backgroundColor: c.brandLight }}
             >
               <HugeiconsIcon icon={Add01Icon} size={14} color={c.brand} />
-              <Text variant="medium" className="text-xs text-brand">{t("seller.productForm.addVariant")}</Text>
+              <Text variant="medium" className="text-xs text-brand dark:text-white">{t("seller.productForm.addVariant")}</Text>
             </Pressable>
           </View>
 
           {variantFields.map((field, i) => (
             <View key={field.id} className="gap-2 rounded-xl border border-brand-100 dark:border-[#2A2A2A] bg-white dark:bg-bg-card p-3">
               <View className="flex-row items-center">
-                <Text variant="semibold" className="flex-1 text-xs text-brand">
+                <Text variant="semibold" className="flex-1 text-xs text-brand dark:text-white">
                   {t("seller.productForm.variantLabel", { number: i + 1 })}
                 </Text>
                 <Pressable onPress={() => removeVariant(i)}>
@@ -609,7 +613,7 @@ export function ProductForm({ initial, onSubmit, submitLabel }: Props) {
                                               className="absolute right-1 top-1 h-4 w-4 items-center justify-center rounded-full"
                                               style={{ backgroundColor: c.brand }}
                                             >
-                                              <HugeiconsIcon icon={Tick01Icon} size={10} color="#fff" />
+                                              <HugeiconsIcon icon={Tick01Icon} size={10} color={c.isDark ? "#0A0A0A" : "#fff"} />
                                             </View>
                                           ) : null}
                                         </Pressable>
@@ -625,6 +629,23 @@ export function ProductForm({ initial, onSubmit, submitLabel }: Props) {
                   ) : <></>
                 }
               />
+
+              <View className="gap-1">
+                <Text className="text-xs" style={{ color: c.secondary }}>{t("seller.productForm.variantDescription")}</Text>
+                <Controller
+                  control={control}
+                  name={`variants.${i}.description`}
+                  render={({ field: { onChange, value } }) => (
+                    <Input
+                      placeholder={t("seller.productForm.variantDescriptionPlaceholder")}
+                      value={value}
+                      onChangeText={onChange}
+                      spellCheck={false}
+                      autoCorrect={false}
+                    />
+                  )}
+                />
+              </View>
 
               <View className="flex-row gap-2">
                 <View className="flex-1 gap-1">
@@ -668,28 +689,21 @@ export function ProductForm({ initial, onSubmit, submitLabel }: Props) {
         </View>
 
         {/* Submit */}
-        <Pressable
+        <Button
+          label={submitLabel}
           onPress={handleSubmit(submit)}
-          disabled={submitting}
-          className="flex-row items-center justify-center gap-2 rounded-xl bg-brand py-4"
-          style={{ opacity: submitting ? 0.6 : 1 }}
-        >
-          {submitting ? (
-            <Spinner size={20} color="#fff" trackColor="rgba(255,255,255,0.3)" strokeWidth={2} />
-          ) : (
-            <HugeiconsIcon icon={Tick01Icon} size={18} color="#fff" />
-          )}
-          <Text variant="bold" style={{ color: "#fff" }}>
-            {submitLabel}
-          </Text>
-        </Pressable>
+          loading={submitting}
+          leftIcon={<HugeiconsIcon icon={Tick01Icon} size={18} color={c.isDark ? "#0A0A0A" : "#fff"} />}
+          fullWidth
+          size="lg"
+        />
       </ScrollView>
 
       {/* Category picker modal */}
       <Modal visible={catPickerOpen} animationType="slide" presentationStyle="pageSheet">
         <View className="flex-1 bg-bg-light dark:bg-bg-dark">
           <View className="flex-row items-center justify-between px-6 py-5">
-            <Text variant="bold" className="text-lg text-brand">{t("seller.productForm.selectCategory")}</Text>
+            <Text variant="bold" className="text-lg text-brand dark:text-white">{t("seller.productForm.selectCategory")}</Text>
             <Pressable onPress={() => setCatPickerOpen(false)}>
               <Text variant="medium" className="text-sm" style={{ color: "#FF4D4F" }}>
                 {t("seller.productForm.close")}

@@ -42,6 +42,7 @@ export interface Order {
 export interface PlaceOrderInput {
   address_id: number;
   coupon_code?: string;
+  payment_method?: "cash_on_delivery" | "cliq";
   notes?: string;
   items: Array<{
     product_id: number;
@@ -98,6 +99,24 @@ export function useOrderReviewStatus(orderId: number, enabled = true) {
       return res.data.data;
     },
     enabled: enabled && !!orderId,
+  });
+}
+
+export function useCancelOrder() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ orderId, reason }: { orderId: number; reason?: string }) => {
+      const res = await api.post<{
+        success: boolean;
+        message: string;
+        data: { cancellation_fee: number };
+      }>(`/client/orders/${orderId}/cancel`, { reason });
+      return res.data;
+    },
+    onSuccess: (_, { orderId }) => {
+      qc.invalidateQueries({ queryKey: ["orders", orderId] });
+      qc.invalidateQueries({ queryKey: ["orders"] });
+    },
   });
 }
 

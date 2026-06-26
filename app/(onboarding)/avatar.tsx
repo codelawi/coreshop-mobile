@@ -34,7 +34,7 @@ export default function AvatarStep() {
   const pickAndUpload = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") {
-      toast.error("Media permission denied");
+      toast.error(t("onboarding.avatar.permissionDenied"));
       return;
     }
 
@@ -70,7 +70,7 @@ export default function AvatarStep() {
 
       setUploadedUrl(json.data.url);
     } catch (e: any) {
-      toast.error(e?.message ?? "Upload failed. Please try again.");
+      toast.error(e?.message ?? t("onboarding.avatar.uploadFailed"));
       setPreviewUri(null);
     } finally {
       setUploading(false);
@@ -79,7 +79,7 @@ export default function AvatarStep() {
 
   const onNext = () => {
     if (!uploadedUrl) {
-      toast.error("Please upload a profile photo to continue");
+      toast.error(t("onboarding.avatar.pleaseUpload"));
       return;
     }
     setAvatar(uploadedUrl);
@@ -92,11 +92,11 @@ export default function AvatarStep() {
         <ProgressBar current={1} total={5} />
 
         <Animated.View entering={FadeInDown.duration(500).springify()} className="mt-8">
-          <Text variant="bold" className="text-3xl text-brand">
+          <Text variant="bold" className="text-3xl text-brand dark:text-white">
             {t("onboarding.avatar.title")}
           </Text>
           <Text className="mt-2 text-base" style={{ color: c.secondary }}>
-            Upload a photo so others can recognise you.
+            {t("onboarding.avatar.subtitle")}
           </Text>
         </Animated.View>
 
@@ -144,10 +144,10 @@ export default function AvatarStep() {
 
           <Text className="text-center text-sm" style={{ color: c.secondary }}>
             {uploading
-              ? "Uploading…"
+              ? t("onboarding.avatar.uploading")
               : uploadedUrl
-                ? "Photo uploaded successfully"
-                : "Tap to choose a photo from your gallery"}
+                ? t("onboarding.avatar.uploaded")
+                : t("onboarding.avatar.tapToChoose")}
           </Text>
         </Animated.View>
 

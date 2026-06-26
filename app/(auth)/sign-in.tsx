@@ -38,6 +38,7 @@ export default function SignIn() {
   const router = useRouter();
   const c = useThemeColors();
   const setAuth = useAuthStore((s) => s.setAuth);
+  const continueAsGuest = useAuthStore((s) => s.continueAsGuest);
   const [showPassword, setShowPassword] = useState(false);
   const { ready: googleReady, loading: googleLoading, signInWithGoogle } = useGoogleAuth();
 
@@ -57,7 +58,7 @@ export default function SignIn() {
     },
     onSuccess: async (res) => {
       await setAuth(res.data.user, res.data.token);
-      toast.success("Welcome back");
+      toast.success(t("auth.welcomeBack"));
       router.replace("/");
     },
     onError: async (err: any) => {
@@ -66,7 +67,7 @@ export default function SignIn() {
         await setAuth(body.data.user, body.data.token);
         router.replace("/(auth)/verify-email" as any);
       } else {
-        toast.error(body?.message ?? "Login failed");
+        toast.error(body?.message ?? t("auth.loginFailed"));
       }
     },
   });
@@ -87,7 +88,7 @@ export default function SignIn() {
               entering={FadeInDown.duration(600).springify()}
               className="mb-10"
             >
-              <Text variant="bold" className="text-4xl text-brand">
+              <Text variant="bold" className="text-4xl text-brand dark:text-white">
                 {t("app.name")}
               </Text>
               <Text className="mt-2 text-base" style={{ color: c.secondary }}>
@@ -152,7 +153,7 @@ export default function SignIn() {
 
               <Link href={"/(auth)/forgot-password" as any} asChild>
                 <Pressable className="self-end">
-                  <Text variant="medium" className="text-sm text-brand">
+                  <Text variant="medium" className="text-sm text-brand dark:text-white">
                     {t("auth.forgotPassword")}
                   </Text>
                 </Pressable>
@@ -172,7 +173,7 @@ export default function SignIn() {
                   <View className="my-4 flex-row items-center gap-3">
                     <View className="h-px flex-1 bg-brand-100 dark:bg-[#2A2A2A]" />
                     <Text className="text-xs" style={{ color: c.secondary }}>
-                      OR
+                      {t("auth.or")}
                     </Text>
                     <View className="h-px flex-1 bg-brand-100 dark:bg-[#2A2A2A]" />
                   </View>
@@ -199,10 +200,27 @@ export default function SignIn() {
                 {t("auth.noAccount")}
               </Text>
               <Link href={"/(auth)/sign-up" as any}>
-                <Text variant="semibold" className="text-sm text-brand">
+                <Text variant="semibold" className="text-sm text-brand dark:text-white">
                   {t("auth.signUp")}
                 </Text>
               </Link>
+            </Animated.View>
+
+            <Animated.View
+              entering={FadeInUp.duration(700).delay(500)}
+              className="mt-4 items-center"
+            >
+              <Pressable
+                onPress={() => {
+                  continueAsGuest();
+                  router.replace("/(tabs)/home" as any);
+                }}
+                hitSlop={10}
+              >
+                <Text variant="medium" className="text-sm" style={{ color: c.muted }}>
+                  {t("auth.browseAsGuest")}
+                </Text>
+              </Pressable>
             </Animated.View>
           </View>
         </ScrollView>

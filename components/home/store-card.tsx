@@ -27,10 +27,10 @@ export function StoreCard({ store }: { store: HomeStore }) {
             ) : null}
           </View>
           <View className="flex-1">
-            <Text variant="semibold" numberOfLines={1} className="text-xs text-brand">{store.name}</Text>
+            <Text variant="semibold" numberOfLines={1} className="text-xs text-brand dark:text-white">{store.name}</Text>
             <View className="flex-row items-center gap-1">
               <HugeiconsIcon icon={StarIcon} size={10} color="#F59E0B" />
-              <Text variant="medium" className="text-xs text-brand">{parseFloat(store.rating).toFixed(1)}</Text>
+              <Text variant="medium" className="text-xs text-brand dark:text-white">{parseFloat(store.rating).toFixed(1)}</Text>
             </View>
           </View>
         </View>

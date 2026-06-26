@@ -18,18 +18,41 @@ import { ProductCard } from "@/components/product/product-card";
 import { useStore } from "@/lib/queries/home";
 import { useThemeColors } from "@/lib/theme";
 import { Spinner } from "@/components/ui/spinner";
+import { Button } from "@/components/ui/button";
 
 export default function StoreProfile() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const c = useThemeColors();
-  const { data: store, isLoading } = useStore(id);
+  const { data: store, isLoading, isError, refetch } = useStore(id);
 
-  if (isLoading || !store) {
+  if (isLoading) {
     return (
       <SafeAreaView className="flex-1 bg-bg-light dark:bg-bg-dark">
         <View className="flex-1 items-center justify-center">
           <Spinner size={44} />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (isError || !store) {
+    return (
+      <SafeAreaView className="flex-1 bg-bg-light dark:bg-bg-dark">
+        <View className="flex-row items-center gap-3 px-4 py-3">
+          <Pressable
+            onPress={() => router.back()}
+            className="h-10 w-10 items-center justify-center rounded-full bg-white dark:bg-bg-card"
+          >
+            <HugeiconsIcon icon={ArrowLeft01Icon} size={22} color={c.brand} />
+          </Pressable>
+        </View>
+        <View className="flex-1 items-center justify-center px-8 gap-4">
+          <HugeiconsIcon icon={Store01Icon} size={48} color={c.muted} />
+          <Text variant="semibold" className="text-center text-base text-brand dark:text-white">
+            Could not load store
+          </Text>
+          <Button label="Try Again" onPress={() => refetch()} size="sm" />
         </View>
       </SafeAreaView>
     );

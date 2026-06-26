@@ -1,15 +1,18 @@
-import { View, ScrollView, RefreshControl, Pressable } from "react-native";
+import { View, ScrollView, RefreshControl, Pressable, Modal } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 import { HugeiconsIcon } from "@hugeicons/react-native";
-import { Search01Icon, ShoppingCart01Icon, Notification03Icon } from "@hugeicons/core-free-icons";
+import { Search01Icon, ShoppingCart01Icon, Notification03Icon, Store01Icon } from "@hugeicons/core-free-icons";
+import { useState } from "react";
 
 import { Text } from "@/components/ui/text";
+import { Button } from "@/components/ui/button";
 import { useHome } from "@/lib/queries/home";
 import { useAuthStore } from "@/stores/auth-store";
 import { useUnreadCount } from "@/lib/queries/notifications";
+import { useSellerStore } from "@/lib/queries/seller";
 import { BannerCarousel } from "@/components/home/banner-carousel";
 import { CategoryCircle } from "@/components/home/category-circle";
 import { ProductCard } from "@/components/product/product-card";
@@ -26,6 +29,10 @@ export default function Home() {
   const user = useAuthStore((s) => s.user);
   const { data, isLoading, isRefetching, refetch } = useHome();
   const { data: unreadCount = 0 } = useUnreadCount();
+  const [storeModalDismissed, setStoreModalDismissed] = useState(false);
+  const { data: sellerStore, isLoading: isLoadingStore } = useSellerStore(user?.role === "seller");
+  const showStoreModal =
+    user?.role === "seller" && !isLoadingStore && sellerStore === null && !storeModalDismissed;
 
   if (isLoading) {
     return (
@@ -72,12 +79,31 @@ export default function Home() {
             </View>
           ) : null}
         </Pressable>
-        <Pressable
-          onPress={() => router.push("/(tabs)/cart" as any)}
-          className="h-10 w-10 items-center justify-center rounded-full bg-white dark:bg-bg-card"
-        >
-          <HugeiconsIcon icon={ShoppingCart01Icon} size={22} color={c.brand} />
-        </Pressable>
+        {user?.role === "seller" ? (
+          <Pressable
+            onPress={() => router.push("/seller" as any)}
+            className="h-10 w-10 items-center justify-center rounded-full bg-white dark:bg-bg-card"
+          >
+            <HugeiconsIcon icon={Store01Icon} size={22} color={c.brand} />
+            {(sellerStore?.pending_orders_count ?? 0) > 0 ? (
+              <View
+                className="absolute right-0.5 top-0.5 h-4 min-w-[16px] items-center justify-center rounded-full px-0.5"
+                style={{ backgroundColor: "#FF4D4F" }}
+              >
+                <Text variant="bold" style={{ color: "#fff", fontSize: 8 }}>
+                  {(sellerStore?.pending_orders_count ?? 0) > 9 ? "9+" : sellerStore?.pending_orders_count}
+                </Text>
+              </View>
+            ) : null}
+          </Pressable>
+        ) : (
+          <Pressable
+            onPress={() => router.push("/(tabs)/cart" as any)}
+            className="h-10 w-10 items-center justify-center rounded-full bg-white dark:bg-bg-card"
+          >
+            <HugeiconsIcon icon={ShoppingCart01Icon} size={22} color={c.brand} />
+          </Pressable>
+        )}
       </Animated.View>
 
       <Animated.View entering={FadeInDown.duration(400).delay(80)} className="px-6 pb-3">
@@ -175,6 +201,40 @@ export default function Home() {
           </Animated.View>
         ) : null}
       </ScrollView>
+
+      <Modal visible={showStoreModal} transparent animationType="fade" statusBarTranslucent>
+        <View className="flex-1 justify-end" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+          <View className="mx-4 mb-8 rounded-2xl bg-white dark:bg-bg-card p-6">
+            <View className="mb-4 h-14 w-14 items-center justify-center rounded-2xl bg-brand dark:bg-white">
+              <HugeiconsIcon icon={Store01Icon} size={28} color={c.isDark ? "#0A0A0A" : "#FFFFFF"} />
+            </View>
+            <Text variant="bold" className="text-xl text-brand dark:text-white">
+              {t("seller.storePrompt.modalTitle")}
+            </Text>
+            <Text className="mt-2 text-sm leading-5" style={{ color: c.secondary }}>
+              {t("seller.storePrompt.modalDesc")}
+            </Text>
+            <View className="mt-5 gap-3">
+              <Button
+                label={t("seller.storePrompt.setupNow")}
+                onPress={() => {
+                  setStoreModalDismissed(true);
+                  router.push("/seller/setup" as any);
+                }}
+                fullWidth
+                size="lg"
+              />
+              <Button
+                label={t("seller.storePrompt.later")}
+                variant="outline"
+                onPress={() => setStoreModalDismissed(true)}
+                fullWidth
+                size="lg"
+              />
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }

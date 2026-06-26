@@ -18,9 +18,11 @@ export interface User {
 interface AuthState {
   user: User | null;
   token: string | null;
+  isGuest: boolean;
   isLoading: boolean;
   setAuth: (user: User, token: string) => Promise<void>;
   setUser: (user: User) => void;
+  continueAsGuest: () => void;
   logout: () => Promise<void>;
   hydrate: () => Promise<void>;
 }
@@ -28,15 +30,17 @@ interface AuthState {
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   token: null,
+  isGuest: false,
   isLoading: true,
   setAuth: async (user, token) => {
     await SecureStore.setItemAsync("auth_token", token);
-    set({ user, token, isLoading: false });
+    set({ user, token, isGuest: false, isLoading: false });
   },
   setUser: (user) => set({ user }),
+  continueAsGuest: () => set({ isGuest: true, user: null, token: null }),
   logout: async () => {
     await SecureStore.deleteItemAsync("auth_token");
-    set({ user: null, token: null, isLoading: false });
+    set({ user: null, token: null, isGuest: false, isLoading: false });
   },
   hydrate: async () => {
     const token = await SecureStore.getItemAsync("auth_token");

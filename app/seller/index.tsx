@@ -13,11 +13,13 @@ import {
   Settings02Icon,
   StarIcon,
   MoneyReceive02Icon,
+  Clock01Icon,
 } from "@hugeicons/core-free-icons";
 import { toast } from "sonner-native";
 import { useTranslation } from "react-i18next";
 
 import { Text } from "@/components/ui/text";
+import { Button } from "@/components/ui/button";
 import { useSellerStore, useToggleStoreOpen } from "@/lib/queries/seller";
 import { useThemeColors } from "@/lib/theme";
 import { Spinner } from "@/components/ui/spinner";
@@ -115,13 +117,114 @@ export default function SellerHome() {
           <Text className="mb-8 text-center text-sm leading-5" style={{ color: c.secondary }}>
             {t("seller.setupDesc")}
           </Text>
-          <Pressable
+          <Button
+            label={t("seller.createStore")}
             onPress={() => router.push("/seller/setup" as any)}
-            className="w-full items-center rounded-xl bg-brand py-4"
-          >
-            <Text variant="bold" style={{ color: "#fff" }}>{t("seller.createStore")}</Text>
-          </Pressable>
+            fullWidth
+            size="lg"
+          />
         </Animated.View>
+      </SafeAreaView>
+    );
+  }
+
+  if (store.status === "pending") {
+    return (
+      <SafeAreaView className="flex-1 bg-bg-light dark:bg-bg-dark">
+        <ScrollView
+          contentContainerStyle={{ flexGrow: 1 }}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefetching}
+              onRefresh={refetch}
+              tintColor={c.brand}
+              colors={[c.brand]}
+            />
+          }
+        >
+          {/* Header */}
+          <View className="flex-row items-center gap-3 px-6 py-4">
+            <Pressable onPress={() => router.back()}>
+              <HugeiconsIcon icon={ArrowLeft01Icon} size={24} color={c.brand} />
+            </Pressable>
+            <Text variant="bold" className="flex-1 text-xl text-brand dark:text-white">
+              {t("seller.hub")}
+            </Text>
+            <Pressable onPress={() => router.push("/seller/setup" as any)}>
+              <HugeiconsIcon icon={Settings02Icon} size={22} color={c.brand} />
+            </Pressable>
+          </View>
+
+          <Animated.View
+            entering={FadeInDown.duration(500)}
+            className="flex-1 items-center justify-center px-8 py-16"
+          >
+            {/* Animated clock icon in amber ring */}
+            <View className="mb-8 items-center justify-center">
+              <View
+                className="h-32 w-32 items-center justify-center rounded-full"
+                style={{ backgroundColor: "#FEF3C7" }}
+              >
+                <View
+                  className="h-24 w-24 items-center justify-center rounded-full"
+                  style={{ backgroundColor: "#FDE68A" }}
+                >
+                  <HugeiconsIcon icon={Clock01Icon} size={48} color="#D97706" />
+                </View>
+              </View>
+            </View>
+
+            <Text variant="bold" className="mb-3 text-center text-2xl text-brand dark:text-white">
+              {t("seller.pending.title")}
+            </Text>
+
+            {/* Store name chip */}
+            <View
+              className="mb-5 flex-row items-center gap-2 rounded-full px-4 py-2"
+              style={{ backgroundColor: c.card }}
+            >
+              <HugeiconsIcon icon={Store01Icon} size={16} color={c.secondary} />
+              <Text variant="medium" className="text-sm text-brand dark:text-white">
+                {store.name}
+              </Text>
+            </View>
+
+            <Text className="mb-8 text-center text-sm leading-6" style={{ color: c.secondary }}>
+              {t("seller.pending.desc")}
+            </Text>
+
+            {/* Status badge */}
+            <View
+              className="mb-8 rounded-full px-5 py-2"
+              style={{ backgroundColor: "#FEF3C7" }}
+            >
+              <Text variant="semibold" style={{ color: "#D97706", fontSize: 13 }}>
+                {t("seller.status.pending")}
+              </Text>
+            </View>
+
+            <View className="w-full gap-3">
+              <Button
+                label={t("seller.pending.editInfo")}
+                variant="outline"
+                onPress={() => router.push("/seller/setup" as any)}
+                fullWidth
+                size="lg"
+              />
+              <Button
+                label={t("seller.pending.goHome")}
+                onPress={() => router.replace("/(tabs)/home" as any)}
+                fullWidth
+                size="lg"
+              />
+            </View>
+
+            <Text className="mt-6 text-center text-xs" style={{ color: c.muted }}>
+              {t("seller.pending.hint")}
+            </Text>
+          </Animated.View>
+        </ScrollView>
       </SafeAreaView>
     );
   }
@@ -134,7 +237,7 @@ export default function SellerHome() {
   const statusLabel =
     store.status === "active" ? t("seller.status.active") :
     store.status === "suspended" ? t("seller.status.suspended") :
-    store.status === "pending" ? t("seller.status.pending") : t("seller.status.closed");
+    t("seller.status.closed");
 
   const handleToggleOpen = () => {
     toggleOpen.mutate(undefined, {
@@ -209,13 +312,6 @@ export default function SellerHome() {
             </View>
           </View>
 
-          {store.status === "pending" ? (
-            <View className="mt-4 rounded-lg px-3 py-2.5" style={{ backgroundColor: "#FEF3C7" }}>
-              <Text className="text-xs" style={{ color: "#92400E" }}>
-                {t("seller.storeUnderReview")}
-              </Text>
-            </View>
-          ) : null}
         </Animated.View>
 
         {/* Stats */}
@@ -284,25 +380,25 @@ export default function SellerHome() {
           entering={FadeInUp.duration(400).delay(240)}
           className="mx-6 mt-4 rounded-xl bg-white dark:bg-bg-card p-4 gap-3"
         >
-          <Text variant="semibold" className="text-sm text-brand dark:text-white">Store Info</Text>
+          <Text variant="semibold" className="text-sm text-brand dark:text-white">{t("seller.storeInfo")}</Text>
           {store.description ? (
             <Text className="text-sm leading-5" style={{ color: c.secondary }}>{store.description}</Text>
           ) : null}
           <View className="flex-row gap-4">
             <View className="flex-1">
-              <Text className="text-xs" style={{ color: c.secondary }}>City</Text>
+              <Text className="text-xs" style={{ color: c.secondary }}>{t("seller.city")}</Text>
               <Text variant="medium" className="mt-0.5 text-sm text-brand dark:text-white">
                 {store.city ?? "—"}
               </Text>
             </View>
             <View className="flex-1">
-              <Text className="text-xs" style={{ color: c.secondary }}>Delivery radius</Text>
+              <Text className="text-xs" style={{ color: c.secondary }}>{t("seller.deliveryRadius")}</Text>
               <Text variant="medium" className="mt-0.5 text-sm text-brand dark:text-white">
                 {store.delivery_radius_km} km
               </Text>
             </View>
             <View className="flex-1">
-              <Text className="text-xs" style={{ color: c.secondary }}>Reviews</Text>
+              <Text className="text-xs" style={{ color: c.secondary }}>{t("seller.reviews")}</Text>
               <Text variant="medium" className="mt-0.5 text-sm text-brand dark:text-white">
                 {store.reviews_count}
               </Text>

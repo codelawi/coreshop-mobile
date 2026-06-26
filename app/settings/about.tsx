@@ -106,7 +106,7 @@ export default function About() {
           <AboutRow
             icon={DocumentValidationIcon}
             title={t("settings.termsOfService")}
-            onPress={() => Linking.openURL("https://coreshop.app/terms")}
+            onPress={() => router.push("/settings/terms-of-service" as any)}
             showArrow
             delay={160}
           />
@@ -114,7 +114,7 @@ export default function About() {
           <AboutRow
             icon={SecurityLockIcon}
             title={t("settings.privacyPolicy")}
-            onPress={() => Linking.openURL("https://coreshop.app/privacy")}
+            onPress={() => router.push("/settings/privacy-policy" as any)}
             showArrow
             delay={220}
           />

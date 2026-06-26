@@ -38,7 +38,7 @@ function PermissionCard({ icon, title, desc, granted, onPress, delay, allowLabel
           <HugeiconsIcon icon={icon} size={24} color={c.brand} />
         </View>
         <View className="ml-4 flex-1">
-          <Text variant="semibold" className="text-base text-brand">{title}</Text>
+          <Text variant="semibold" className="text-base text-brand dark:text-white">{title}</Text>
           <Text className="text-xs" style={{ color: c.secondary }}>{desc}</Text>
         </View>
         <Pressable
@@ -94,7 +94,7 @@ export default function PermissionsStep() {
         <ProgressBar current={4} total={5} />
 
         <Animated.View entering={FadeInDown.duration(500).springify()} className="mt-8">
-          <Text variant="bold" className="text-3xl text-brand">
+          <Text variant="bold" className="text-3xl text-brand dark:text-white">
             {t("onboarding.permissions.title")}
           </Text>
           <Text className="mt-2 text-base" style={{ color: c.secondary }}>

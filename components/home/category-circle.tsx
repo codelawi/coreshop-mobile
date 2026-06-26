@@ -21,7 +21,7 @@ export function CategoryCircle({ category }: { category: HomeCategory }) {
           <Image source={{ uri: category.image }} style={{ flex: 1 }} contentFit="cover" />
         ) : null}
       </View>
-      <Text variant="medium" numberOfLines={1} className="mt-1.5 text-center text-xs text-brand">
+      <Text variant="medium" numberOfLines={1} className="mt-1.5 text-center text-xs text-brand dark:text-white">
         {label}
       </Text>
     </Pressable>

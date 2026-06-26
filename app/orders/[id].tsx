@@ -1,7 +1,8 @@
-import { View, ScrollView, Pressable, RefreshControl } from "react-native";
+import { View, ScrollView, Pressable, RefreshControl, Modal } from "react-native";
 import { Image } from "expo-image";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { useState } from "react";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { HugeiconsIcon } from "@hugeicons/react-native";
 import {
@@ -12,11 +13,14 @@ import {
   Store01Icon,
   CreditCardIcon,
   StarIcon,
+  Cancel01Icon,
 } from "@hugeicons/core-free-icons";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner-native";
 
 import { Text } from "@/components/ui/text";
-import { useOrder, useOrderReviewStatus } from "@/lib/queries/orders";
+import { Button } from "@/components/ui/button";
+import { useOrder, useOrderReviewStatus, useCancelOrder } from "@/lib/queries/orders";
 import { useThemeColors } from "@/lib/theme";
 import { Spinner } from "@/components/ui/spinner";
 
@@ -47,6 +51,9 @@ function getTimelineSteps(status: string, t: (key: string) => string) {
   }));
 }
 
+const CANCELLABLE_STATUSES = ["pending", "approved", "preparing", "ready_for_pickup", "assigned"];
+const FEE_STATUSES = ["approved", "preparing", "ready_for_pickup", "assigned", "out_for_delivery"];
+
 export default function OrderDetail() {
   const router = useRouter();
   const c = useThemeColors();
@@ -55,6 +62,11 @@ export default function OrderDetail() {
   const { data: order, isLoading, isRefetching, refetch } = useOrder(Number(id));
   const isReviewable = order?.status === "delivered" || order?.status === "completed";
   const { data: reviewStatus } = useOrderReviewStatus(Number(id), isReviewable);
+  const cancelMutation = useCancelOrder();
+  const [showCancelModal, setShowCancelModal] = useState(false);
+
+  const canCancel = order ? CANCELLABLE_STATUSES.includes(order.status) : false;
+  const hasCancellationFee = order ? FEE_STATUSES.includes(order.status) : false;
 
   if (isLoading || !order) {
     return (
@@ -244,7 +256,14 @@ export default function OrderDetail() {
           <View className="rounded-md bg-white dark:bg-bg-card px-4 py-3">
             <View className="flex-row items-center gap-3 border-b border-brand-100 dark:border-[#2A2A2A] pb-3">
               <HugeiconsIcon icon={CreditCardIcon} size={18} color={c.secondary} />
-              <Text variant="medium" className="flex-1 text-sm text-brand dark:text-white">{t("orders.detail.cashOnDelivery")}</Text>
+              <Text variant="medium" className="flex-1 text-sm text-brand dark:text-white">
+                {order.payment_method === "cliq" ? "CliQ" : t("orders.detail.cashOnDelivery")}
+              </Text>
+              {order.payment_method === "cliq" && (
+                <View className="rounded px-1.5 py-0.5" style={{ backgroundColor: "#006B3F" }}>
+                  <Text style={{ color: "#fff", fontSize: 9, fontFamily: "Manrope_700Bold" }}>CliQ</Text>
+                </View>
+              )}
             </View>
             <View className="mt-3 gap-2">
               <View className="flex-row justify-between">
@@ -328,7 +347,98 @@ export default function OrderDetail() {
             )}
           </Animated.View>
         )}
+        {/* Cancel order */}
+        {canCancel && (
+          <Animated.View entering={FadeInDown.duration(400).delay(340)} className="mx-4 mt-3 mb-4">
+            <Pressable
+              onPress={() => setShowCancelModal(true)}
+              className="flex-row items-center justify-center gap-2 rounded-xl border py-4"
+              style={{ borderColor: "#FF4D4F" }}
+            >
+              <HugeiconsIcon icon={Cancel01Icon} size={18} color="#FF4D4F" />
+              <Text variant="semibold" style={{ color: "#FF4D4F", fontSize: 14 }}>
+                Cancel Order
+              </Text>
+            </Pressable>
+          </Animated.View>
+        )}
       </ScrollView>
+
+      {/* Cancel confirmation modal */}
+      <Modal
+        visible={showCancelModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowCancelModal(false)}
+      >
+        <Pressable
+          className="flex-1 items-center justify-end"
+          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+          onPress={() => setShowCancelModal(false)}
+        >
+          <Pressable
+            className="w-full rounded-t-2xl bg-white dark:bg-bg-card px-6 pb-10 pt-5"
+            onPress={() => {}}
+          >
+            <View className="mb-4 h-1 w-10 self-center rounded-full bg-brand-100 dark:bg-[#3A3A3A]" />
+
+            <View className="mb-1 h-12 w-12 items-center justify-center self-center rounded-full" style={{ backgroundColor: "#FEE2E2" }}>
+              <HugeiconsIcon icon={Cancel01Icon} size={24} color="#EF4444" />
+            </View>
+
+            <Text variant="bold" className="mt-3 text-center text-lg text-brand dark:text-white">
+              Cancel Order?
+            </Text>
+
+            {hasCancellationFee ? (
+              <View className="mt-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+                <Text variant="semibold" className="text-center text-sm" style={{ color: "#EF4444" }}>
+                  Cancellation Fee: JOD 2.00
+                </Text>
+                <Text className="mt-1 text-center text-xs" style={{ color: "#EF4444" }}>
+                  Since your order has already been approved by the store, a JOD 2.00 cancellation fee will apply.
+                </Text>
+              </View>
+            ) : (
+              <Text className="mt-2 text-center text-sm" style={{ color: c.secondary }}>
+                Are you sure you want to cancel this order? This action cannot be undone.
+              </Text>
+            )}
+
+            <View className="mt-5 gap-3">
+              <Button
+                label={hasCancellationFee ? "Cancel Order (JOD 2.00 fee)" : "Yes, Cancel Order"}
+                onPress={() => {
+                  cancelMutation.mutate(
+                    { orderId: Number(id) },
+                    {
+                      onSuccess: () => {
+                        setShowCancelModal(false);
+                        toast.success("Order cancelled.");
+                      },
+                      onError: (err: any) => {
+                        setShowCancelModal(false);
+                        toast.error(err.response?.data?.message ?? "Could not cancel order.");
+                      },
+                    }
+                  );
+                }}
+                loading={cancelMutation.isPending}
+                fullWidth
+                style={{ backgroundColor: "#EF4444" }}
+              />
+              <Pressable
+                onPress={() => setShowCancelModal(false)}
+                className="items-center py-2"
+              >
+                <Text variant="semibold" className="text-sm" style={{ color: c.secondary }}>
+                  Keep Order
+                </Text>
+              </Pressable>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </SafeAreaView>
   );
 }

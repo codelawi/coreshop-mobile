@@ -29,13 +29,13 @@ export function ProgressBar({ current, total }: Props) {
         <Text variant="medium" className="text-xs" style={{ color: c.secondary }}>
           {t("onboarding.stepOf", { current, total })}
         </Text>
-        <Text variant="semibold" className="text-xs text-brand">
+        <Text variant="semibold" className="text-xs text-brand dark:text-white">
           {Math.round((current / total) * 100)}%
         </Text>
       </View>
-      <View className="h-1.5 w-full overflow-hidden rounded-full bg-brand-100">
+      <View className="h-1.5 w-full overflow-hidden rounded-full bg-brand-100 dark:bg-[#2A2A2A]">
         <Animated.View
-          className="h-full rounded-full bg-brand"
+          className="h-full rounded-full bg-brand dark:bg-white"
           style={animatedStyle}
         />
       </View>

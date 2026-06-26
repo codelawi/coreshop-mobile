@@ -1,4 +1,4 @@
-import { View, ScrollView, Pressable, KeyboardAvoidingView, Platform } from "react-native";
+import { View, ScrollView, Pressable, KeyboardAvoidingView, Platform, Modal } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
@@ -15,12 +15,15 @@ import {
   ArrowRight01Icon,
   View as ViewIcon,
   ViewOffSlashIcon,
+  Alert02Icon,
 } from "@hugeicons/core-free-icons";
 import { useLanguageStore } from "@/stores/language-store";
 import { useAuthStore } from "@/stores/auth-store";
+import { useCartStore } from "@/stores/cart-store";
 import { Text } from "@/components/ui/text";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import { useThemeColors } from "@/lib/theme";
 import { api } from "@/lib/api";
 
@@ -50,11 +53,16 @@ export default function AccountSettings() {
   const { language } = useLanguageStore();
   const user = useAuthStore((s) => s.user);
   const setUser = useAuthStore((s) => s.setUser);
+  const logout = useAuthStore((s) => s.logout);
+  const clearCart = useCartStore((s) => s.clear);
   const BackIcon = language === "ar" ? ArrowRight01Icon : ArrowLeft02Icon;
 
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletePassword, setDeletePassword] = useState("");
+  const [showDeletePassword, setShowDeletePassword] = useState(false);
 
   const profileForm = useForm<ProfileForm>({
     resolver: zodResolver(profileSchema),
@@ -91,6 +99,27 @@ export default function AccountSettings() {
     },
     onError: (err: any) => {
       toast.error(err?.response?.data?.message ?? t("settings.toastPasswordError"));
+    },
+  });
+
+  const deleteAccount = useMutation({
+    mutationFn: async () => {
+      await api.delete("/auth/account", { data: { password: deletePassword } });
+    },
+    onSuccess: async () => {
+      setShowDeleteModal(false);
+      toast.success(t("settings.deleteAccountSuccess"));
+      clearCart();
+      await logout();
+      router.replace("/(auth)/sign-in" as any);
+    },
+    onError: (err: any) => {
+      const message = err?.response?.data?.message;
+      toast.error(
+        message?.toLowerCase().includes("password") || err?.response?.status === 422
+          ? t("settings.deleteAccountWrongPassword")
+          : message ?? t("auth.somethingWentWrong")
+      );
     },
   });
 
@@ -245,8 +274,111 @@ export default function AccountSettings() {
               />
             </View>
           </Animated.View>
+
+          {/* Danger Zone */}
+          <Animated.View
+            entering={FadeInUp.duration(400).delay(220)}
+            className="mx-4 mt-4 mb-2 overflow-hidden rounded-xl p-4"
+            style={{ backgroundColor: c.isDark ? "#1A0A0A" : "#FFF5F5", borderWidth: 1, borderColor: c.isDark ? "#3A1010" : "#FEE2E2" }}
+          >
+            <Text variant="semibold" className="mb-1 text-sm" style={{ color: "#FF4D4F" }}>
+              {t("settings.deleteAccountDesc")}
+            </Text>
+            <Pressable
+              onPress={() => {
+                setDeletePassword("");
+                setShowDeleteModal(true);
+              }}
+              className="mt-3 flex-row items-center gap-2 self-start rounded-lg px-4 py-2.5"
+              style={{ backgroundColor: c.isDark ? "#2D1010" : "#FEE2E2" }}
+            >
+              <HugeiconsIcon icon={Alert02Icon} size={16} color="#FF4D4F" />
+              <Text variant="semibold" style={{ color: "#FF4D4F", fontSize: 13 }}>
+                {t("settings.deleteAccount")}
+              </Text>
+            </Pressable>
+          </Animated.View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* Delete Account Modal */}
+      <Modal
+        visible={showDeleteModal}
+        transparent
+        animationType="fade"
+        statusBarTranslucent
+        onRequestClose={() => setShowDeleteModal(false)}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          className="flex-1 justify-end"
+          style={{ backgroundColor: "rgba(0,0,0,0.6)" }}
+        >
+          <View className="mx-4 mb-8 rounded-2xl bg-white dark:bg-bg-card p-6">
+            <View
+              className="mb-4 h-12 w-12 items-center justify-center rounded-xl"
+              style={{ backgroundColor: c.isDark ? "#2D1010" : "#FEE2E2" }}
+            >
+              <HugeiconsIcon icon={Alert02Icon} size={24} color="#FF4D4F" />
+            </View>
+
+            <Text variant="bold" className="text-lg text-brand dark:text-white">
+              {t("settings.deleteAccountTitle")}
+            </Text>
+            <Text className="mt-2 text-sm leading-5" style={{ color: c.secondary }}>
+              {t("settings.deleteAccountWarning")}
+            </Text>
+
+            <View className="mt-5">
+              <Input
+                label={t("settings.deleteAccountPasswordLabel")}
+                value={deletePassword}
+                onChangeText={setDeletePassword}
+                secureTextEntry={!showDeletePassword}
+                autoCapitalize="none"
+                spellCheck={false}
+                autoCorrect={false}
+                rightIcon={
+                  <Pressable onPress={() => setShowDeletePassword((p) => !p)} hitSlop={10}>
+                    <HugeiconsIcon
+                      icon={showDeletePassword ? ViewOffSlashIcon : ViewIcon}
+                      size={20}
+                      color={c.muted}
+                    />
+                  </Pressable>
+                }
+              />
+            </View>
+
+            <View className="mt-4 gap-3">
+              <Pressable
+                onPress={() => deleteAccount.mutate()}
+                disabled={deletePassword.length < 1 || deleteAccount.isPending}
+                className="h-14 w-full items-center justify-center rounded-md"
+                style={{
+                  backgroundColor: "#FF4D4F",
+                  opacity: deletePassword.length < 1 ? 0.5 : 1,
+                }}
+              >
+                {deleteAccount.isPending ? (
+                  <Spinner size={22} color="#fff" trackColor="#ffffff40" strokeWidth={2} />
+                ) : (
+                  <Text variant="semibold" style={{ color: "#fff", fontSize: 16 }}>
+                    {t("settings.deleteAccountConfirm")}
+                  </Text>
+                )}
+              </Pressable>
+              <Button
+                label={t("common.cancel")}
+                variant="outline"
+                onPress={() => setShowDeleteModal(false)}
+                disabled={deleteAccount.isPending}
+                fullWidth
+              />
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </SafeAreaView>
   );
 }

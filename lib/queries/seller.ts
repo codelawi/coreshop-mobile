@@ -47,6 +47,7 @@ export interface SellerProduct {
     size: string | null;
     color: string | null;
     color_hex: string | null;
+    description: string | null;
     image_url: string | null;
     sku: string | null;
     price_adjustment: string;
@@ -119,6 +120,7 @@ export interface CreateProductInput {
     size?: string;
     color?: string;
     color_hex?: string;
+    description?: string;
     image_url?: string;
     sku?: string;
     price_adjustment?: number;
@@ -126,13 +128,14 @@ export interface CreateProductInput {
   }>;
 }
 
-export function useSellerStore() {
+export function useSellerStore(enabled = true) {
   return useQuery({
     queryKey: ["seller", "store"],
     queryFn: async () => {
       const res = await api.get<{ success: boolean; data: SellerStore | null }>("/seller/store");
       return res.data.data;
     },
+    enabled,
   });
 }
 

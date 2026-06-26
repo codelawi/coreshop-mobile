@@ -30,7 +30,7 @@ export default function NewProduct() {
         <Pressable onPress={() => router.back()}>
           <HugeiconsIcon icon={ArrowLeft01Icon} size={24} color={c.brand} />
         </Pressable>
-        <Text variant="bold" className="flex-1 text-xl text-brand">{t("seller.newProduct.pageTitle")}</Text>
+        <Text variant="bold" className="flex-1 text-xl text-brand dark:text-white">{t("seller.newProduct.pageTitle")}</Text>
       </View>
 
       <ProductForm onSubmit={handleSubmit} submitLabel={t("seller.newProduct.submitLabel")} />

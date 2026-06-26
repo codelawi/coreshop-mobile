@@ -24,6 +24,7 @@ import { toast } from "sonner-native";
 import { useColorScheme } from "nativewind";
 
 import { Text } from "@/components/ui/text";
+import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/stores/auth-store";
 import { useLanguageStore } from "@/stores/language-store";
 import { useCartStore } from "@/stores/cart-store";
@@ -52,7 +53,7 @@ function Row({ icon, label, value, onPress, danger, badge }: RowProps) {
     <Pressable onPress={onPress} className="flex-row items-center gap-3 px-4 py-4">
       <View
         className="h-10 w-10 items-center justify-center rounded-md"
-        style={{ backgroundColor: danger ? "#FEE2E2" : c.brandLight }}
+        style={{ backgroundColor: danger ? (c.isDark ? "#2D1010" : "#FEE2E2") : c.brandLight }}
       >
         <HugeiconsIcon icon={icon} size={20} color={danger ? "#FF4D4F" : c.brand} />
       </View>
@@ -86,6 +87,7 @@ export default function Profile() {
   const router = useRouter();
   const c = useThemeColors();
   const user = useAuthStore((s) => s.user);
+  const isGuest = useAuthStore((s) => s.isGuest);
   const logout = useAuthStore((s) => s.logout);
   const { language, setLanguage } = useLanguageStore();
   const clearCart = useCartStore((s) => s.clear);
@@ -153,6 +155,65 @@ export default function Profile() {
       { text: t("common.cancel"), style: "cancel" },
     ]);
   };
+
+  if (isGuest) {
+    return (
+      <SafeAreaView className="flex-1 bg-bg-light dark:bg-bg-dark" edges={["top"]}>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }}>
+          <View className="px-6 pb-4 pt-4">
+            <Text variant="bold" className="text-2xl text-brand dark:text-white">{t("profile.title")}</Text>
+          </View>
+
+          <Animated.View
+            entering={FadeInUp.duration(400)}
+            className="mx-6 flex-row items-center gap-4 rounded-md bg-white dark:bg-bg-card p-4"
+          >
+            <View className="h-16 w-16 items-center justify-center rounded-full bg-brand-50 dark:bg-[#2A2A2A]">
+              <HugeiconsIcon icon={UserIcon} size={28} color={c.brand} />
+            </View>
+            <View className="flex-1">
+              <Text variant="bold" className="text-base text-brand dark:text-white">{t("profile.guest")}</Text>
+              <Text className="text-xs" style={{ color: c.secondary }}>{t("profile.guestSubtitle")}</Text>
+            </View>
+          </Animated.View>
+
+          <Animated.View entering={FadeInUp.duration(400).delay(80)} className="mx-6 mt-4 gap-3">
+            <Button
+              label={t("auth.signIn")}
+              onPress={() => router.push("/(auth)/sign-in" as any)}
+              fullWidth
+              size="lg"
+            />
+            <Button
+              label={t("auth.createAccount")}
+              variant="outline"
+              onPress={() => router.push("/(auth)/sign-up" as any)}
+              fullWidth
+              size="lg"
+            />
+          </Animated.View>
+
+          <Animated.View
+            entering={FadeInUp.duration(400).delay(160)}
+            className="mx-6 mt-4 overflow-hidden rounded-md bg-white dark:bg-bg-card"
+          >
+            <Row
+              icon={Globe02Icon}
+              label={t("profile.language")}
+              value={language === "en" ? t("profile.langEnglish") : t("profile.langArabic")}
+              onPress={switchLanguage}
+            />
+            <View className="ml-16 h-px bg-brand-100 dark:bg-[#2A2A2A]" />
+            <Row icon={Moon02Icon} label={t("profile.theme")} value={themeLabels[mode]} onPress={switchTheme} />
+          </Animated.View>
+
+          <Text className="mt-6 text-center text-xs" style={{ color: c.muted }}>
+            CoreShop v1.0.0
+          </Text>
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView className="flex-1 bg-bg-light dark:bg-bg-dark" edges={["top"]}>

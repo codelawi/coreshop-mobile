@@ -16,12 +16,14 @@ import {
 import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
 import { useCartStore } from "@/stores/cart-store";
+import { useAuthStore } from "@/stores/auth-store";
 import { useThemeColors } from "@/lib/theme";
 
 export default function Cart() {
   const { t } = useTranslation();
   const router = useRouter();
   const c = useThemeColors();
+  const isGuest = useAuthStore((s) => s.isGuest);
   const items = useCartStore((s) => s.items);
   const storeName = useCartStore((s) => s.storeName);
   const setQty = useCartStore((s) => s.setQty);
@@ -36,6 +38,45 @@ export default function Cart() {
       { text: t("cart.clear"), style: "destructive", onPress: clear },
     ]);
   };
+
+  if (isGuest) {
+    return (
+      <SafeAreaView className="flex-1 bg-bg-light dark:bg-bg-dark" edges={["top"]}>
+        <View className="px-6 pt-4">
+          <Text variant="bold" className="text-2xl text-brand dark:text-white">{t("cart.title")}</Text>
+        </View>
+        <Animated.View
+          entering={FadeInUp.duration(400)}
+          className="flex-1 items-center justify-center px-6"
+        >
+          <View className="h-24 w-24 items-center justify-center rounded-full bg-brand-50 dark:bg-[#2A2A2A]">
+            <HugeiconsIcon icon={ShoppingCart01Icon} size={40} color={c.brand} />
+          </View>
+          <Text variant="bold" className="mt-4 text-lg text-brand dark:text-white">
+            {t("cart.guestTitle")}
+          </Text>
+          <Text className="mt-1 text-center text-sm" style={{ color: c.secondary }}>
+            {t("cart.guestDesc")}
+          </Text>
+          <View className="mt-6 w-full gap-3">
+            <Button
+              label={t("auth.signIn")}
+              onPress={() => router.push("/(auth)/sign-in" as any)}
+              fullWidth
+              size="lg"
+            />
+            <Button
+              label={t("auth.createAccount")}
+              variant="outline"
+              onPress={() => router.push("/(auth)/sign-up" as any)}
+              fullWidth
+              size="lg"
+            />
+          </View>
+        </Animated.View>
+      </SafeAreaView>
+    );
+  }
 
   if (items.length === 0) {
     return (

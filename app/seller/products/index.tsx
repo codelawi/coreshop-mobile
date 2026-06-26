@@ -16,6 +16,7 @@ import { toast } from "sonner-native";
 import { useTranslation } from "react-i18next";
 
 import { Text } from "@/components/ui/text";
+import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { useSellerProducts, useDeleteProduct } from "@/lib/queries/seller";
 import { useThemeColors } from "@/lib/theme";
@@ -127,9 +128,9 @@ export default function SellerProducts() {
         <Text variant="bold" className="flex-1 text-xl text-brand dark:text-white">{t("seller.products.title")}</Text>
         <Pressable
           onPress={() => router.push("/seller/products/new" as any)}
-          className="h-9 w-9 items-center justify-center rounded-xl bg-brand"
+          className="h-9 w-9 items-center justify-center rounded-xl bg-brand dark:bg-white"
         >
-          <HugeiconsIcon icon={Add01Icon} size={20} color="#fff" />
+          <HugeiconsIcon icon={Add01Icon} size={20} color={c.isDark ? "#0A0A0A" : "#fff"} />
         </Pressable>
       </View>
 
@@ -181,12 +182,11 @@ export default function SellerProducts() {
           <Text className="text-center text-sm" style={{ color: c.secondary }}>
             {t("seller.products.noProductsDesc")}
           </Text>
-          <Pressable
+          <Button
+            label={t("seller.products.addProduct")}
             onPress={() => router.push("/seller/products/new" as any)}
-            className="rounded-xl bg-brand px-6 py-3"
-          >
-            <Text variant="bold" style={{ color: "#fff" }}>{t("seller.products.addProduct")}</Text>
-          </Pressable>
+            size="lg"
+          />
         </Animated.View>
       ) : (
         <ScrollView
