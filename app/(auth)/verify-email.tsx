@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 import { HugeiconsIcon } from "@hugeicons/react-native";
-import { Mail01Icon, Refresh01Icon, Tick02Icon } from "@hugeicons/core-free-icons";
+import { Mail01Icon, Refresh01Icon, Tick02Icon, Logout01Icon } from "@hugeicons/core-free-icons";
 import { toast } from "sonner-native";
 import { useTranslation } from "react-i18next";
 
@@ -22,6 +22,7 @@ export default function VerifyEmail() {
   const c = useThemeColors();
   const user = useAuthStore((s) => s.user);
   const setUser = useAuthStore((s) => s.setUser);
+  const logout = useAuthStore((s) => s.logout);
   const [checking, setChecking] = useState(false);
 
   const resendMutation = useMutation({
@@ -105,11 +106,20 @@ export default function VerifyEmail() {
 
         <Animated.View
           entering={FadeInUp.duration(500).delay(200)}
-          className="absolute bottom-10 items-center"
+          className="absolute bottom-10 items-center gap-2"
         >
           <Text className="text-xs text-center leading-4" style={{ color: c.muted }}>
             {t("auth.didntGetIt")}
           </Text>
+          <Pressable
+            onPress={async () => { await logout(); router.replace("/(auth)/sign-in" as any); }}
+            className="flex-row items-center gap-1.5 py-2"
+          >
+            <HugeiconsIcon icon={Logout01Icon} size={14} color="#FF4D4F" />
+            <Text variant="medium" className="text-xs" style={{ color: "#FF4D4F" }}>
+              {t("profile.logout")}
+            </Text>
+          </Pressable>
         </Animated.View>
       </View>
     </SafeAreaView>

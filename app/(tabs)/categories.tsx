@@ -54,7 +54,7 @@ export default function Categories() {
         <ScrollView
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingVertical: 8 }}
-          style={{ width: 96, backgroundColor: c.card }}
+          style={{ width: 72, backgroundColor: c.card }}
         >
           {data?.map((cat) => {
             const isActive = cat.id === activeId;

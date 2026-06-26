@@ -28,7 +28,7 @@ import { Button } from "@/components/ui/button";
 import { useCartStore } from "@/stores/cart-store";
 import { useAddresses } from "@/lib/queries/addresses";
 import type { Address } from "@/lib/queries/addresses";
-import { useStore } from "@/lib/queries/home";
+import { useStore, useFeeSettings } from "@/lib/queries/home";
 import { usePlaceOrder } from "@/lib/queries/orders";
 import { useThemeColors } from "@/lib/theme";
 import { Spinner } from "@/components/ui/spinner";
@@ -52,8 +52,8 @@ function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): nu
   return R * 2 * Math.asin(Math.sqrt(a));
 }
 
-function deliveryFeeFor(distanceKm: number): number {
-  return Math.round(Math.max(1.0, 1.0 + distanceKm * 0.3) * 100) / 100;
+function deliveryFeeFor(distanceKm: number, feePerKm: number, minimum: number): number {
+  return Math.round(Math.max(minimum, minimum + distanceKm * feePerKm) * 100) / 100;
 }
 
 export default function Checkout() {
@@ -67,6 +67,7 @@ export default function Checkout() {
 
   const { data: addresses, isLoading: addressesLoading } = useAddresses();
   const { data: storeDetail } = useStore(storeId ?? 0);
+  const { data: feeSettings } = useFeeSettings();
   const placeOrderMutation = usePlaceOrder();
 
   const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
@@ -84,14 +85,16 @@ export default function Checkout() {
     if (!storeDetail || !activeAddress) {
       return { distanceKm: null, deliveryFee: null };
     }
+    const feePerKm = feeSettings?.delivery_fee_per_km ?? 0.3;
+    const minimum = feeSettings?.delivery_fee_minimum ?? 1.0;
     const d = haversineKm(
       parseFloat(storeDetail.latitude),
       parseFloat(storeDetail.longitude),
       parseFloat(activeAddress.latitude),
       parseFloat(activeAddress.longitude),
     );
-    return { distanceKm: d, deliveryFee: deliveryFeeFor(d) };
-  }, [storeDetail, activeAddress]);
+    return { distanceKm: d, deliveryFee: deliveryFeeFor(d, feePerKm, minimum) };
+  }, [storeDetail, activeAddress, feeSettings]);
 
   const discount = appliedCoupon?.discount ?? 0;
   const total = subtotal - discount + (deliveryFee ?? 0);

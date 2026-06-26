@@ -98,7 +98,7 @@ export default function SellerHome() {
     return (
       <SafeAreaView className="flex-1 bg-bg-light dark:bg-bg-dark">
         <View className="flex-row items-center gap-3 px-6 py-4">
-          <Pressable onPress={() => router.back()}>
+          <Pressable onPress={() => router.replace("/(tabs)/home" as any)}>
             <HugeiconsIcon icon={ArrowLeft01Icon} size={24} color={c.brand} />
           </Pressable>
           <Text variant="bold" className="text-xl text-brand dark:text-white">{t("seller.hub")}</Text>
@@ -145,7 +145,7 @@ export default function SellerHome() {
         >
           {/* Header */}
           <View className="flex-row items-center gap-3 px-6 py-4">
-            <Pressable onPress={() => router.back()}>
+            <Pressable onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)/home" as any)}>
               <HugeiconsIcon icon={ArrowLeft01Icon} size={24} color={c.brand} />
             </Pressable>
             <Text variant="bold" className="flex-1 text-xl text-brand dark:text-white">

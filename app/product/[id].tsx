@@ -4,7 +4,7 @@ import {
   Pressable,
   Dimensions,
   Alert,
-  Modal,
+  Share,
 } from "react-native";
 import { useRef } from "react";
 import { Image } from "expo-image";
@@ -14,6 +14,7 @@ import { useState, useEffect } from "react";
 import Animated, {
   FadeInDown,
   FadeInUp,
+  FadeOut,
   useSharedValue,
   useAnimatedStyle,
   withTiming,
@@ -66,9 +67,20 @@ export default function ProductDetail() {
   const { data: product, isLoading } = useProduct(id);
   const [imageIndex, setImageIndex] = useState(0);
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
-  const [tooltipVariant, setTooltipVariant] = useState<ProductVariant | null>(null);
   const [qty, setQty] = useState(1);
   const imageScrollRef = useRef<ScrollView>(null);
+  const [tooltip, setTooltip] = useState<{ variant: ProductVariant; centerX: number; topY: number } | null>(null);
+  const tooltipTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const variantRefs = useRef<Record<number, View | null>>({});
+
+  const showTooltip = (v: ProductVariant, ref: View | null) => {
+    if (!v.description || !ref) return;
+    ref.measureInWindow((x, y, w) => {
+      if (tooltipTimer.current) clearTimeout(tooltipTimer.current);
+      setTooltip({ variant: v, centerX: x + w / 2, topY: y });
+      tooltipTimer.current = setTimeout(() => setTooltip(null), 2500);
+    });
+  };
 
   const cartAdd = useCartStore((s) => s.add);
   const cartForceAdd = useCartStore((s) => s.forceAdd);
@@ -146,6 +158,17 @@ export default function ProductDetail() {
     }
   };
 
+  const handleShare = async () => {
+    try {
+      await Share.share({
+        title: product.name,
+        message: `${product.name}\nPrice: JOD ${Number(product.price).toFixed(2)}${product.store?.name ? `\nSold by ${product.store.name}` : ""}\n\nFind it on CoreShop!`,
+      });
+    } catch {
+      // user dismissed share sheet
+    }
+  };
+
   return (
     <View className="flex-1 bg-bg-light dark:bg-bg-dark">
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
@@ -178,7 +201,7 @@ export default function ProductDetail() {
                 <HugeiconsIcon icon={ArrowLeft01Icon} size={22} color={c.brand} />
               </Pressable>
               <View className="flex-row gap-2">
-                <Pressable className="h-10 w-10 items-center justify-center rounded-full bg-white dark:bg-bg-card">
+                <Pressable onPress={handleShare} className="h-10 w-10 items-center justify-center rounded-full bg-white dark:bg-bg-card">
                   <HugeiconsIcon icon={Share01Icon} size={20} color={c.brand} />
                 </Pressable>
                 <Pressable className="h-10 w-10 items-center justify-center rounded-full bg-white dark:bg-bg-card">
@@ -279,10 +302,12 @@ export default function ProductDetail() {
                 return (
                   <Pressable
                     key={v.id}
+                    ref={(r) => { variantRefs.current[v.id] = r; }}
                     disabled={disabled}
-                    onPress={() => setSelectedVariant(v)}
-                    onLongPress={() => v.description ? setTooltipVariant(v) : null}
-                    delayLongPress={300}
+                    onPress={() => {
+                      setSelectedVariant(v);
+                      showTooltip(v, variantRefs.current[v.id]);
+                    }}
                     className={`min-w-[48px] items-center justify-center rounded-md border px-3 py-2 ${
                       active ? "border-brand bg-brand" : "border-brand-100 dark:border-[#3A3A3A] bg-white dark:bg-[#2A2A2A]"
                     } ${disabled ? "opacity-40" : ""}`}
@@ -293,12 +318,6 @@ export default function ProductDetail() {
                     >
                       {v.size}
                     </Text>
-                    {v.description ? (
-                      <View
-                        className="absolute -right-1 -top-1 h-2 w-2 rounded-full"
-                        style={{ backgroundColor: "#6366F1" }}
-                      />
-                    ) : null}
                   </Pressable>
                 );
               })}
@@ -316,20 +335,12 @@ export default function ProductDetail() {
                   <Pressable
                     key={v.id}
                     onPress={() => selectColorVariant(v)}
-                    onLongPress={() => v.description ? setTooltipVariant(v) : null}
-                    delayLongPress={300}
                     className={`h-10 w-10 items-center justify-center rounded-full border-2 ${
                       active ? "border-brand" : "border-brand-100 dark:border-[#3A3A3A]"
                     }`}
                     style={{ backgroundColor: v.color_hex ?? "#ddd" }}
                   >
                     {active ? <HugeiconsIcon icon={Tick02Icon} size={16} color="#fff" /> : null}
-                    {v.description && !active ? (
-                      <View
-                        className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border border-white"
-                        style={{ backgroundColor: "#6366F1" }}
-                      />
-                    ) : null}
                   </Pressable>
                 );
               })}
@@ -433,47 +444,59 @@ export default function ProductDetail() {
         })()}
       </ScrollView>
 
-      {/* Variant description tooltip */}
-      <Modal
-        visible={!!tooltipVariant}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setTooltipVariant(null)}
-      >
+      {tooltip ? (
         <Pressable
-          className="flex-1 items-center justify-end"
-          style={{ backgroundColor: "rgba(0,0,0,0.4)" }}
-          onPress={() => setTooltipVariant(null)}
+          style={{ position: "absolute", inset: 0 }}
+          onPress={() => setTooltip(null)}
         >
-          <Pressable
-            className="w-full rounded-t-2xl bg-white dark:bg-bg-card px-6 pb-10 pt-5"
-            onPress={() => {}}
+          <Animated.View
+            entering={FadeInUp.duration(180)}
+            exiting={FadeOut.duration(150)}
+            style={{
+              position: "absolute",
+              left: Math.min(Math.max(tooltip.centerX - 110, 12), width - 232),
+              top: tooltip.topY - 72,
+              width: 220,
+              backgroundColor: c.isDark ? "#1E1E2E" : "#0A0A0A",
+              borderRadius: 10,
+              paddingHorizontal: 12,
+              paddingVertical: 8,
+              shadowColor: "#000",
+              shadowOpacity: 0.25,
+              shadowRadius: 8,
+              shadowOffset: { width: 0, height: 4 },
+              elevation: 8,
+            }}
           >
-            <View className="mb-4 h-1 w-10 self-center rounded-full bg-brand-100 dark:bg-[#3A3A3A]" />
-            {tooltipVariant?.size ? (
-              <Text variant="semibold" className="mb-1 text-xs" style={{ color: c.secondary }}>
-                {t("product.size")}: {tooltipVariant.size}
+            {(tooltip.variant.size || tooltip.variant.color) ? (
+              <Text variant="semibold" style={{ color: "#ffffff80", fontSize: 10, marginBottom: 2 }}>
+                {tooltip.variant.size ?? tooltip.variant.color}
               </Text>
             ) : null}
-            {tooltipVariant?.color ? (
-              <View className="mb-1 flex-row items-center gap-2">
-                {tooltipVariant.color_hex ? (
-                  <View
-                    className="h-4 w-4 rounded-full"
-                    style={{ backgroundColor: tooltipVariant.color_hex }}
-                  />
-                ) : null}
-                <Text variant="semibold" className="text-xs" style={{ color: c.secondary }}>
-                  {tooltipVariant.color}
-                </Text>
-              </View>
-            ) : null}
-            <Text variant="bold" className="mt-2 text-base text-brand dark:text-white">
-              {tooltipVariant?.description}
+            <Text variant="medium" style={{ color: "#fff", fontSize: 12, lineHeight: 17 }}>
+              {tooltip.variant.description}
             </Text>
-          </Pressable>
+            <View
+              style={{
+                position: "absolute",
+                bottom: -6,
+                left: Math.min(
+                  Math.max(tooltip.centerX - Math.min(Math.max(tooltip.centerX - 110, 12), width - 232) - 6, 10),
+                  200
+                ),
+                width: 0,
+                height: 0,
+                borderLeftWidth: 6,
+                borderRightWidth: 6,
+                borderTopWidth: 6,
+                borderLeftColor: "transparent",
+                borderRightColor: "transparent",
+                borderTopColor: c.isDark ? "#1E1E2E" : "#0A0A0A",
+              }}
+            />
+          </Animated.View>
         </Pressable>
-      </Modal>
+      ) : null}
 
       <SafeAreaView edges={["bottom"]} className="absolute bottom-0 left-0 right-0 bg-white dark:bg-bg-card">
         <Animated.View entering={FadeInDown.duration(500)} className="flex-row items-center gap-3 border-t border-brand-100 dark:border-[#2A2A2A] px-5 py-3">

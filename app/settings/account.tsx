@@ -1,4 +1,5 @@
 import { View, ScrollView, Pressable, KeyboardAvoidingView, Platform, Modal } from "react-native";
+import { Image } from "expo-image";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
@@ -9,6 +10,9 @@ import { z } from "zod";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
+import * as ImagePicker from "expo-image-picker";
+import * as FileSystem from "expo-file-system/legacy";
+import * as SecureStore from "expo-secure-store";
 import { HugeiconsIcon } from "@hugeicons/react-native";
 import {
   ArrowLeft02Icon,
@@ -16,6 +20,8 @@ import {
   View as ViewIcon,
   ViewOffSlashIcon,
   Alert02Icon,
+  UserIcon,
+  ImageUpload01Icon,
 } from "@hugeicons/core-free-icons";
 import { useLanguageStore } from "@/stores/language-store";
 import { useAuthStore } from "@/stores/auth-store";
@@ -25,7 +31,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { useThemeColors } from "@/lib/theme";
-import { api } from "@/lib/api";
+import { api, API_URL } from "@/lib/api";
 
 const profileSchema = z.object({
   name: z.string().min(2, "Name is too short"),
@@ -63,6 +69,57 @@ export default function AccountSettings() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deletePassword, setDeletePassword] = useState("");
   const [showDeletePassword, setShowDeletePassword] = useState(false);
+
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [avatarUploading, setAvatarUploading] = useState(false);
+
+  const pickAndUploadAvatar = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      toast.error("Media library permission is required.");
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+
+    if (result.canceled) return;
+
+    const asset = result.assets[0];
+    setAvatarPreview(asset.uri);
+    setAvatarUploading(true);
+
+    try {
+      const token = await SecureStore.getItemAsync("auth_token");
+      const upload = await FileSystem.uploadAsync(
+        `${API_URL}/upload/avatar`,
+        asset.uri,
+        {
+          httpMethod: "POST",
+          uploadType: FileSystem.FileSystemUploadType.MULTIPART,
+          fieldName: "avatar",
+          headers: { Authorization: `Bearer ${token ?? ""}` },
+        }
+      );
+
+      const json = JSON.parse(upload.body);
+      if (upload.status >= 400) throw new Error(json?.message ?? "Upload failed");
+
+      const avatarUrl: string = json.data.url;
+      const res = await api.patch("/auth/profile", { avatar: avatarUrl });
+      setUser(res.data.data);
+      toast.success(t("settings.toastProfileSaved"));
+    } catch (e: any) {
+      toast.error(e?.message ?? "Avatar upload failed.");
+      setAvatarPreview(null);
+    } finally {
+      setAvatarUploading(false);
+    }
+  };
 
   const profileForm = useForm<ProfileForm>({
     resolver: zodResolver(profileSchema),
@@ -154,6 +211,39 @@ export default function AccountSettings() {
             <Text variant="semibold" className="mb-4 text-base text-brand dark:text-white">
               {t("settings.account")}
             </Text>
+
+            {/* Avatar picker */}
+            <View className="mb-4 items-center">
+              <Pressable onPress={pickAndUploadAvatar} disabled={avatarUploading}>
+                <View className="relative">
+                  {avatarPreview || user?.avatar ? (
+                    <Image
+                      source={{ uri: avatarPreview ?? user!.avatar! }}
+                      style={{ width: 80, height: 80, borderRadius: 40 }}
+                      contentFit="cover"
+                    />
+                  ) : (
+                    <View
+                      className="h-20 w-20 items-center justify-center rounded-full"
+                      style={{ backgroundColor: c.card }}
+                    >
+                      <HugeiconsIcon icon={UserIcon} size={36} color={c.secondary} />
+                    </View>
+                  )}
+                  <View
+                    className="absolute bottom-0 right-0 h-7 w-7 items-center justify-center rounded-full"
+                    style={{ backgroundColor: c.brand }}
+                  >
+                    {avatarUploading ? (
+                      <Spinner size={14} color="#fff" strokeWidth={2} />
+                    ) : (
+                      <HugeiconsIcon icon={ImageUpload01Icon} size={14} color="#fff" />
+                    )}
+                  </View>
+                </View>
+              </Pressable>
+            </View>
+
             <View className="gap-4">
               <Controller
                 control={profileForm.control}

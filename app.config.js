@@ -5,7 +5,7 @@ export default {
     scheme: "coreshop",
     version: "1.0.0",
     orientation: "portrait",
-    icon: "./assets/coreshop.png",
+    icon: "./assets/logo.png",
     userInterfaceStyle: "automatic",
     newArchEnabled: true,
     splash: {
@@ -30,7 +30,7 @@ export default {
     },
     android: {
       adaptiveIcon: {
-        foregroundImage: "./assets/coreshop.png",
+        foregroundImage: "./assets/logo.png",
         backgroundColor: "#0A0A0A",
       },
       edgeToEdgeEnabled: true,

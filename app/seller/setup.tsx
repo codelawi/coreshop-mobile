@@ -234,11 +234,12 @@ export default function SellerSetup() {
       if (isEditing) {
         await updateStore.mutateAsync(payload);
         toast.success(t("seller.setup.storeUpdated"));
+        router.replace("/seller" as any);
       } else {
         await createStore.mutateAsync(payload);
         toast.success(t("seller.setup.storeCreated"));
+        router.replace("/(tabs)/home" as any);
       }
-      router.replace("/seller" as any);
     } catch (err: any) {
       const msg = err?.response?.data?.message ?? t("seller.setup.somethingWentWrong");
       toast.error(msg);

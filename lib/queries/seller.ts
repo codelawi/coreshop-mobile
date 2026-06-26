@@ -146,7 +146,10 @@ export function useCreateStore() {
       const res = await api.post<{ success: boolean; data: SellerStore }>("/seller/store", data);
       return res.data.data;
     },
-    onSuccess: (store) => qc.setQueryData(["seller", "store"], store),
+    onSuccess: (store) => {
+      qc.setQueryData(["seller", "store"], store);
+      qc.invalidateQueries({ queryKey: ["seller", "store"] });
+    },
   });
 }
 

@@ -36,6 +36,7 @@ export function Button({
   rightIcon,
   fullWidth,
   className,
+  style,
   ...props
 }: Props) {
   const { colorScheme } = useColorScheme();
@@ -73,7 +74,7 @@ export function Button({
         scale.value = withTiming(1, { duration: 120 });
         opacity.value = withTiming(1, { duration: 120 });
       }}
-      style={[animatedStyle, { justifyContent: "center", alignItems: "center" }]}
+      style={[animatedStyle, { justifyContent: "center", alignItems: "center" }, style]}
       className={`flex-row rounded-md ${variantBg[variant]} ${sizeStyles[size]} ${fullWidth ? "w-full" : ""} ${disabled ? "opacity-50" : ""} ${className ?? ""}`}
       {...props}
     >

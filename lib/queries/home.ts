@@ -222,3 +222,22 @@ export function useStore(id: number | string) {
     retry: 1,
   });
 }
+
+export interface FeeSettings {
+  platform_fee_percentage: number;
+  delivery_fee_per_km: number;
+  delivery_fee_minimum: number;
+}
+
+export function useFeeSettings() {
+  return useQuery({
+    queryKey: ["fee-settings"],
+    queryFn: async () => {
+      const res = await api.get<{ success: boolean; data: FeeSettings }>(
+        "/client/fees",
+      );
+      return res.data.data;
+    },
+    staleTime: 1000 * 60 * 10, // cache for 10 minutes
+  });
+}

@@ -13,15 +13,18 @@ import {
 
 import { Text } from "@/components/ui/text";
 import { useSellerAnalyticsOverview } from "@/lib/queries/seller";
+import { useFeeSettings } from "@/lib/queries/home";
 import { useThemeColors } from "@/lib/theme";
 
 export default function SellerPayouts() {
   const router = useRouter();
   const c = useThemeColors();
   const { data: overview } = useSellerAnalyticsOverview();
+  const { data: feeSettings } = useFeeSettings();
 
   const totalRevenue = overview?.total_revenue ?? 0;
-  const platformFee = totalRevenue * 0.1;
+  const platformFeePercent = feeSettings?.platform_fee_percentage ?? 10;
+  const platformFee = totalRevenue * (platformFeePercent / 100);
   const netEarnings = totalRevenue - platformFee;
 
   return (
@@ -54,7 +57,7 @@ export default function SellerPayouts() {
               </Text>
             </View>
             <View className="flex-1">
-              <Text style={{ color: "#9CA3AF", fontSize: 11 }}>Platform fee (10%)</Text>
+              <Text style={{ color: "#9CA3AF", fontSize: 11 }}>Platform fee ({platformFeePercent}%)</Text>
               <Text variant="semibold" style={{ color: "#fff", fontSize: 14 }}>
                 - JOD {platformFee.toFixed(2)}
               </Text>
