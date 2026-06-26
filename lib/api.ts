@@ -5,12 +5,17 @@ export const API_URL = process.env.EXPO_PUBLIC_API_URL ?? "https://coreshop.io/a
 
 export const api = axios.create({
   baseURL: API_URL,
+  timeout: 15000,
   headers: { Accept: "application/json", "Content-Type": "application/json" },
 });
 
 api.interceptors.request.use(async (config) => {
-  const token = await SecureStore.getItemAsync("auth_token");
-  if (token) config.headers.Authorization = `Bearer ${token}`;
+  try {
+    const token = await SecureStore.getItemAsync("auth_token");
+    if (token) config.headers.Authorization = `Bearer ${token}`;
+  } catch {
+    // SecureStore unavailable on this device, proceed without token
+  }
   return config;
 });
 
