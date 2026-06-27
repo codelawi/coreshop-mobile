@@ -14,7 +14,7 @@ import { useRouter } from "expo-router";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import Animated, { FadeInRight } from "react-native-reanimated";
+import Animated, { FadeInRight, FadeIn, FadeOut } from "react-native-reanimated";
 import { useTranslation } from "react-i18next";
 import { HugeiconsIcon } from "@hugeicons/react-native";
 import {
@@ -23,6 +23,7 @@ import {
   Location01Icon,
   ImageUpload01Icon,
   Tick01Icon,
+  Tick02Icon,
 } from "@hugeicons/core-free-icons";
 import MapView, { type Region, PROVIDER_DEFAULT } from "react-native-maps";
 import * as Location from "expo-location";
@@ -52,7 +53,6 @@ const basicsSchema = z.object({
   name: z.string().min(2, "Store name is required"),
   description: z.string().optional(),
   phone: z.string().optional(),
-  delivery_radius_km: z.coerce.number().int().min(1).max(100).optional(),
 });
 
 type BasicsForm = z.infer<typeof basicsSchema>;
@@ -106,6 +106,7 @@ export default function SellerSetup() {
   const [city, setCity] = useState(existingStore?.city ?? "");
   const [address, setAddress] = useState(existingStore?.address ?? "");
   const [gpsLoading, setGpsLoading] = useState(false);
+  const [locationSuccess, setLocationSuccess] = useState(false);
   const mapRef = useRef<MapView>(null);
 
   // Step 2 — images
@@ -136,7 +137,6 @@ export default function SellerSetup() {
       name: existingStore?.name ?? "",
       description: existingStore?.description ?? "",
       phone: existingStore?.phone ?? "",
-      delivery_radius_km: existingStore?.delivery_radius_km ?? 10,
     },
   });
 
@@ -155,6 +155,8 @@ export default function SellerSetup() {
       const [place] = await Location.reverseGeocodeAsync({ latitude, longitude });
       if (place?.city) { setCity(place.city); }
       if (place?.street) { setAddress(place.street); }
+      setLocationSuccess(true);
+      setTimeout(() => setLocationSuccess(false), 1200);
     } catch {
       toast.error(t("seller.setup.couldNotDetectLocation"));
     } finally {
@@ -348,28 +350,6 @@ export default function SellerSetup() {
                 />
               </View>
 
-              <View className="gap-1.5">
-                <Text variant="medium" className="text-sm text-brand dark:text-white">
-                  {t("seller.setup.deliveryRadiusLabel")}
-                </Text>
-                <Controller
-                  control={control}
-                  name="delivery_radius_km"
-                  render={({ field: { onChange, value } }) => (
-                    <Input
-                      placeholder="10"
-                      value={String(value ?? "")}
-                      onChangeText={onChange}
-                      keyboardType="numeric"
-                    />
-                  )}
-                />
-                {errors.delivery_radius_km ? (
-                  <Text className="text-xs" style={{ color: "#FF4D4F" }}>
-                    {errors.delivery_radius_km.message}
-                  </Text>
-                ) : null}
-              </View>
             </ScrollView>
 
             <View className="px-6 pb-8 pt-4">
@@ -450,6 +430,12 @@ export default function SellerSetup() {
               >
                 {gpsLoading ? (
                   <Spinner size={18} strokeWidth={2} />
+                ) : locationSuccess ? (
+                  <Animated.View entering={FadeIn.duration(200)} exiting={FadeOut.duration(300)}>
+                    <View className="h-5 w-5 items-center justify-center rounded-full" style={{ backgroundColor: "#22C55E" }}>
+                      <HugeiconsIcon icon={Tick02Icon} size={12} color="#fff" />
+                    </View>
+                  </Animated.View>
                 ) : (
                   <HugeiconsIcon icon={Location01Icon} size={18} color={c.brand} />
                 )}

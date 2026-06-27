@@ -16,12 +16,23 @@ export interface CartItem {
   stock: number;
 }
 
+export interface RestoredOrderItem {
+  product_id: number;
+  variant_id: number | null;
+  product_name: string;
+  product_image: string | null;
+  unit_price: string | number;
+  quantity: number;
+  variant_label: string | null;
+}
+
 interface CartState {
   items: CartItem[];
   storeId: number | null;
   storeName: string | null;
   add: (product: ProductDetail, variant: ProductVariant | null, qty: number) => "added" | "needs_clear";
   forceAdd: (product: ProductDetail, variant: ProductVariant | null, qty: number) => void;
+  restoreFromOrder: (orderItems: RestoredOrderItem[], storeId: number, storeName: string) => void;
   remove: (id: string) => void;
   setQty: (id: string, qty: number) => void;
   clear: () => void;
@@ -88,6 +99,38 @@ export const useCartStore = create<CartState>((set, get) => ({
       storeId: product.store.id,
       storeName: product.store.name,
     };
+    set(next);
+    persist(next);
+  },
+
+  restoreFromOrder: (orderItems, storeId, storeName) => {
+    const existing = get().items;
+    const newItems = [...existing];
+
+    for (const item of orderItems) {
+      const id = lineId(item.product_id, item.variant_id);
+      const price = parseFloat(String(item.unit_price));
+      const found = newItems.find((i) => i.id === id);
+      if (found) {
+        found.quantity += item.quantity;
+      } else {
+        newItems.push({
+          id,
+          product_id: item.product_id,
+          variant_id: item.variant_id,
+          name: item.product_name,
+          image: item.product_image,
+          price,
+          quantity: item.quantity,
+          variant_label: item.variant_label,
+          store_id: storeId,
+          store_name: storeName,
+          stock: 999,
+        });
+      }
+    }
+
+    const next = { items: newItems, storeId, storeName };
     set(next);
     persist(next);
   },

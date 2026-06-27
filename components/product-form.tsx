@@ -52,7 +52,6 @@ const schema = z.object({
   description: z.string().optional(),
   category_id: z.coerce.number().min(1, "Select a category"),
   price: z.coerce.number().min(0.01, "Price is required"),
-  original_price: z.coerce.number().optional(),
   stock: z.coerce.number().int().min(0, "Stock is required"),
   weight_grams: z.coerce.number().int().optional(),
   images: z.array(z.string()).max(7).optional(),
@@ -103,7 +102,6 @@ export function ProductForm({ initial, onSubmit, submitLabel }: Props) {
       description: initial?.description ?? "",
       category_id: initial?.category?.id ?? 0,
       price: initial?.price ? Number(initial.price) : undefined,
-      original_price: initial?.original_price ? Number(initial.original_price) : undefined,
       stock: initial?.stock ?? 0,
       weight_grams: initial?.weight_grams ?? undefined,
       images: initial?.images?.map((i) => i.url) ?? [],
@@ -224,7 +222,6 @@ export function ProductForm({ initial, onSubmit, submitLabel }: Props) {
         description: values.description || undefined,
         category_id: values.category_id,
         price: values.price,
-        original_price: values.original_price || undefined,
         stock: values.stock,
         weight_grams: values.weight_grams || undefined,
         images: values.images?.filter(Boolean),
@@ -323,42 +320,25 @@ export function ProductForm({ initial, onSubmit, submitLabel }: Props) {
         </View>
 
         {/* Pricing */}
-        <View className="flex-row gap-3">
-          <View className="flex-1 gap-1.5">
-            <Text variant="medium" className="text-sm text-brand dark:text-white">{t("seller.productForm.price")}</Text>
-            <Controller
-              control={control}
-              name="price"
-              render={({ field: { onChange, value } }) => (
-                <Input
-                  placeholder="0.00"
-                  value={value !== undefined ? String(value) : ""}
-                  onChangeText={onChange}
-                  keyboardType="decimal-pad"
-                />
-              )}
-            />
-            {errors.price ? (
-              <Text className="text-xs" style={{ color: "#FF4D4F" }}>
-                {errors.price.message}
-              </Text>
-            ) : null}
-          </View>
-          <View className="flex-1 gap-1.5">
-            <Text variant="medium" className="text-sm text-brand dark:text-white">{t("seller.productForm.originalPrice")}</Text>
-            <Controller
-              control={control}
-              name="original_price"
-              render={({ field: { onChange, value } }) => (
-                <Input
-                  placeholder="0.00"
-                  value={value !== undefined ? String(value) : ""}
-                  onChangeText={onChange}
-                  keyboardType="decimal-pad"
-                />
-              )}
-            />
-          </View>
+        <View className="gap-1.5">
+          <Text variant="medium" className="text-sm text-brand dark:text-white">{t("seller.productForm.price")}</Text>
+          <Controller
+            control={control}
+            name="price"
+            render={({ field: { onChange, value } }) => (
+              <Input
+                placeholder="0.00"
+                value={value !== undefined ? String(value) : ""}
+                onChangeText={onChange}
+                keyboardType="decimal-pad"
+              />
+            )}
+          />
+          {errors.price ? (
+            <Text className="text-xs" style={{ color: "#FF4D4F" }}>
+              {errors.price.message}
+            </Text>
+          ) : null}
         </View>
 
         {/* Stock & weight */}

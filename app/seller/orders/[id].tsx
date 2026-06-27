@@ -10,6 +10,7 @@ import {
   Location01Icon,
   User02Icon,
   Tick01Icon,
+  Message01Icon,
 } from "@hugeicons/core-free-icons";
 import { toast } from "sonner-native";
 
@@ -254,6 +255,18 @@ export default function SellerOrderDetail() {
             <Text className="text-sm leading-5" style={{ color: c.secondary }}>{order.notes}</Text>
           </Animated.View>
         ) : null}
+
+        {/* Chat with Customer */}
+        <Animated.View entering={FadeInDown.duration(300).delay(200)}>
+          <Pressable
+            onPress={() => router.push("/seller/chats" as any)}
+            className="flex-row items-center justify-center gap-2 rounded-xl border py-4"
+            style={{ borderColor: c.brand }}
+          >
+            <HugeiconsIcon icon={Message01Icon} size={18} color={c.brand} />
+            <Text variant="semibold" style={{ color: c.brand, fontSize: 14 }}>Chat with Customer</Text>
+          </Pressable>
+        </Animated.View>
       </ScrollView>
 
       {/* Action button */}

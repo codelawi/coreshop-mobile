@@ -14,6 +14,7 @@ import {
   StarIcon,
   MoneyReceive02Icon,
   Clock01Icon,
+  Message01Icon,
 } from "@hugeicons/core-free-icons";
 import { toast } from "sonner-native";
 import { useTranslation } from "react-i18next";
@@ -371,7 +372,11 @@ export default function SellerHome() {
               label={t("seller.actions.payouts")}
               onPress={() => router.push("/seller/payouts" as any)}
             />
-            <View className="flex-1" />
+            <QuickAction
+              icon={Message01Icon}
+              label={t("chat.customerChats")}
+              onPress={() => router.push("/seller/chats" as any)}
+            />
           </View>
         </Animated.View>
 

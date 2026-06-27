@@ -40,12 +40,12 @@ export const useAuthStore = create<AuthState>((set) => ({
   continueAsGuest: () => set({ isGuest: true, user: null, token: null }),
   logout: async () => {
     await SecureStore.deleteItemAsync("auth_token");
-    set({ user: null, token: null, isGuest: false, isLoading: false });
+    set({ user: null, token: null, isGuest: true, isLoading: false });
   },
   hydrate: async () => {
     const token = await SecureStore.getItemAsync("auth_token");
     if (!token) {
-      set({ token: null, user: null, isLoading: false });
+      set({ token: null, user: null, isGuest: true, isLoading: false });
       return;
     }
     try {

@@ -14,6 +14,7 @@ import {
   CreditCardIcon,
   StarIcon,
   Cancel01Icon,
+  Message01Icon,
 } from "@hugeicons/core-free-icons";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner-native";
@@ -21,8 +22,10 @@ import { toast } from "sonner-native";
 import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
 import { useOrder, useOrderReviewStatus, useCancelOrder } from "@/lib/queries/orders";
+import { useStartConversation } from "@/lib/queries/chat";
 import { useThemeColors } from "@/lib/theme";
 import { Spinner } from "@/components/ui/spinner";
+import { useCartStore } from "@/stores/cart-store";
 
 const TIMELINE_KEYS = [
   "pending",
@@ -63,7 +66,26 @@ export default function OrderDetail() {
   const isReviewable = order?.status === "delivered" || order?.status === "completed";
   const { data: reviewStatus } = useOrderReviewStatus(Number(id), isReviewable);
   const cancelMutation = useCancelOrder();
+  const startConversation = useStartConversation();
+  const restoreFromOrder = useCartStore((s) => s.restoreFromOrder);
   const [showCancelModal, setShowCancelModal] = useState(false);
+
+  const handleChatWithStore = () => {
+    if (!order?.store) {
+      return;
+    }
+    startConversation.mutate(
+      { store_id: order.store.id, order_id: order.id },
+      {
+        onSuccess: (conv) => {
+          router.push({
+            pathname: "/chat/[id]",
+            params: { id: conv.id, title: order.store?.name, role: "client" },
+          } as any);
+        },
+      }
+    );
+  };
 
   const canCancel = order ? CANCELLABLE_STATUSES.includes(order.status) : false;
   const hasCancellationFee = order ? FEE_STATUSES.includes(order.status) : false;
@@ -347,6 +369,23 @@ export default function OrderDetail() {
             )}
           </Animated.View>
         )}
+        {/* Chat with Store */}
+        {order.store && (
+          <Animated.View entering={FadeInDown.duration(400).delay(330)} className="mx-4 mt-3">
+            <Pressable
+              onPress={handleChatWithStore}
+              disabled={startConversation.isPending}
+              className="flex-row items-center justify-center gap-2 rounded-xl border py-4"
+              style={{ borderColor: c.brand, opacity: startConversation.isPending ? 0.6 : 1 }}
+            >
+              <HugeiconsIcon icon={Message01Icon} size={18} color={c.brand} />
+              <Text variant="semibold" style={{ color: c.brand, fontSize: 14 }}>
+                {t("chat.chatWithStore")}
+              </Text>
+            </Pressable>
+          </Animated.View>
+        )}
+
         {/* Cancel order */}
         {canCancel && (
           <Animated.View entering={FadeInDown.duration(400).delay(340)} className="mx-4 mt-3 mb-4">
@@ -414,7 +453,10 @@ export default function OrderDetail() {
                     {
                       onSuccess: () => {
                         setShowCancelModal(false);
-                        toast.success("Order cancelled.");
+                        if (order?.items && order.store) {
+                          restoreFromOrder(order.items, order.store.id, order.store.name);
+                        }
+                        toast.success("Order cancelled. Items restored to cart.");
                       },
                       onError: (err: any) => {
                         setShowCancelModal(false);

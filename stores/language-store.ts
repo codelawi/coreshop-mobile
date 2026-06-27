@@ -12,7 +12,7 @@ interface LanguageState {
 }
 
 export const useLanguageStore = create<LanguageState>((set) => ({
-  language: "en",
+  language: "ar",
   setLanguage: async (lang) => {
     await SecureStore.setItemAsync("app_language", lang);
     await i18n.changeLanguage(lang);
@@ -23,7 +23,7 @@ export const useLanguageStore = create<LanguageState>((set) => ({
   },
   hydrate: async () => {
     const stored = (await SecureStore.getItemAsync("app_language")) as Language | null;
-    const lang = stored ?? (i18n.language.startsWith("ar") ? "ar" : "en");
+    const lang = stored ?? "ar";
     await i18n.changeLanguage(lang);
     const shouldBeRTL = lang === "ar";
     I18nManager.allowRTL(shouldBeRTL);

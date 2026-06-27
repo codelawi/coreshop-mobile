@@ -3,11 +3,11 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
-import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
+import Animated, { FadeInDown, FadeInUp, FadeIn, FadeOut } from "react-native-reanimated";
 import { HugeiconsIcon } from "@hugeicons/react-native";
-import { Location01Icon, MapsLocation02Icon } from "@hugeicons/core-free-icons";
+import { Location01Icon, MapsLocation02Icon, Tick02Icon } from "@hugeicons/core-free-icons";
 import * as Location from "expo-location";
-import MapView, { Marker, Region, PROVIDER_DEFAULT } from "react-native-maps";
+import MapView, { Region, PROVIDER_DEFAULT } from "react-native-maps";
 import { toast } from "sonner-native";
 
 import { Text } from "@/components/ui/text";
@@ -34,6 +34,7 @@ export default function LocationStep() {
   const [loading, setLoading] = useState(true);
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [city, setCity] = useState("");
+  const [locationSuccess, setLocationSuccess] = useState(false);
 
   useEffect(() => {
     detectLocation();
@@ -58,6 +59,8 @@ export default function LocationStep() {
         longitudeDelta: 0.01,
       });
       await updateCityFromCoords(newCoords.lat, newCoords.lng);
+      setLocationSuccess(true);
+      setTimeout(() => setLocationSuccess(false), 1200);
     } catch {
       toast.error("Could not get location");
     } finally {
@@ -178,7 +181,15 @@ export default function LocationStep() {
           entering={FadeInUp.duration(600).delay(300)}
           className="mt-4 flex-row items-center gap-3 rounded-md border border-brand-100 dark:border-[#2A2A2A] bg-white dark:bg-bg-card px-4 py-3"
         >
-          <HugeiconsIcon icon={Location01Icon} size={22} color={c.brand} />
+          {locationSuccess ? (
+            <Animated.View entering={FadeIn.duration(200)} exiting={FadeOut.duration(300)}>
+              <View className="h-7 w-7 items-center justify-center rounded-full" style={{ backgroundColor: "#22C55E" }}>
+                <HugeiconsIcon icon={Tick02Icon} size={16} color="#fff" />
+              </View>
+            </Animated.View>
+          ) : (
+            <HugeiconsIcon icon={Location01Icon} size={22} color={c.brand} />
+          )}
           <View className="flex-1">
             <Text variant="medium" className="text-xs" style={{ color: c.secondary }}>
               {t("onboarding.location.city")}

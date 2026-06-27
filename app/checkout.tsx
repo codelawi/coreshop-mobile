@@ -5,6 +5,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   TextInput,
+  Share,
 } from "react-native";
 import { Image } from "expo-image";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -395,22 +396,23 @@ export default function Checkout() {
 
                 {paymentMethod === "cliq" && (
                   <View
-                    className="mx-4 mb-4 flex-row items-center justify-between rounded-lg px-4 py-3"
+                    className="mx-4 mb-4 rounded-lg px-4 py-3"
                     style={{ backgroundColor: "#E8F5EF" }}
                   >
-                    <View>
-                      <Text style={{ fontSize: 11, color: "#006B3F", fontFamily: "Manrope_500Medium" }}>
-                        Transfer to CliQ username
-                      </Text>
-                      <Text style={{ fontSize: 18, color: "#006B3F", fontFamily: "Manrope_700Bold", letterSpacing: 0.5 }}>
+                    <Text style={{ fontSize: 11, color: "#006B3F", fontFamily: "Manrope_500Medium" }}>
+                      Transfer to CliQ username
+                    </Text>
+                    <View className="mt-1 flex-row items-center gap-3">
+                      <Text style={{ flex: 1, fontSize: 18, color: "#006B3F", fontFamily: "Manrope_700Bold", letterSpacing: 0.5 }}>
                         CORE26
                       </Text>
-                    </View>
-                    <View
-                      className="rounded px-2 py-1"
-                      style={{ backgroundColor: "#006B3F" }}
-                    >
-                      <Text style={{ color: "#fff", fontSize: 10, fontFamily: "Manrope_600SemiBold" }}>CliQ</Text>
+                      <Pressable
+                        onPress={() => Share.share({ message: "CORE26", title: "CliQ Username" })}
+                        className="flex-row items-center gap-1.5 rounded-lg px-3 py-2"
+                        style={{ backgroundColor: "#006B3F" }}
+                      >
+                        <Text style={{ color: "#fff", fontSize: 11, fontFamily: "Manrope_600SemiBold" }}>Copy</Text>
+                      </Pressable>
                     </View>
                   </View>
                 )}

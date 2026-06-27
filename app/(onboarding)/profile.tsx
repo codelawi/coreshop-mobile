@@ -49,7 +49,7 @@ export default function ProfileStep() {
     }
     setName(data.name);
     setRole(selectedRole);
-    router.push("/(onboarding)/location" as any);
+    router.push("/(onboarding)/avatar" as any);
   };
 
   return (
@@ -59,7 +59,7 @@ export default function ProfileStep() {
         className="flex-1"
       >
         <View className="flex-1 px-6 pt-4">
-          <ProgressBar current={2} total={5} />
+          <ProgressBar current={1} total={5} />
 
           <ScrollView
             className="mt-8"

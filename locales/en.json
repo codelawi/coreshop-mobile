@@ -475,6 +475,18 @@
     "contactSupport": "Contact Support",
     "rateApp": "Rate the App"
   },
+  "chat": {
+    "myChats": "My Chats",
+    "customerChats": "Customer Chats",
+    "conversation": "Conversation",
+    "chatWithStore": "Chat with Store",
+    "chatWithCustomer": "Chat with Customer",
+    "empty": "No conversations yet",
+    "emptyDesc": "Conversations will appear here when you chat with a store.",
+    "noMessages": "No messages yet",
+    "inputPlaceholder": "Write a message...",
+    "send": "Send"
+  },
   "onboarding": {
     "stepOf": "Step {{current}} of {{total}}",
     "avatar": {

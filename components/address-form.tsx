@@ -12,11 +12,13 @@ import { useRouter } from "expo-router";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 import { HugeiconsIcon } from "@hugeicons/react-native";
 import {
   ArrowLeft01Icon,
   Location01Icon,
   MapsLocation02Icon,
+  Tick02Icon,
 } from "@hugeicons/core-free-icons";
 import MapView, { type Region, PROVIDER_DEFAULT } from "react-native-maps";
 import * as Location from "expo-location";
@@ -37,10 +39,10 @@ const DEFAULT_REGION: Region = {
 };
 
 const schema = z.object({
-  label: z.string().min(1, "Label is required"),
+  label: z.string().optional(),
   recipient_name: z.string().min(1, "Required"),
   phone: z.string().min(1, "Required"),
-  address_line: z.string().min(1, "Required"),
+  address_line: z.string().optional(),
   building: z.string().optional(),
   floor: z.string().optional(),
   apartment: z.string().optional(),
@@ -62,6 +64,7 @@ export function AddressForm({ title, initialAddress, onSave, isSaving }: Props) 
   const c = useThemeColors();
   const mapRef = useRef<MapView>(null);
 
+  const [locationSuccess, setLocationSuccess] = useState(false);
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(
     initialAddress
       ? {
@@ -118,6 +121,8 @@ export function AddressForm({ title, initialAddress, onSave, isSaving }: Props) 
         longitudeDelta: 0.01,
       });
       await reverseGeocode(newCoords.lat, newCoords.lng);
+      setLocationSuccess(true);
+      setTimeout(() => setLocationSuccess(false), 1200);
     } catch {
       toast.error("Could not get location");
     } finally {
@@ -146,7 +151,10 @@ export function AddressForm({ title, initialAddress, onSave, isSaving }: Props) 
       return;
     }
     onSave({
-      ...formData,
+      label: formData.label || "Home",
+      recipient_name: formData.recipient_name,
+      phone: formData.phone,
+      address_line: formData.address_line || "",
       city: city || "Unknown",
       latitude: coords.lat,
       longitude: coords.lng,
@@ -154,6 +162,7 @@ export function AddressForm({ title, initialAddress, onSave, isSaving }: Props) 
       floor: formData.floor || null,
       apartment: formData.apartment || null,
       notes: formData.notes || null,
+      is_default: formData.is_default,
     });
   };
 
@@ -258,7 +267,15 @@ export function AddressForm({ title, initialAddress, onSave, isSaving }: Props) 
 
           {/* Detected city */}
           <View className="flex-row items-center gap-2 border-b border-brand-100 dark:border-[#2A2A2A] bg-white dark:bg-bg-card px-4 py-3">
-            <HugeiconsIcon icon={Location01Icon} size={16} color={c.secondary} />
+            {locationSuccess ? (
+              <Animated.View entering={FadeIn.duration(200)} exiting={FadeOut.duration(300)}>
+                <View className="h-5 w-5 items-center justify-center rounded-full" style={{ backgroundColor: "#22C55E" }}>
+                  <HugeiconsIcon icon={Tick02Icon} size={12} color="#fff" />
+                </View>
+              </Animated.View>
+            ) : (
+              <HugeiconsIcon icon={Location01Icon} size={16} color={c.secondary} />
+            )}
             <Text className="text-sm" style={{ color: c.secondary }}>
               City:
             </Text>
@@ -274,11 +291,10 @@ export function AddressForm({ title, initialAddress, onSave, isSaving }: Props) 
               name="label"
               render={({ field: { onChange, value } }) => (
                 <Input
-                  label="Label"
+                  label="Label (optional)"
                   placeholder="Home, Work, etc."
-                  value={value}
+                  value={value ?? ""}
                   onChangeText={onChange}
-                  error={errors.label?.message}
                 />
               )}
             />
@@ -317,11 +333,10 @@ export function AddressForm({ title, initialAddress, onSave, isSaving }: Props) 
               name="address_line"
               render={({ field: { onChange, value } }) => (
                 <Input
-                  label="Street Address"
+                  label="Street Address (optional)"
                   placeholder="Street name and number"
-                  value={value}
+                  value={value ?? ""}
                   onChangeText={onChange}
-                  error={errors.address_line?.message}
                 />
               )}
             />

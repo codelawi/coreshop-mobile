@@ -21,6 +21,8 @@ import { useThemeColors } from "@/lib/theme";
 import { Spinner } from "@/components/ui/spinner";
 import { API_URL } from "@/lib/api";
 
+const DEFAULT_AVATAR_URL = "https://api.dicebear.com/9.x/initials/png?seed=User&backgroundColor=0A0A0A&radius=50&size=200";
+
 export default function AvatarStep() {
   const { t } = useTranslation();
   const router = useRouter();
@@ -78,18 +80,14 @@ export default function AvatarStep() {
   };
 
   const onNext = () => {
-    if (!uploadedUrl) {
-      toast.error(t("onboarding.avatar.pleaseUpload"));
-      return;
-    }
-    setAvatar(uploadedUrl);
-    router.push("/(onboarding)/profile" as any);
+    setAvatar(uploadedUrl ?? DEFAULT_AVATAR_URL);
+    router.push("/(onboarding)/location" as any);
   };
 
   return (
     <SafeAreaView className="flex-1 bg-bg-light dark:bg-bg-dark">
       <View className="flex-1 px-6 pt-4">
-        <ProgressBar current={1} total={5} />
+        <ProgressBar current={2} total={5} />
 
         <Animated.View entering={FadeInDown.duration(500).springify()} className="mt-8">
           <Text variant="bold" className="text-3xl text-brand dark:text-white">
@@ -157,7 +155,7 @@ export default function AvatarStep() {
             onPress={onNext}
             fullWidth
             size="lg"
-            disabled={!uploadedUrl || uploading}
+            disabled={uploading}
           />
         </Animated.View>
       </View>

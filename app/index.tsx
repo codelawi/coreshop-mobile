@@ -18,7 +18,7 @@ export default function Index() {
   }
 
   if (user.role !== "admin" && !user.onboarding_completed) {
-    return <Redirect href={"/(onboarding)/avatar" as any} />;
+    return <Redirect href={"/(onboarding)/profile" as any} />;
   }
 
   return <Redirect href={"/(tabs)/home" as any} />;

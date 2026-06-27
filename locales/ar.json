@@ -475,6 +475,18 @@
     "contactSupport": "التواصل مع الدعم",
     "rateApp": "تقييم التطبيق"
   },
+  "chat": {
+    "myChats": "محادثاتي",
+    "customerChats": "محادثات العملاء",
+    "conversation": "محادثة",
+    "chatWithStore": "تواصل مع المتجر",
+    "chatWithCustomer": "تواصل مع العميل",
+    "empty": "لا توجد محادثات بعد",
+    "emptyDesc": "ستظهر المحادثات هنا عند التواصل مع متجر.",
+    "noMessages": "لا توجد رسائل بعد",
+    "inputPlaceholder": "اكتب رسالة...",
+    "send": "إرسال"
+  },
   "onboarding": {
     "stepOf": "الخطوة {{current}} من {{total}}",
     "avatar": {

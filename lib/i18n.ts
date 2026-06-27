@@ -5,14 +5,12 @@ import * as Localization from "expo-localization";
 import en from "@/locales/en.json";
 import ar from "@/locales/ar.json";
 
-const deviceLang = Localization.getLocales()[0]?.languageCode ?? "en";
-
 i18n.use(initReactI18next).init({
   resources: {
     en: { translation: en },
     ar: { translation: ar },
   },
-  lng: deviceLang === "ar" ? "ar" : "en",
+  lng: "ar",
   fallbackLng: "en",
   interpolation: { escapeValue: false },
   compatibilityJSON: "v4",

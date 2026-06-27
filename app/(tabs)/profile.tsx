@@ -19,6 +19,7 @@ import {
   UserIcon,
   Store01Icon,
   Notification03Icon,
+  Message01Icon,
 } from "@hugeicons/core-free-icons";
 import { toast } from "sonner-native";
 import { useColorScheme } from "nativewind";
@@ -277,6 +278,12 @@ export default function Profile() {
             icon={Location01Icon}
             label={t("profile.addresses")}
             onPress={() => router.push("/addresses" as any)}
+          />
+          <View className="ml-16 h-px bg-brand-100 dark:bg-[#2A2A2A]" />
+          <Row
+            icon={Message01Icon}
+            label={t("chat.myChats")}
+            onPress={() => router.push("/chats" as any)}
           />
         </Animated.View>
 
