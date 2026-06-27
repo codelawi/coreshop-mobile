@@ -7,9 +7,9 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:855662469976:android:9d897e9b2dee2cafac7b2d",
+        "mobilesdk_app_id": "1:855662469976:android:3b8e67418a06ba12ac7b2d",
         "android_client_info": {
-          "package_name": "com.coreshop.app"
+          "package_name": "com.coreshop.mobile"
         }
       },
       "oauth_client": [],
