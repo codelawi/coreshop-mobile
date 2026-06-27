@@ -14,7 +14,7 @@ import { useRouter } from "expo-router";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import Animated, { FadeInRight, FadeIn, FadeOut } from "react-native-reanimated";
+import Animated, { FadeInRight } from "react-native-reanimated";
 import { useTranslation } from "react-i18next";
 import { HugeiconsIcon } from "@hugeicons/react-native";
 import {
@@ -23,8 +23,8 @@ import {
   Location01Icon,
   ImageUpload01Icon,
   Tick01Icon,
-  Tick02Icon,
 } from "@hugeicons/core-free-icons";
+import { LocationSuccessOverlay } from "@/components/ui/location-success-overlay";
 import MapView, { type Region, PROVIDER_DEFAULT } from "react-native-maps";
 import * as Location from "expo-location";
 import * as ImagePicker from "expo-image-picker";
@@ -156,7 +156,7 @@ export default function SellerSetup() {
       if (place?.city) { setCity(place.city); }
       if (place?.street) { setAddress(place.street); }
       setLocationSuccess(true);
-      setTimeout(() => setLocationSuccess(false), 1200);
+      setTimeout(() => setLocationSuccess(false), 1500);
     } catch {
       toast.error(t("seller.setup.couldNotDetectLocation"));
     } finally {
@@ -430,12 +430,6 @@ export default function SellerSetup() {
               >
                 {gpsLoading ? (
                   <Spinner size={18} strokeWidth={2} />
-                ) : locationSuccess ? (
-                  <Animated.View entering={FadeIn.duration(200)} exiting={FadeOut.duration(300)}>
-                    <View className="h-5 w-5 items-center justify-center rounded-full" style={{ backgroundColor: "#22C55E" }}>
-                      <HugeiconsIcon icon={Tick02Icon} size={12} color="#fff" />
-                    </View>
-                  </Animated.View>
                 ) : (
                   <HugeiconsIcon icon={Location01Icon} size={18} color={c.brand} />
                 )}
@@ -443,6 +437,7 @@ export default function SellerSetup() {
                   {t("seller.setup.useMyLocation")}
                 </Text>
               </Pressable>
+              <LocationSuccessOverlay visible={locationSuccess} />
 
               <View className="gap-1.5">
                 <Text variant="medium" className="text-sm text-brand dark:text-white">

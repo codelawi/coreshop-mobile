@@ -12,14 +12,13 @@ import { useRouter } from "expo-router";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 import { HugeiconsIcon } from "@hugeicons/react-native";
 import {
   ArrowLeft01Icon,
   Location01Icon,
   MapsLocation02Icon,
-  Tick02Icon,
 } from "@hugeicons/core-free-icons";
+import { LocationSuccessOverlay } from "@/components/ui/location-success-overlay";
 import MapView, { type Region, PROVIDER_DEFAULT } from "react-native-maps";
 import * as Location from "expo-location";
 import { toast } from "sonner-native";
@@ -122,7 +121,7 @@ export function AddressForm({ title, initialAddress, onSave, isSaving }: Props) 
       });
       await reverseGeocode(newCoords.lat, newCoords.lng);
       setLocationSuccess(true);
-      setTimeout(() => setLocationSuccess(false), 1200);
+      setTimeout(() => setLocationSuccess(false), 1500);
     } catch {
       toast.error("Could not get location");
     } finally {
@@ -267,15 +266,7 @@ export function AddressForm({ title, initialAddress, onSave, isSaving }: Props) 
 
           {/* Detected city */}
           <View className="flex-row items-center gap-2 border-b border-brand-100 dark:border-[#2A2A2A] bg-white dark:bg-bg-card px-4 py-3">
-            {locationSuccess ? (
-              <Animated.View entering={FadeIn.duration(200)} exiting={FadeOut.duration(300)}>
-                <View className="h-5 w-5 items-center justify-center rounded-full" style={{ backgroundColor: "#22C55E" }}>
-                  <HugeiconsIcon icon={Tick02Icon} size={12} color="#fff" />
-                </View>
-              </Animated.View>
-            ) : (
-              <HugeiconsIcon icon={Location01Icon} size={16} color={c.secondary} />
-            )}
+            <HugeiconsIcon icon={Location01Icon} size={16} color={c.secondary} />
             <Text className="text-sm" style={{ color: c.secondary }}>
               City:
             </Text>
@@ -283,6 +274,7 @@ export function AddressForm({ title, initialAddress, onSave, isSaving }: Props) 
               {city || "Drag the map to detect"}
             </Text>
           </View>
+          <LocationSuccessOverlay visible={locationSuccess} />
 
           {/* Form fields */}
           <View className="gap-4 px-4 pt-5">

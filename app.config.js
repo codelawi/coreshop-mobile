@@ -16,6 +16,7 @@ export default {
     ios: {
       supportsTablet: true,
       bundleIdentifier: "com.coreshop.mobile",
+      googleServicesFile: "./GoogleService-Info.plist",
       infoPlist: {
         NSLocationWhenInUseUsageDescription:
           "Allow CoreShop to use your location to show nearby stores.",
@@ -33,6 +34,7 @@ export default {
         foregroundImage: "./assets/logo.png",
         backgroundColor: "#0A0A0A",
       },
+      googleServicesFile: "./google-services.json",
       edgeToEdgeEnabled: true,
       predictiveBackGestureEnabled: false,
       package: "com.coreshop.mobile",

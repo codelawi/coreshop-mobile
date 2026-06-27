@@ -7,7 +7,7 @@ import { useTranslation } from "react-i18next";
 import * as ImagePicker from "expo-image-picker";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 import { HugeiconsIcon } from "@hugeicons/react-native";
-import { ImageUpload01Icon, UserIcon } from "@hugeicons/core-free-icons";
+import { ImageUpload01Icon } from "@hugeicons/core-free-icons";
 import { toast } from "sonner-native";
 
 import * as FileSystem from "expo-file-system/legacy";
@@ -21,7 +21,8 @@ import { useThemeColors } from "@/lib/theme";
 import { Spinner } from "@/components/ui/spinner";
 import { API_URL } from "@/lib/api";
 
-const DEFAULT_AVATAR_URL = "https://api.dicebear.com/9.x/initials/png?seed=User&backgroundColor=0A0A0A&radius=50&size=200";
+const DEFAULT_AVATAR_URL =
+  "https://api.dicebear.com/9.x/initials/png?seed=User&backgroundColor=0A0A0A&radius=50&size=200";
 
 export default function AvatarStep() {
   const { t } = useTranslation();
@@ -32,6 +33,9 @@ export default function AvatarStep() {
   const [previewUri, setPreviewUri] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadedUrl, setUploadedUrl] = useState<string | null>(null);
+
+  const displayUri = previewUri ?? DEFAULT_AVATAR_URL;
+  const hasCustomAvatar = !!uploadedUrl;
 
   const pickAndUpload = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -102,36 +106,36 @@ export default function AvatarStep() {
           entering={FadeInUp.duration(600).delay(150)}
           className="flex-1 items-center justify-center gap-6"
         >
+          {/* Avatar circle — shows default or picked image */}
           <Pressable onPress={pickAndUpload} disabled={uploading}>
             <View
-              className="h-40 w-40 items-center justify-center overflow-hidden rounded-full bg-white dark:bg-bg-card"
+              className="h-40 w-40 overflow-hidden rounded-full"
               style={{
-                borderWidth: 2,
-                borderColor: uploadedUrl ? c.brand : c.border,
-                borderStyle: "dashed",
+                borderWidth: 2.5,
+                borderColor: hasCustomAvatar ? c.brand : c.border,
               }}
             >
-              {previewUri ? (
-                <>
-                  <Image
-                    source={{ uri: previewUri }}
-                    style={{ width: "100%", height: "100%" }}
-                    contentFit="cover"
+              <Image
+                source={{ uri: displayUri }}
+                style={{ width: "100%", height: "100%" }}
+                contentFit="cover"
+              />
+              {uploading && (
+                <View
+                  className="absolute inset-0 items-center justify-center rounded-full"
+                  style={{ backgroundColor: "rgba(0,0,0,0.45)" }}
+                >
+                  <Spinner
+                    size={40}
+                    color="#fff"
+                    trackColor="rgba(255,255,255,0.3)"
+                    strokeWidth={3}
                   />
-                  {uploading && (
-                    <View
-                      className="absolute inset-0 items-center justify-center rounded-full"
-                      style={{ backgroundColor: "rgba(0,0,0,0.45)" }}
-                    >
-                      <Spinner size={40} color="#fff" trackColor="rgba(255,255,255,0.3)" strokeWidth={3} />
-                    </View>
-                  )}
-                </>
-              ) : (
-                <HugeiconsIcon icon={UserIcon} size={52} color="#D1D5DB" />
+                </View>
               )}
             </View>
 
+            {/* Upload badge */}
             <View
               className="absolute bottom-0 right-0 h-10 w-10 items-center justify-center rounded-full bg-brand"
               style={{ elevation: 3 }}
@@ -143,13 +147,13 @@ export default function AvatarStep() {
           <Text className="text-center text-sm" style={{ color: c.secondary }}>
             {uploading
               ? t("onboarding.avatar.uploading")
-              : uploadedUrl
+              : hasCustomAvatar
                 ? t("onboarding.avatar.uploaded")
                 : t("onboarding.avatar.tapToChoose")}
           </Text>
         </Animated.View>
 
-        <Animated.View entering={FadeInUp.duration(600).delay(300)} className="pb-4">
+        <Animated.View entering={FadeInUp.duration(600).delay(300)} className="gap-3 pb-4">
           <Button
             label={t("common.next")}
             onPress={onNext}
@@ -157,6 +161,11 @@ export default function AvatarStep() {
             size="lg"
             disabled={uploading}
           />
+          <Pressable onPress={onNext} disabled={uploading} className="items-center py-2">
+            <Text variant="medium" className="text-sm" style={{ color: c.muted }}>
+              {t("common.skip")}
+            </Text>
+          </Pressable>
         </Animated.View>
       </View>
     </SafeAreaView>

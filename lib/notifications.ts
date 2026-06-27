@@ -1,35 +1,54 @@
 import * as Notifications from "expo-notifications";
-import Constants from "expo-constants";
+import Constants, { ExecutionEnvironment } from "expo-constants";
 import { Platform } from "react-native";
 import { router } from "expo-router";
 import { api } from "@/lib/api";
 import { useAuthStore } from "@/stores/auth-store";
 
-const PROJECT_ID = "ac7a0146-f6aa-4fa3-b939-a8bc4713c03e";
+const PROJECT_ID =
+  (Constants.expoConfig?.extra?.eas?.projectId as string | undefined) ??
+  "ac7a0146-f6aa-4fa3-b939-a8bc4713c03e";
 
-// expo-notifications remote push was removed from Expo Go in SDK 53
-const isExpoGo = Constants.executionEnvironment === "storeClient";
+/**
+ * Expo Go no longer delivers push notifications in SDK 53+.
+ * Google removed FCM Legacy (which Expo Go relied on) and per-app Firebase
+ * credentials cannot be embedded in a shared Expo Go binary.
+ *
+ * Solution: use a development build for testing push.
+ *   eas build --profile development --platform android
+ *   eas build --profile development --platform ios
+ */
+const isExpoGo = Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
 
-if (!isExpoGo) {
-  Notifications.setNotificationHandler({
-    handleNotification: async () => ({
-      shouldShowAlert: true,
-      shouldPlaySound: true,
-      shouldSetBadge: true,
-      shouldShowBanner: true,
-      shouldShowList: true,
-    }),
-  });
-}
+// Must be called unconditionally so foreground notifications always display,
+// including in development builds and standalone apps.
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
+  }),
+});
 
 export async function registerForPushNotifications(): Promise<void> {
-  if (isExpoGo) return;
+  if (isExpoGo) {
+    if (__DEV__) {
+      console.warn(
+        "[Push] Expo Go (SDK 53+) cannot receive push notifications. " +
+          "Run `eas build --profile development` to get a dev build that supports push."
+      );
+    }
+    return;
+  }
 
   if (Platform.OS === "android") {
     await Notifications.setNotificationChannelAsync("default", {
       name: "Default",
       importance: Notifications.AndroidImportance.MAX,
       vibrationPattern: [0, 250, 250, 250],
+      lightColor: "#0A0A0A",
     });
   }
 
@@ -42,22 +61,42 @@ export async function registerForPushNotifications(): Promise<void> {
   }
 
   if (finalStatus !== "granted") {
+    if (__DEV__) {
+      console.warn("[Push] Permission denied:", finalStatus);
+    }
     return;
   }
 
   try {
     const tokenData = await Notifications.getExpoPushTokenAsync({ projectId: PROJECT_ID });
+    if (__DEV__) {
+      console.log("[Push] Token:", tokenData.data);
+    }
     await api.patch("/auth/push-token", { token: tokenData.data });
-  } catch {
-    // Silently ignore — push is non-critical
+  } catch (error: any) {
+    if (__DEV__) {
+      const msg: string = error?.message ?? String(error);
+      console.warn("[Push] Token registration failed:", msg);
+      if (msg.includes("physical device")) {
+        console.warn("[Push] Push notifications require a real device, not a simulator/emulator.");
+      } else if (Platform.OS === "android") {
+        console.warn(
+          "[Push] Android: ensure google-services.json is in the project root " +
+            "and FCM credentials are configured via `eas credentials --platform android`."
+        );
+      } else if (Platform.OS === "ios") {
+        console.warn(
+          "[Push] iOS: ensure APNs credentials are configured via `eas credentials --platform ios`."
+        );
+      }
+    }
   }
 }
 
 export function setupNotificationListeners(): () => void {
-  if (isExpoGo) return () => {};
-
   const receivedSub = Notifications.addNotificationReceivedListener((notification) => {
     const data = notification.request.content.data as { type?: string };
+
     if (data?.type === "account_banned") {
       const user = useAuthStore.getState().user;
       if (user) {
@@ -81,8 +120,8 @@ export function setupNotificationListeners(): () => void {
       }
     } else if (data?.type === "order_status" && data?.order_id) {
       router.push(`/orders/${data.order_id}` as any);
-    } else if (data?.type === "new_order" && data?.order_id) {
-      router.push(`/seller/orders` as any);
+    } else if (data?.type === "new_order") {
+      router.push("/seller/orders" as any);
     }
   });
 

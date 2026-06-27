@@ -43,7 +43,7 @@ export default function VerifyEmail() {
         setUser(freshUser);
         toast.success(t("auth.emailVerified"));
         if (!freshUser.onboarding_completed) {
-          router.replace("/(onboarding)/avatar" as any);
+          router.replace("/(onboarding)/profile" as any);
         } else {
           router.replace("/(tabs)/home" as any);
         }
