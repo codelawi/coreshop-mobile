@@ -48,7 +48,8 @@
     "items": "items",
     "delete": "Delete",
     "remove": "Remove",
-    "reviews": "reviews"
+    "reviews": "reviews",
+    "offline": "No internet connection"
   },
   "tabs": {
     "home": "Home",

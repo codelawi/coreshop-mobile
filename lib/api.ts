@@ -1,5 +1,6 @@
 import axios from "axios";
 import * as SecureStore from "expo-secure-store";
+import { useNetworkStore } from "@/stores/network-store";
 
 export const API_URL = process.env.EXPO_PUBLIC_API_URL ?? "https://coreshop.io/api/v1";
 
@@ -20,10 +21,19 @@ api.interceptors.request.use(async (config) => {
 });
 
 api.interceptors.response.use(
-  (res) => res,
+  (res) => {
+    useNetworkStore.getState().setOffline(false);
+    return res;
+  },
   async (error) => {
-    if (error.response?.status === 401) {
-      await SecureStore.deleteItemAsync("auth_token");
+    if (!error.response) {
+      // No response = no internet or server unreachable
+      useNetworkStore.getState().setOffline(true);
+    } else {
+      useNetworkStore.getState().setOffline(false);
+      if (error.response.status === 401) {
+        await SecureStore.deleteItemAsync("auth_token");
+      }
     }
     return Promise.reject(error);
   }

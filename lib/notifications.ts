@@ -9,19 +9,30 @@ const PROJECT_ID =
   (Constants.expoConfig?.extra?.eas?.projectId as string | undefined) ??
   "ac7a0146-f6aa-4fa3-b939-a8bc4713c03e";
 
-/**
- * Expo Go no longer delivers push notifications in SDK 53+.
- * Google removed FCM Legacy (which Expo Go relied on) and per-app Firebase
- * credentials cannot be embedded in a shared Expo Go binary.
- *
- * Solution: use a development build for testing push.
- *   eas build --profile development --platform android
- *   eas build --profile development --platform ios
- */
+export const NOTIFICATION_CHANNEL_ID = "coreshop_v2";
+
+const CHANNEL_CONFIG: Notifications.NotificationChannelInput = {
+  name: "CoreShop",
+  importance: Notifications.AndroidImportance.MAX,
+  vibrationPattern: [0, 250, 250, 250],
+  lightColor: "#FF4D4F",
+  sound: "default",
+  enableVibrate: true,
+  showBadge: true,
+  bypassDnd: false,
+  lockScreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+};
+
 const isExpoGo = Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
 
-// Must be called unconditionally so foreground notifications always display,
-// including in development builds and standalone apps.
+// ─── Run at module load ────────────────────────────────────────────────────────
+// This fires the instant _layout.tsx imports this module — before any FCM
+// message can be processed — so the channel always exists with MAX importance.
+if (Platform.OS === "android") {
+  void Notifications.setNotificationChannelAsync(NOTIFICATION_CHANNEL_ID, CHANNEL_CONFIG);
+}
+
+// Controls how notifications are displayed when the app is in the foreground.
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
@@ -32,6 +43,15 @@ Notifications.setNotificationHandler({
   }),
 });
 
+// ─── Exported so _layout can call it on every app open ───────────────────────
+export async function ensureNotificationChannel(): Promise<void> {
+  if (Platform.OS !== "android") {
+    return;
+  }
+
+  await Notifications.setNotificationChannelAsync(NOTIFICATION_CHANNEL_ID, CHANNEL_CONFIG);
+}
+
 export async function registerForPushNotifications(): Promise<void> {
   if (isExpoGo) {
     if (__DEV__) {
@@ -40,20 +60,11 @@ export async function registerForPushNotifications(): Promise<void> {
           "Run `eas build --profile development` to get a dev build that supports push."
       );
     }
+
     return;
   }
 
-  if (Platform.OS === "android") {
-    await Notifications.setNotificationChannelAsync("default", {
-      name: "Default",
-      importance: Notifications.AndroidImportance.MAX,
-      vibrationPattern: [0, 250, 250, 250],
-      lightColor: "#0A0A0A",
-      sound: "default",
-      enableVibrate: true,
-      showBadge: true,
-    });
-  }
+  await ensureNotificationChannel();
 
   const { status: existingStatus } = await Notifications.getPermissionsAsync();
   let finalStatus = existingStatus;
@@ -67,19 +78,23 @@ export async function registerForPushNotifications(): Promise<void> {
     if (__DEV__) {
       console.warn("[Push] Permission denied:", finalStatus);
     }
+
     return;
   }
 
   try {
     const tokenData = await Notifications.getExpoPushTokenAsync({ projectId: PROJECT_ID });
+
     if (__DEV__) {
       console.log("[Push] Token:", tokenData.data);
     }
+
     await api.patch("/auth/push-token", { token: tokenData.data });
   } catch (error: any) {
     if (__DEV__) {
       const msg: string = error?.message ?? String(error);
       console.warn("[Push] Token registration failed:", msg);
+
       if (msg.includes("physical device")) {
         console.warn("[Push] Push notifications require a real device, not a simulator/emulator.");
       } else if (Platform.OS === "android") {
@@ -88,9 +103,7 @@ export async function registerForPushNotifications(): Promise<void> {
             "and FCM credentials are configured via `eas credentials --platform android`."
         );
       } else if (Platform.OS === "ios") {
-        console.warn(
-          "[Push] iOS: ensure APNs credentials are configured via `eas credentials --platform ios`."
-        );
+        console.warn("[Push] iOS: ensure APNs credentials are configured via `eas credentials --platform ios`.");
       }
     }
   }
@@ -102,6 +115,7 @@ export function setupNotificationListeners(): () => void {
 
     if (data?.type === "account_banned") {
       const user = useAuthStore.getState().user;
+
       if (user) {
         useAuthStore.getState().setUser({ ...user, status: "suspended" });
         router.replace("/banned" as any);
@@ -120,6 +134,7 @@ export function setupNotificationListeners(): () => void {
 
     if (data?.type === "account_banned") {
       const user = useAuthStore.getState().user;
+
       if (user) {
         useAuthStore.getState().setUser({ ...user, status: "suspended" });
         router.replace("/banned" as any);

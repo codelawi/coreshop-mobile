@@ -31,7 +31,8 @@ import { useCartStore } from "@/stores/cart-store";
 import { useWishlistStore } from "@/stores/wishlist-store";
 import { useThemeStore } from "@/stores/theme-store";
 import { useColorScheme } from "nativewind";
-import { registerForPushNotifications, setupNotificationListeners } from "@/lib/notifications";
+import { registerForPushNotifications, setupNotificationListeners, ensureNotificationChannel } from "@/lib/notifications";
+import { OfflineBanner } from "@/components/ui/offline-banner";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -78,6 +79,12 @@ export default function RootLayout() {
     }
   }, [token]);
 
+  // Ensure the Android notification channel exists with correct importance on every app open.
+  // This runs independently of auth so the channel is ready before any push arrives.
+  useEffect(() => {
+    void ensureNotificationChannel();
+  }, []);
+
   // Set up notification tap listener for the lifetime of the app
   useEffect(() => {
     const cleanup = setupNotificationListeners();
@@ -95,6 +102,7 @@ export default function RootLayout() {
           <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
           <Stack screenOptions={{ headerShown: false }} />
           <Toaster position="top-center" />
+          <OfflineBanner />
         </SafeAreaProvider>
       </QueryClientProvider>
     </GestureHandlerRootView>

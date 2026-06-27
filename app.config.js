@@ -80,10 +80,11 @@ export default {
         "expo-notifications",
         {
           icon: "./assets/icon.png",
-          color: "#0A0A0A",
+          color: "#FF4D4F",
           sounds: [],
           androidMode: "default",
           androidCollapsedTitle: "CoreShop",
+          defaultChannel: "coreshop_v2",
         },
       ],
     ],
