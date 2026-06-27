@@ -19,8 +19,11 @@ import {
   MapsLocation02Icon,
 } from "@hugeicons/core-free-icons";
 import { LocationSuccessOverlay } from "@/components/ui/location-success-overlay";
-import MapView, { type Region, PROVIDER_DEFAULT } from "react-native-maps";
+import MapboxGL from "@rnmapbox/maps";
 import * as Location from "expo-location";
+import { useTranslation } from "react-i18next";
+
+MapboxGL.setAccessToken(process.env.EXPO_PUBLIC_MAPBOX_TOKEN ?? "");
 import { toast } from "sonner-native";
 
 import { Text } from "@/components/ui/text";
@@ -30,12 +33,8 @@ import { useThemeColors } from "@/lib/theme";
 import { Spinner } from "@/components/ui/spinner";
 import type { Address, AddressInput } from "@/lib/queries/addresses";
 
-const DEFAULT_REGION: Region = {
-  latitude: 31.9539,
-  longitude: 35.9106,
-  latitudeDelta: 0.05,
-  longitudeDelta: 0.05,
-};
+// Amman, Jordan [lng, lat]
+const DEFAULT_CENTER: [number, number] = [35.9106, 31.9539];
 
 const schema = z.object({
   label: z.string().optional(),
@@ -60,8 +59,9 @@ interface Props {
 
 export function AddressForm({ title, initialAddress, onSave, isSaving }: Props) {
   const router = useRouter();
+  const { t } = useTranslation();
   const c = useThemeColors();
-  const mapRef = useRef<MapView>(null);
+  const cameraRef = useRef<MapboxGL.Camera>(null);
 
   const [locationSuccess, setLocationSuccess] = useState(false);
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(
@@ -105,7 +105,7 @@ export function AddressForm({ title, initialAddress, onSave, isSaving }: Props) 
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") {
-        toast.error("Location permission required");
+        toast.error(t("addresses.form.locationRequired"));
         return;
       }
       const loc = await Location.getCurrentPositionAsync({
@@ -113,17 +113,16 @@ export function AddressForm({ title, initialAddress, onSave, isSaving }: Props) 
       });
       const newCoords = { lat: loc.coords.latitude, lng: loc.coords.longitude };
       setCoords(newCoords);
-      mapRef.current?.animateToRegion({
-        latitude: newCoords.lat,
-        longitude: newCoords.lng,
-        latitudeDelta: 0.01,
-        longitudeDelta: 0.01,
+      cameraRef.current?.setCamera({
+        centerCoordinate: [newCoords.lng, newCoords.lat],
+        zoomLevel: 16,
+        animationDuration: 800,
       });
       await reverseGeocode(newCoords.lat, newCoords.lng);
       setLocationSuccess(true);
       setTimeout(() => setLocationSuccess(false), 1500);
     } catch {
-      toast.error("Could not get location");
+      toast.error(t("addresses.form.couldNotGetLocation"));
     } finally {
       setMapLoading(false);
     }
@@ -138,15 +137,15 @@ export function AddressForm({ title, initialAddress, onSave, isSaving }: Props) 
     }
   };
 
-  const onRegionChangeComplete = async (region: Region) => {
-    const newCoords = { lat: region.latitude, lng: region.longitude };
-    setCoords(newCoords);
-    await reverseGeocode(newCoords.lat, newCoords.lng);
+  const onMapIdle = async (state: any) => {
+    const [lng, lat] = state.properties.center;
+    setCoords({ lat, lng });
+    await reverseGeocode(lat, lng);
   };
 
   const onSubmit = (formData: FormData) => {
     if (!coords) {
-      toast.error("Please pin your location on the map");
+      toast.error(t("addresses.form.pinRequired"));
       return;
     }
     onSave({
@@ -164,16 +163,6 @@ export function AddressForm({ title, initialAddress, onSave, isSaving }: Props) 
       is_default: formData.is_default,
     });
   };
-
-  const initialRegion =
-    coords
-      ? {
-          latitude: coords.lat,
-          longitude: coords.lng,
-          latitudeDelta: 0.01,
-          longitudeDelta: 0.01,
-        }
-      : DEFAULT_REGION;
 
   return (
     <SafeAreaView className="flex-1 bg-bg-light dark:bg-bg-dark">
@@ -200,66 +189,47 @@ export function AddressForm({ title, initialAddress, onSave, isSaving }: Props) 
         >
           {/* Map picker */}
           <View className="h-64 overflow-hidden border-b border-brand-100 dark:border-[#2A2A2A]">
-            {Platform.OS === "ios" ? (
-              <>
-                <MapView
-                  ref={mapRef}
-                  provider={PROVIDER_DEFAULT}
-                  style={{ flex: 1 }}
-                  initialRegion={initialRegion}
-                  onRegionChangeComplete={onRegionChangeComplete}
-                  showsUserLocation
-                  showsMyLocationButton={false}
-                />
-                <View
-                  pointerEvents="none"
-                  className="absolute inset-0 items-center justify-center"
-                >
-                  <View className="-mt-6 h-12 w-12 items-center justify-center rounded-full bg-brand">
-                    <HugeiconsIcon icon={Location01Icon} size={24} color="#fff" />
-                  </View>
+            <MapboxGL.MapView
+              style={{ flex: 1 }}
+              onMapIdle={onMapIdle}
+              logoEnabled={false}
+              attributionEnabled={false}
+              scaleBarEnabled={false}
+            >
+              <MapboxGL.Camera
+                ref={cameraRef}
+                zoomLevel={coords ? 16 : 13}
+                centerCoordinate={
+                  coords ? [coords.lng, coords.lat] : DEFAULT_CENTER
+                }
+                animationDuration={0}
+              />
+              <MapboxGL.UserLocation visible />
+            </MapboxGL.MapView>
+
+            {/* Fixed center pin */}
+            <View
+              pointerEvents="none"
+              style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, alignItems: "center", justifyContent: "center" }}
+            >
+              <View style={{ marginBottom: 28 }}>
+                <View className="h-12 w-12 items-center justify-center rounded-full bg-brand">
+                  <HugeiconsIcon icon={Location01Icon} size={24} color="#fff" />
                 </View>
-                {mapLoading && (
-                  <View className="absolute inset-0 items-center justify-center bg-white/70 dark:bg-black/70">
-                    <Spinner size={40} />
-                  </View>
-                )}
-                <Pressable
-                  onPress={detectGPS}
-                  className="absolute bottom-3 right-3 h-11 w-11 items-center justify-center rounded-full bg-white dark:bg-bg-card shadow"
-                >
-                  <HugeiconsIcon icon={MapsLocation02Icon} size={20} color={c.brand} />
-                </Pressable>
-              </>
-            ) : (
-              <View className="flex-1 items-center justify-center gap-4 bg-white dark:bg-bg-card px-6">
-                <View className="h-16 w-16 items-center justify-center rounded-full bg-brand">
-                  <HugeiconsIcon icon={Location01Icon} size={28} color="#fff" />
-                </View>
-                <View className="items-center gap-1">
-                  <Text variant="semibold" className="text-sm text-brand dark:text-white">
-                    {mapLoading ? "Detecting location..." : coords ? city || "Location detected" : "Tap to detect location"}
-                  </Text>
-                  {coords && (
-                    <Text className="text-xs" style={{ color: c.secondary }}>
-                      {coords.lat.toFixed(5)}, {coords.lng.toFixed(5)}
-                    </Text>
-                  )}
-                </View>
-                <Pressable
-                  onPress={detectGPS}
-                  disabled={mapLoading}
-                  className="flex-row items-center gap-2 rounded-xl bg-brand px-5 py-2.5"
-                >
-                  {mapLoading ? (
-                    <Spinner size={16} color="#fff" />
-                  ) : (
-                    <HugeiconsIcon icon={MapsLocation02Icon} size={16} color="#fff" />
-                  )}
-                  <Text variant="semibold" className="text-sm text-white">
-                    {mapLoading ? "Detecting..." : "Use My Location"}
-                  </Text>
-                </Pressable>
+              </View>
+            </View>
+
+            {/* GPS button */}
+            <Pressable
+              onPress={detectGPS}
+              className="absolute bottom-3 right-3 h-11 w-11 items-center justify-center rounded-full bg-white dark:bg-bg-card shadow"
+            >
+              <HugeiconsIcon icon={MapsLocation02Icon} size={20} color={c.brand} />
+            </Pressable>
+
+            {mapLoading && (
+              <View className="absolute inset-0 items-center justify-center bg-white/70 dark:bg-black/70">
+                <Spinner size={40} />
               </View>
             )}
           </View>
@@ -268,10 +238,10 @@ export function AddressForm({ title, initialAddress, onSave, isSaving }: Props) 
           <View className="flex-row items-center gap-2 border-b border-brand-100 dark:border-[#2A2A2A] bg-white dark:bg-bg-card px-4 py-3">
             <HugeiconsIcon icon={Location01Icon} size={16} color={c.secondary} />
             <Text className="text-sm" style={{ color: c.secondary }}>
-              City:
+              {t("addresses.form.cityLabel")}
             </Text>
             <Text variant="semibold" className="text-sm text-brand dark:text-white">
-              {city || "Drag the map to detect"}
+              {city || t("addresses.form.dragToDetect")}
             </Text>
           </View>
           <LocationSuccessOverlay visible={locationSuccess} />
@@ -283,8 +253,8 @@ export function AddressForm({ title, initialAddress, onSave, isSaving }: Props) 
               name="label"
               render={({ field: { onChange, value } }) => (
                 <Input
-                  label="Label (optional)"
-                  placeholder="Home, Work, etc."
+                  label={t("addresses.form.labelField")}
+                  placeholder={t("addresses.form.labelPlaceholder")}
                   value={value ?? ""}
                   onChangeText={onChange}
                 />
@@ -296,8 +266,8 @@ export function AddressForm({ title, initialAddress, onSave, isSaving }: Props) 
               name="recipient_name"
               render={({ field: { onChange, value } }) => (
                 <Input
-                  label="Recipient Name"
-                  placeholder="Full name"
+                  label={t("addresses.form.recipientName")}
+                  placeholder={t("addresses.form.recipientPlaceholder")}
                   value={value}
                   onChangeText={onChange}
                   error={errors.recipient_name?.message}
@@ -310,8 +280,8 @@ export function AddressForm({ title, initialAddress, onSave, isSaving }: Props) 
               name="phone"
               render={({ field: { onChange, value } }) => (
                 <Input
-                  label="Phone"
-                  placeholder="+962 7x xxx xxxx"
+                  label={t("addresses.form.phone")}
+                  placeholder={t("addresses.form.phonePlaceholder")}
                   keyboardType="phone-pad"
                   value={value}
                   onChangeText={onChange}
@@ -325,8 +295,8 @@ export function AddressForm({ title, initialAddress, onSave, isSaving }: Props) 
               name="address_line"
               render={({ field: { onChange, value } }) => (
                 <Input
-                  label="Street Address (optional)"
-                  placeholder="Street name and number"
+                  label={t("addresses.form.streetAddress")}
+                  placeholder={t("addresses.form.streetPlaceholder")}
                   value={value ?? ""}
                   onChangeText={onChange}
                 />
@@ -340,8 +310,8 @@ export function AddressForm({ title, initialAddress, onSave, isSaving }: Props) 
                   name="building"
                   render={({ field: { onChange, value } }) => (
                     <Input
-                      label="Building"
-                      placeholder="Optional"
+                      label={t("addresses.form.building")}
+                      placeholder={t("addresses.form.optional")}
                       value={value ?? ""}
                       onChangeText={onChange}
                     />
@@ -354,8 +324,8 @@ export function AddressForm({ title, initialAddress, onSave, isSaving }: Props) 
                   name="floor"
                   render={({ field: { onChange, value } }) => (
                     <Input
-                      label="Floor"
-                      placeholder="Optional"
+                      label={t("addresses.form.floor")}
+                      placeholder={t("addresses.form.optional")}
                       value={value ?? ""}
                       onChangeText={onChange}
                     />
@@ -368,8 +338,8 @@ export function AddressForm({ title, initialAddress, onSave, isSaving }: Props) 
                   name="apartment"
                   render={({ field: { onChange, value } }) => (
                     <Input
-                      label="Apt"
-                      placeholder="Optional"
+                      label={t("addresses.form.apt")}
+                      placeholder={t("addresses.form.optional")}
                       value={value ?? ""}
                       onChangeText={onChange}
                     />
@@ -383,8 +353,8 @@ export function AddressForm({ title, initialAddress, onSave, isSaving }: Props) 
               name="notes"
               render={({ field: { onChange, value } }) => (
                 <Input
-                  label="Notes"
-                  placeholder="Delivery instructions (optional)"
+                  label={t("addresses.form.notes")}
+                  placeholder={t("addresses.form.notesPlaceholder")}
                   value={value ?? ""}
                   onChangeText={onChange}
                 />
@@ -398,7 +368,7 @@ export function AddressForm({ title, initialAddress, onSave, isSaving }: Props) 
               render={({ field: { onChange, value } }) => (
                 <View className="flex-row items-center justify-between rounded-md border border-brand-100 dark:border-[#3A3A3A] bg-white dark:bg-bg-card px-4 py-4">
                   <Text variant="medium" className="text-sm text-brand dark:text-white">
-                    Set as default address
+                    {t("addresses.form.setAsDefault")}
                   </Text>
                   <Switch
                     value={value}
@@ -412,7 +382,7 @@ export function AddressForm({ title, initialAddress, onSave, isSaving }: Props) 
             />
 
             <Button
-              label="Save Address"
+              label={t("addresses.form.saveAddress")}
               onPress={handleSubmit(onSubmit)}
               loading={isSaving}
               fullWidth

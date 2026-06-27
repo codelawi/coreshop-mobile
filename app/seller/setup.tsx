@@ -23,6 +23,7 @@ import {
   Location01Icon,
   ImageUpload01Icon,
   Tick01Icon,
+  Search01Icon,
 } from "@hugeicons/core-free-icons";
 import { LocationSuccessOverlay } from "@/components/ui/location-success-overlay";
 import MapboxGL from "@rnmapbox/maps";
@@ -99,6 +100,12 @@ export default function SellerSetup() {
 
   const [step, setStep] = useState(0);
 
+  // Step 1 — place search
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<Array<{ id: string; name: string; lat: number; lng: number }>>([]);
+  const [showResults, setShowResults] = useState(false);
+  const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // Step 0 — location
   const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(
     existingStore?.latitude && existingStore?.longitude
@@ -171,6 +178,40 @@ export default function SellerSetup() {
   const onMapIdle = (state: any) => {
     const [lng, lat] = state.properties.center;
     setCoords({ latitude: lat, longitude: lng });
+  };
+
+  const searchPlaces = async (query: string) => {
+    if (!query.trim()) { setSearchResults([]); setShowResults(false); return; }
+    try {
+      const token = process.env.EXPO_PUBLIC_MAPBOX_TOKEN ?? "";
+      const res = await fetch(
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${token}&limit=5&country=JO&language=ar,en`
+      );
+      const json = await res.json();
+      const features: any[] = json.features ?? [];
+      setSearchResults(features.map((f) => ({ id: f.id, name: f.place_name, lat: f.center[1], lng: f.center[0] })));
+      setShowResults(true);
+    } catch { /* ignore */ }
+  };
+
+  const onSearchChange = (text: string) => {
+    setSearchQuery(text);
+    if (searchTimeout.current) { clearTimeout(searchTimeout.current); }
+    searchTimeout.current = setTimeout(() => searchPlaces(text), 400);
+  };
+
+  const onSelectPlace = (item: { id: string; name: string; lat: number; lng: number }) => {
+    setCoords({ latitude: item.lat, longitude: item.lng });
+    cameraRef.current?.setCamera({ centerCoordinate: [item.lng, item.lat], zoomLevel: 15, animationDuration: 800 });
+    setSearchQuery(item.name);
+    setShowResults(false);
+    setSearchResults([]);
+    Location.reverseGeocodeAsync({ latitude: item.lat, longitude: item.lng })
+      .then(([place]) => {
+        if (place?.city) { setCity(place.city); }
+        if (place?.street) { setAddress(place.street); }
+      })
+      .catch(() => {});
   };
 
   const pickLogo = async () => {
@@ -382,6 +423,55 @@ export default function SellerSetup() {
               <Text className="text-sm" style={{ color: c.secondary }}>
                 {t("seller.setup.locationSubtitle")}
               </Text>
+
+              {/* Place search */}
+              <View style={{ zIndex: 10 }}>
+                <View
+                  className="flex-row items-center gap-2 rounded-xl border border-brand-100 dark:border-[#2A2A2A] bg-white dark:bg-bg-card px-3"
+                  style={{ height: 46 }}
+                >
+                  <HugeiconsIcon icon={Search01Icon} size={18} color={c.secondary} />
+                  <TextInput
+                    value={searchQuery}
+                    onChangeText={onSearchChange}
+                    placeholder={t("seller.setup.searchPlace")}
+                    placeholderTextColor={c.placeholder}
+                    className="flex-1 text-sm text-brand dark:text-white"
+                    style={{ height: 46 }}
+                    autoCorrect={false}
+                    spellCheck={false}
+                    returnKeyType="search"
+                  />
+                </View>
+                {showResults && searchResults.length > 0 ? (
+                  <View
+                    className="absolute top-12 left-0 right-0 rounded-xl border border-brand-100 dark:border-[#2A2A2A] bg-white dark:bg-bg-card overflow-hidden"
+                    style={{ zIndex: 20, elevation: 8, shadowColor: "#000", shadowOpacity: 0.12, shadowRadius: 8, shadowOffset: { width: 0, height: 4 } }}
+                  >
+                    {searchResults.map((item, index) => (
+                      <Pressable
+                        key={item.id}
+                        onPress={() => onSelectPlace(item)}
+                        className="px-4 py-3"
+                        style={{ borderBottomWidth: index < searchResults.length - 1 ? 1 : 0, borderBottomColor: c.border }}
+                      >
+                        <Text className="text-sm text-brand dark:text-white" numberOfLines={1}>
+                          {item.name}
+                        </Text>
+                      </Pressable>
+                    ))}
+                  </View>
+                ) : showResults && searchResults.length === 0 ? (
+                  <View
+                    className="absolute top-12 left-0 right-0 rounded-xl border border-brand-100 dark:border-[#2A2A2A] bg-white dark:bg-bg-card px-4 py-3"
+                    style={{ zIndex: 20, elevation: 8 }}
+                  >
+                    <Text className="text-sm" style={{ color: c.secondary }}>
+                      {t("seller.setup.searchNoResults")}
+                    </Text>
+                  </View>
+                ) : null}
+              </View>
 
               <View className="overflow-hidden rounded-xl" style={{ height: 240 }}>
                 <MapboxGL.MapView

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import * as Google from "expo-auth-session/providers/google";
+import { useAuthRequest, makeRedirectUri } from "expo-auth-session";
 import { useRouter } from "expo-router";
 import { toast } from "sonner-native";
 import * as SecureStore from "expo-secure-store";
@@ -7,20 +7,33 @@ import * as SecureStore from "expo-secure-store";
 import { api } from "@/lib/api";
 import { useAuthStore } from "@/stores/auth-store";
 
+const discovery = {
+  authorizationEndpoint: "https://accounts.google.com/o/oauth2/v2/auth",
+  tokenEndpoint: "https://oauth2.googleapis.com/token",
+};
+
+const redirectUri = makeRedirectUri({ useProxy: true });
+
 export function useGoogleAuth() {
   const router = useRouter();
   const setAuth = useAuthStore((s) => s.setAuth);
   const [loading, setLoading] = useState(false);
 
-  const [request, response, promptAsync] = Google.useAuthRequest({
-    webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
-    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
-    androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
-  });
+  const [request, response, promptAsync] = useAuthRequest(
+    {
+      clientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? "",
+      scopes: ["openid", "profile", "email"],
+      redirectUri,
+      responseType: "token",
+    },
+    discovery
+  );
 
   useEffect(() => {
     if (response?.type === "success") {
-      const accessToken = response.authentication?.accessToken;
+      const accessToken =
+        response.authentication?.accessToken ??
+        (response.params as any)?.access_token;
       if (accessToken) {
         handleToken(accessToken);
       }
@@ -56,6 +69,6 @@ export function useGoogleAuth() {
   return {
     ready: !!request,
     loading,
-    signInWithGoogle: () => promptAsync(),
+    signInWithGoogle: () => promptAsync({ useProxy: true }),
   };
 }
