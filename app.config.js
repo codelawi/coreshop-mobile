@@ -47,11 +47,6 @@ export default {
         "android.permission.ACCESS_COARSE_LOCATION",
         "android.permission.ACCESS_FINE_LOCATION",
       ],
-      config: {
-        googleMaps: {
-          apiKey: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY ?? "",
-        },
-      },
       intentFilters: [
         {
           action: "VIEW",
@@ -67,6 +62,12 @@ export default {
     },
     plugins: [
       "expo-router",
+      [
+        "@rnmapbox/maps",
+        {
+          RNMapboxMapsDownloadToken: process.env.MAPBOX_DOWNLOAD_TOKEN ?? "",
+        },
+      ],
       [
         "expo-location",
         {

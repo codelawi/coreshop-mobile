@@ -25,7 +25,9 @@ import {
   Tick01Icon,
 } from "@hugeicons/core-free-icons";
 import { LocationSuccessOverlay } from "@/components/ui/location-success-overlay";
-import MapView, { type Region, PROVIDER_DEFAULT } from "react-native-maps";
+import MapboxGL from "@rnmapbox/maps";
+
+MapboxGL.setAccessToken(process.env.EXPO_PUBLIC_MAPBOX_TOKEN ?? "");
 import * as Location from "expo-location";
 import * as ImagePicker from "expo-image-picker";
 import * as FileSystem from "expo-file-system/legacy";
@@ -107,7 +109,7 @@ export default function SellerSetup() {
   const [address, setAddress] = useState(existingStore?.address ?? "");
   const [gpsLoading, setGpsLoading] = useState(false);
   const [locationSuccess, setLocationSuccess] = useState(false);
-  const mapRef = useRef<MapView>(null);
+  const cameraRef = useRef<MapboxGL.Camera>(null);
 
   // Step 2 — images
   const [logoUri, setLogoUri] = useState<string | null>(existingStore?.logo ?? null);
@@ -120,12 +122,10 @@ export default function SellerSetup() {
   // Step 3 — hours
   const [hours, setHours] = useState<WorkingHours>(existingStore?.working_hours ?? DEFAULT_HOURS);
 
-  const DEFAULT_REGION: Region = {
-    latitude: coords?.latitude ?? 31.9522,
-    longitude: coords?.longitude ?? 35.2332,
-    latitudeDelta: 0.05,
-    longitudeDelta: 0.05,
-  };
+  const defaultCenter: [number, number] = [
+    coords?.longitude ?? 35.9106,
+    coords?.latitude ?? 31.9539,
+  ];
 
   const {
     control,
@@ -151,7 +151,11 @@ export default function SellerSetup() {
       const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
       const { latitude, longitude } = loc.coords;
       setCoords({ latitude, longitude });
-      mapRef.current?.animateToRegion({ latitude, longitude, latitudeDelta: 0.01, longitudeDelta: 0.01 });
+      cameraRef.current?.setCamera({
+        centerCoordinate: [longitude, latitude],
+        zoomLevel: 15,
+        animationDuration: 800,
+      });
       const [place] = await Location.reverseGeocodeAsync({ latitude, longitude });
       if (place?.city) { setCity(place.city); }
       if (place?.street) { setAddress(place.street); }
@@ -164,8 +168,9 @@ export default function SellerSetup() {
     }
   };
 
-  const onMapRegionChange = (region: Region) => {
-    setCoords({ latitude: region.latitude, longitude: region.longitude });
+  const onMapIdle = (state: any) => {
+    const [lng, lat] = state.properties.center;
+    setCoords({ latitude: lat, longitude: lng });
   };
 
   const pickLogo = async () => {
@@ -378,50 +383,36 @@ export default function SellerSetup() {
                 {t("seller.setup.locationSubtitle")}
               </Text>
 
-              {Platform.OS === "ios" ? (
-                <View className="overflow-hidden rounded-xl" style={{ height: 240 }}>
-                  <MapView
-                    ref={mapRef}
-                    provider={PROVIDER_DEFAULT}
-                    style={{ flex: 1 }}
-                    initialRegion={DEFAULT_REGION}
-                    onRegionChangeComplete={onMapRegionChange}
-                  />
-                  <View
-                    className="absolute left-1/2 top-1/2 items-center"
-                    style={{ marginLeft: -12, marginTop: -28 }}
-                    pointerEvents="none"
-                  >
-                    <View
-                      className="h-6 w-6 rounded-full border-2 border-white"
-                      style={{ backgroundColor: "#FF4D4F" }}
-                    />
-                    <View
-                      className="w-0.5"
-                      style={{ height: 10, backgroundColor: "#FF4D4F" }}
-                    />
-                  </View>
-                </View>
-              ) : (
-                <View
-                  className="items-center justify-center gap-4 overflow-hidden rounded-xl bg-white dark:bg-bg-card"
-                  style={{ height: 240 }}
+              <View className="overflow-hidden rounded-xl" style={{ height: 240 }}>
+                <MapboxGL.MapView
+                  style={{ flex: 1 }}
+                  onMapIdle={onMapIdle}
+                  logoEnabled={false}
+                  attributionEnabled={false}
+                  scaleBarEnabled={false}
                 >
-                  <View className="h-16 w-16 items-center justify-center rounded-full bg-brand">
-                    <HugeiconsIcon icon={Location01Icon} size={28} color="#fff" />
-                  </View>
-                  <View className="items-center gap-1">
-                    <Text variant="semibold" className="text-sm text-brand dark:text-white">
-                      {coords ? t("seller.setup.locationSet") : t("seller.setup.noLocationSet")}
-                    </Text>
-                    {coords && (
-                      <Text className="text-xs" style={{ color: c.secondary }}>
-                        {coords.latitude.toFixed(5)}, {coords.longitude.toFixed(5)}
-                      </Text>
-                    )}
+                  <MapboxGL.Camera
+                    ref={cameraRef}
+                    zoomLevel={13}
+                    centerCoordinate={defaultCenter}
+                    animationDuration={0}
+                  />
+                  <MapboxGL.UserLocation visible />
+                </MapboxGL.MapView>
+
+                {/* Fixed center pin */}
+                <View
+                  pointerEvents="none"
+                  style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, alignItems: "center", justifyContent: "center" }}
+                >
+                  <View style={{ marginBottom: 28 }}>
+                    <View
+                      style={{ width: 24, height: 24, borderRadius: 12, borderWidth: 2, borderColor: "#fff", backgroundColor: "#FF4D4F" }}
+                    />
+                    <View style={{ width: 2, height: 10, backgroundColor: "#FF4D4F", alignSelf: "center" }} />
                   </View>
                 </View>
-              )}
+              </View>
 
               <Pressable
                 onPress={detectGps}
