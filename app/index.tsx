@@ -21,5 +21,9 @@ export default function Index() {
     return <Redirect href={"/(onboarding)/profile" as any} />;
   }
 
+  if (user.role === "seller") {
+    return <Redirect href={"/seller" as any} />;
+  }
+
   return <Redirect href={"/(tabs)/home" as any} />;
 }

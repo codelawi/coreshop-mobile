@@ -168,6 +168,34 @@ export default function SignIn() {
                 className="mt-2"
               />
 
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 12, marginTop: 4 }}>
+                <View style={{ flex: 1, height: 1, backgroundColor: c.border }} />
+                <Text style={{ color: c.muted, fontSize: 12 }}>{t("auth.or")}</Text>
+                <View style={{ flex: 1, height: 1, backgroundColor: c.border }} />
+              </View>
+
+              <Pressable
+                onPress={() => googleReady && signInWithGoogle()}
+                disabled={!googleReady || googleLoading}
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 10,
+                  borderRadius: 12,
+                  paddingVertical: 13,
+                  borderWidth: 1,
+                  borderColor: c.border,
+                  backgroundColor: c.card,
+                  opacity: !googleReady || googleLoading ? 0.6 : 1,
+                }}
+              >
+                <GoogleIcon size={20} />
+                <Text variant="semibold" style={{ fontSize: 14, color: c.brand }}>
+                  {t("auth.continueWithGoogle")}
+                </Text>
+              </Pressable>
+
             </Animated.View>
 
             <Animated.View

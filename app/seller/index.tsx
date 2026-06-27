@@ -8,13 +8,13 @@ import {
   Package01Icon,
   ShoppingCart01Icon,
   ChartLineData02Icon,
-  ArrowLeft01Icon,
   Add01Icon,
   Settings02Icon,
   StarIcon,
   MoneyReceive02Icon,
   Clock01Icon,
   Message01Icon,
+  Home03Icon,
 } from "@hugeicons/core-free-icons";
 import { toast } from "sonner-native";
 import { useTranslation } from "react-i18next";
@@ -99,10 +99,14 @@ export default function SellerHome() {
     return (
       <SafeAreaView className="flex-1 bg-bg-light dark:bg-bg-dark">
         <View className="flex-row items-center gap-3 px-6 py-4">
-          <Pressable onPress={() => router.replace("/(tabs)/home" as any)}>
-            <HugeiconsIcon icon={ArrowLeft01Icon} size={24} color={c.brand} />
+          <Text variant="bold" className="flex-1 text-xl text-brand dark:text-white">{t("seller.hub")}</Text>
+          <Pressable
+            onPress={() => router.push("/(tabs)/home" as any)}
+            style={{ flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, backgroundColor: c.brandLight }}
+          >
+            <HugeiconsIcon icon={Home03Icon} size={16} color={c.brand} />
+            <Text variant="semibold" style={{ fontSize: 12, color: c.brand }}>{t("seller.browse")}</Text>
           </Pressable>
-          <Text variant="bold" className="text-xl text-brand dark:text-white">{t("seller.hub")}</Text>
         </View>
 
         <Animated.View
@@ -146,12 +150,16 @@ export default function SellerHome() {
         >
           {/* Header */}
           <View className="flex-row items-center gap-3 px-6 py-4">
-            <Pressable onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)/home" as any)}>
-              <HugeiconsIcon icon={ArrowLeft01Icon} size={24} color={c.brand} />
-            </Pressable>
             <Text variant="bold" className="flex-1 text-xl text-brand dark:text-white">
               {t("seller.hub")}
             </Text>
+            <Pressable
+              onPress={() => router.push("/(tabs)/home" as any)}
+              style={{ flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, backgroundColor: c.brandLight }}
+            >
+              <HugeiconsIcon icon={Home03Icon} size={16} color={c.brand} />
+              <Text variant="semibold" style={{ fontSize: 12, color: c.brand }}>{t("seller.browse")}</Text>
+            </Pressable>
             <Pressable onPress={() => router.push("/seller/setup" as any)}>
               <HugeiconsIcon icon={Settings02Icon} size={22} color={c.brand} />
             </Pressable>
@@ -271,10 +279,14 @@ export default function SellerHome() {
         ) : null}
         {/* Header */}
         <View className="flex-row items-center gap-3 px-6 py-4">
-          <Pressable onPress={() => router.back()}>
-            <HugeiconsIcon icon={ArrowLeft01Icon} size={24} color={c.brand} />
-          </Pressable>
           <Text variant="bold" className="flex-1 text-xl text-brand dark:text-white">{t("seller.hub")}</Text>
+          <Pressable
+            onPress={() => router.push("/(tabs)/home" as any)}
+            style={{ flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, backgroundColor: c.brandLight }}
+          >
+            <HugeiconsIcon icon={Home03Icon} size={16} color={c.brand} />
+            <Text variant="semibold" style={{ fontSize: 12, color: c.brand }}>{t("seller.browse")}</Text>
+          </Pressable>
           <Pressable onPress={() => router.push("/seller/setup" as any)}>
             <HugeiconsIcon icon={Settings02Icon} size={22} color={c.brand} />
           </Pressable>

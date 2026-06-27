@@ -24,6 +24,16 @@ export interface Conversation {
   created_at: string;
 }
 
+export interface MessageReferenceData {
+  id: number;
+  name?: string;
+  price?: number;
+  image?: string | null;
+  status?: string;
+  total?: number;
+  created_at?: string;
+}
+
 export interface Message {
   id: number;
   conversation_id: number;
@@ -31,8 +41,17 @@ export interface Message {
   sender_name: string;
   sender_avatar: string | null;
   body: string;
+  type: "text" | "product" | "order";
+  reference_id: number | null;
+  reference_data: MessageReferenceData | null;
   read_at: string | null;
   created_at: string;
+}
+
+export interface SendMessagePayload {
+  body?: string;
+  type?: "text" | "product" | "order";
+  reference_id?: number;
 }
 
 export function useConversations() {
@@ -42,6 +61,7 @@ export function useConversations() {
       const res = await api.get<{ success: boolean; data: Conversation[] }>("/client/conversations");
       return res.data.data;
     },
+    refetchInterval: 5000,
   });
 }
 
@@ -52,6 +72,7 @@ export function useSellerConversations() {
       const res = await api.get<{ success: boolean; data: Conversation[] }>("/seller/conversations");
       return res.data.data;
     },
+    refetchInterval: 5000,
   });
 }
 
@@ -94,10 +115,63 @@ export function useSendMessage(conversationId: number, role: "client" | "seller"
       : `/client/conversations/${conversationId}/messages`;
 
   return useMutation({
-    mutationFn: async (body: string) => {
-      const res = await api.post<{ success: boolean; data: Message }>(path, { body });
+    mutationFn: async (payload: SendMessagePayload) => {
+      const res = await api.post<{ success: boolean; data: Message }>(path, payload);
       return res.data.data;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["chat", role, conversationId] }),
+  });
+}
+
+export function useClientOrders() {
+  return useQuery({
+    queryKey: ["orders", "client", "chat-picker"],
+    queryFn: async () => {
+      const res = await api.get<{ success: boolean; data: any[] }>("/client/orders");
+      return res.data.data as Array<{
+        id: number;
+        status: string;
+        total: string;
+        created_at: string;
+        store?: { name: string };
+      }>;
+    },
+  });
+}
+
+function extractImageUrl(img: unknown): string | null {
+  if (!img) return null;
+  if (typeof img === "string") return img;
+  if (typeof img === "object" && img !== null && "url" in img) return (img as { url: string }).url;
+  return null;
+}
+
+function normalizeProducts(raw: any[]): Array<{ id: number; name: string; price: string; imageUrl: string | null }> {
+  return raw.map((p) => ({
+    id: p.id,
+    name: p.name,
+    price: p.price,
+    imageUrl: extractImageUrl(Array.isArray(p.images) ? p.images[0] : p.images),
+  }));
+}
+
+export function useSellerProducts() {
+  return useQuery({
+    queryKey: ["products", "seller", "chat-picker"],
+    queryFn: async () => {
+      const res = await api.get<{ success: boolean; data: any[] }>("/seller/products");
+      return normalizeProducts(res.data.data);
+    },
+  });
+}
+
+export function useClientStoreProducts(storeId: number) {
+  return useQuery({
+    queryKey: ["products", "store", storeId, "chat-picker"],
+    queryFn: async () => {
+      const res = await api.get<{ success: boolean; data: any[] }>(`/stores/${storeId}/products`);
+      return normalizeProducts(res.data.data);
+    },
+    enabled: !!storeId,
   });
 }

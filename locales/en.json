@@ -235,6 +235,7 @@
   },
   "seller": {
     "hub": "Seller Hub",
+    "browse": "Browse",
     "setupTitle": "Set up your store",
     "setupDesc": "Start selling on CoreShop by creating your store. It takes just a few minutes.",
     "createStore": "Create My Store",
@@ -485,7 +486,11 @@
     "emptyDesc": "Conversations will appear here when you chat with a store.",
     "noMessages": "No messages yet",
     "inputPlaceholder": "Write a message...",
-    "send": "Send"
+    "send": "Send",
+    "shareProduct": "Share Product",
+    "shareOrder": "Share Order",
+    "noProducts": "No products available",
+    "noOrders": "No orders available"
   },
   "onboarding": {
     "stepOf": "Step {{current}} of {{total}}",

@@ -49,6 +49,9 @@ export async function registerForPushNotifications(): Promise<void> {
       importance: Notifications.AndroidImportance.MAX,
       vibrationPattern: [0, 250, 250, 250],
       lightColor: "#0A0A0A",
+      sound: "default",
+      enableVibrate: true,
+      showBadge: true,
     });
   }
 
@@ -110,6 +113,9 @@ export function setupNotificationListeners(): () => void {
     const data = response.notification.request.content.data as {
       type?: string;
       order_id?: number;
+      conversation_id?: number;
+      role?: string;
+      store_name?: string;
     };
 
     if (data?.type === "account_banned") {
@@ -118,6 +124,15 @@ export function setupNotificationListeners(): () => void {
         useAuthStore.getState().setUser({ ...user, status: "suspended" });
         router.replace("/banned" as any);
       }
+    } else if (data?.type === "new_message" && data?.conversation_id) {
+      router.push({
+        pathname: "/chat/[id]",
+        params: {
+          id: data.conversation_id,
+          role: data.role ?? "client",
+          title: data.store_name ?? "Chat",
+        },
+      } as any);
     } else if (data?.type === "order_status" && data?.order_id) {
       router.push(`/orders/${data.order_id}` as any);
     } else if (data?.type === "new_order") {

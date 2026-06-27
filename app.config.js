@@ -1,3 +1,8 @@
+const androidClientId = process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID ?? "";
+const androidOAuthScheme = androidClientId
+  ? `com.googleusercontent.apps.${androidClientId.replace(".apps.googleusercontent.com", "")}`
+  : "com.googleusercontent.apps.626063460740-pqhbpvld97iqbffte6lh9v4d0j1d6a6u";
+
 export default {
   expo: {
     name: "CoreShop",
@@ -51,12 +56,7 @@ export default {
         {
           action: "VIEW",
           autoVerify: true,
-          data: [
-            {
-              scheme:
-                "com.googleusercontent.apps.626063460740-pqhbpvld97iqbffte6lh9v4d0j1d6a6u",
-            },
-          ],
+          data: [{ scheme: androidOAuthScheme }],
           category: ["BROWSABLE", "DEFAULT"],
         },
       ],
