@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "855662469976",
+    "project_id": "coreshop-25054",
+    "storage_bucket": "coreshop-25054.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:855662469976:android:9d897e9b2dee2cafac7b2d",
+        "android_client_info": {
+          "package_name": "com.coreshop.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDGNTZGn7RqIoZsvJo96H6VTnvKdWYMsds"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
