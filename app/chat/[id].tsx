@@ -36,6 +36,7 @@ import {
   useClientOrders,
   useSellerProducts,
   useClientStoreProducts,
+  useChatChannel,
   type Message,
 } from "@/lib/queries/chat";
 import { useAuthStore } from "@/stores/auth-store";
@@ -71,6 +72,7 @@ export default function ChatRoom() {
   const { width: screenWidth } = useWindowDimensions();
   const { data: messages = [], isLoading } = useMessages(conversationId, role);
   const sendMessage = useSendMessage(conversationId, role);
+  useChatChannel(conversationId, role, user?.id ?? 0);
 
   const [body, setBody] = useState("");
   const [pickerType, setPickerType] = useState<PickerType>(null);

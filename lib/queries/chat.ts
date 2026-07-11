@@ -1,5 +1,7 @@
+import { useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import { getPusher } from "@/lib/pusher";
 
 export interface ChatParticipant {
   id: number;
@@ -61,7 +63,6 @@ export function useConversations() {
       const res = await api.get<{ success: boolean; data: Conversation[] }>("/client/conversations");
       return res.data.data;
     },
-    refetchInterval: 5000,
   });
 }
 
@@ -72,7 +73,6 @@ export function useSellerConversations() {
       const res = await api.get<{ success: boolean; data: Conversation[] }>("/seller/conversations");
       return res.data.data;
     },
-    refetchInterval: 5000,
   });
 }
 
@@ -89,8 +89,39 @@ export function useMessages(conversationId: number, role: "client" | "seller") {
       return res.data.data;
     },
     enabled: !!conversationId,
-    refetchInterval: 3000,
   });
+}
+
+export function useChatChannel(
+  conversationId: number,
+  role: "client" | "seller",
+  currentUserId: number,
+) {
+  const qc = useQueryClient();
+
+  useEffect(() => {
+    if (!conversationId || !currentUserId) return;
+
+    const channelName = `private-conversation.${conversationId}`;
+    const pusher = getPusher();
+    const channel = pusher.subscribe(channelName);
+
+    channel.bind("MessageSent", (data: Message) => {
+      if (data.sender_id === currentUserId) return;
+
+      qc.setQueryData<Message[]>(["chat", role, conversationId], (prev = []) => {
+        if (prev.some((m) => m.id === data.id)) return prev;
+        return [...prev, data];
+      });
+
+      qc.invalidateQueries({ queryKey: ["conversations", role] });
+    });
+
+    return () => {
+      channel.unbind("MessageSent");
+      pusher.unsubscribe(channelName);
+    };
+  }, [conversationId, currentUserId, role, qc]);
 }
 
 export function useStartConversation() {

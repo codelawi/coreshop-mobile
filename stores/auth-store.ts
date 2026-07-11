@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import * as SecureStore from "expo-secure-store";
 import { api } from "@/lib/api";
+import { disconnectPusher } from "@/lib/pusher";
 
 export type Role = "client" | "seller" | "driver" | "admin";
 
@@ -39,6 +40,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   setUser: (user) => set({ user }),
   continueAsGuest: () => set({ isGuest: true, user: null, token: null }),
   logout: async () => {
+    disconnectPusher();
     await SecureStore.deleteItemAsync("auth_token");
     set({ user: null, token: null, isGuest: true, isLoading: false });
   },
