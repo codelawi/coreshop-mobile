@@ -32,7 +32,8 @@
     "couldNotResend": "Could not resend email",
     "verificationEmailSent": "Verification email sent",
     "couldNotCheckVerification": "Could not check verification status",
-    "browseAsGuest": "Browse as guest"
+    "browseAsGuest": "Browse as guest",
+    "signInRequired": "Please sign in to continue"
   },
   "common": {
     "continue": "Continue",
@@ -49,7 +50,8 @@
     "delete": "Delete",
     "remove": "Remove",
     "reviews": "reviews",
-    "offline": "No internet connection"
+    "offline": "No internet connection",
+    "error": "Something went wrong"
   },
   "tabs": {
     "home": "Home",

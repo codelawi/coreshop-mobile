@@ -11,7 +11,10 @@ import {
   Call02Icon,
   Share01Icon,
   Store01Icon,
+  Message01Icon,
 } from "@hugeicons/core-free-icons";
+import { useTranslation } from "react-i18next";
+import { toast } from "sonner-native";
 
 import { Text } from "@/components/ui/text";
 import { ProductCard } from "@/components/product/product-card";
@@ -19,12 +22,40 @@ import { useStore } from "@/lib/queries/home";
 import { useThemeColors } from "@/lib/theme";
 import { Spinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
+import { useStartConversation } from "@/lib/queries/chat";
+import { useAuthStore } from "@/stores/auth-store";
 
 export default function StoreProfile() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const c = useThemeColors();
+  const { t } = useTranslation();
   const { data: store, isLoading, isError, refetch } = useStore(id);
+  const startConversation = useStartConversation();
+  const token = useAuthStore((s) => s.token);
+
+  const handleChatWithStore = () => {
+    if (!token) {
+      toast.error(t("auth.signInRequired"));
+      router.push("/sign-in" as any);
+      return;
+    }
+    if (!store) return;
+    startConversation.mutate(
+      { store_id: store.id },
+      {
+        onSuccess: (conv) => {
+          router.push({
+            pathname: "/chat/[id]",
+            params: { id: conv.id, title: store.name, role: "client", store_id: store.id },
+          } as any);
+        },
+        onError: () => {
+          toast.error(t("common.error"));
+        },
+      }
+    );
+  };
 
   if (isLoading) {
     return (
@@ -163,8 +194,27 @@ export default function StoreProfile() {
           ) : null}
         </Animated.View>
 
+        {/* Chat with Store */}
+        <Animated.View entering={FadeInUp.duration(400).delay(220)} className="mx-6 mt-3">
+          <Pressable
+            onPress={handleChatWithStore}
+            disabled={startConversation.isPending}
+            className="flex-row items-center justify-center gap-2 rounded-xl border py-4"
+            style={{ borderColor: c.brand, opacity: startConversation.isPending ? 0.6 : 1 }}
+          >
+            {startConversation.isPending ? (
+              <Spinner size={18} />
+            ) : (
+              <HugeiconsIcon icon={Message01Icon} size={18} color={c.brand} />
+            )}
+            <Text variant="semibold" style={{ color: c.brand, fontSize: 14 }}>
+              {t("chat.chatWithStore")}
+            </Text>
+          </Pressable>
+        </Animated.View>
+
         <Animated.View
-          entering={FadeInUp.duration(400).delay(220)}
+          entering={FadeInUp.duration(400).delay(260)}
           className="mt-4 px-6"
         >
           <Text variant="bold" className="text-lg text-brand dark:text-white">Products</Text>

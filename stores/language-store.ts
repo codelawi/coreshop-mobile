@@ -2,6 +2,7 @@ import { create } from "zustand";
 import * as SecureStore from "expo-secure-store";
 import { I18nManager } from "react-native";
 import i18n from "@/lib/i18n";
+import { api } from "@/lib/api";
 
 export type Language = "en" | "ar";
 
@@ -20,6 +21,7 @@ export const useLanguageStore = create<LanguageState>((set) => ({
     I18nManager.allowRTL(shouldBeRTL);
     I18nManager.forceRTL(shouldBeRTL);
     set({ language: lang });
+    api.patch("/auth/language", { language: lang }).catch(() => {});
   },
   hydrate: async () => {
     const stored = (await SecureStore.getItemAsync("app_language")) as Language | null;

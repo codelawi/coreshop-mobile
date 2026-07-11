@@ -32,7 +32,8 @@
     "couldNotResend": "تعذّر إعادة إرسال البريد الإلكتروني",
     "verificationEmailSent": "تم إرسال بريد التحقق",
     "couldNotCheckVerification": "تعذّر التحقق من حالة البريد الإلكتروني",
-    "browseAsGuest": "تصفح كضيف"
+    "browseAsGuest": "تصفح كضيف",
+    "signInRequired": "يرجى تسجيل الدخول للمتابعة"
   },
   "common": {
     "continue": "متابعة",
@@ -49,7 +50,8 @@
     "delete": "حذف",
     "remove": "إزالة",
     "reviews": "تقييمات",
-    "offline": "لا يوجد اتصال بالإنترنت"
+    "offline": "لا يوجد اتصال بالإنترنت",
+    "error": "حدث خطأ ما"
   },
   "tabs": {
     "home": "الرئيسية",
