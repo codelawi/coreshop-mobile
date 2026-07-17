@@ -22,6 +22,7 @@ export interface Order {
   total: string;
   payment_method: string;
   payment_status: string;
+  cliq_reference: string | null;
   notes: string | null;
   store: { id: number; name: string; logo: string | null } | null;
   address: {
@@ -43,6 +44,7 @@ export interface PlaceOrderInput {
   address_id: number;
   coupon_code?: string;
   payment_method?: "cash_on_delivery" | "cliq";
+  cliq_reference?: string;
   notes?: string;
   items: Array<{
     product_id: number;

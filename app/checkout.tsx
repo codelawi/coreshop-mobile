@@ -80,6 +80,7 @@ export default function Checkout() {
   const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
   const [showAddressPicker, setShowAddressPicker] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<"cash_on_delivery" | "cliq">("cash_on_delivery");
+  const [cliqReference, setCliqReference] = useState("");
   const [couponCode, setCouponCode] = useState("");
   const [couponLoading, setCouponLoading] = useState(false);
   const [couponError, setCouponError] = useState<string | null>(null);
@@ -147,6 +148,7 @@ export default function Checkout() {
         address_id: activeAddress.id,
         coupon_code: appliedCoupon?.code,
         payment_method: paymentMethod,
+        cliq_reference: paymentMethod === "cliq" && cliqReference.trim() ? cliqReference.trim() : undefined,
         notes: notes.trim() || undefined,
         items: items.map((i) => ({
           product_id: i.product_id,
@@ -401,24 +403,41 @@ export default function Checkout() {
                 </View>
 
                 {paymentMethod === "cliq" && (
-                  <View
-                    className="mx-4 mb-4 rounded-lg px-4 py-3"
-                    style={{ backgroundColor: "#E8F5EF" }}
-                  >
-                    <Text style={{ fontSize: 11, color: "#006B3F", fontFamily: "Manrope_500Medium" }}>
-                      {t("checkout.cliqTransfer")}
-                    </Text>
-                    <View className="mt-1 flex-row items-center gap-3">
-                      <Text style={{ flex: 1, fontSize: 18, color: "#006B3F", fontFamily: "Manrope_700Bold", letterSpacing: 0.5 }}>
-                        CORE26
+                  <View className="mx-4 mb-4 gap-3">
+                    <View
+                      className="rounded-lg px-4 py-3"
+                      style={{ backgroundColor: "#E8F5EF" }}
+                    >
+                      <Text style={{ fontSize: 11, color: "#006B3F", fontFamily: "Manrope_500Medium" }}>
+                        {t("checkout.cliqTransfer")}
                       </Text>
-                      <Pressable
-                        onPress={() => Share.share({ message: "CORE26", title: "CliQ Username" })}
-                        className="flex-row items-center gap-1.5 rounded-lg px-3 py-2"
-                        style={{ backgroundColor: "#006B3F" }}
-                      >
-                        <Text style={{ color: "#fff", fontSize: 11, fontFamily: "Manrope_600SemiBold" }}>{t("checkout.copy")}</Text>
-                      </Pressable>
+                      <View className="mt-1 flex-row items-center gap-3">
+                        <Text style={{ flex: 1, fontSize: 18, color: "#006B3F", fontFamily: "Manrope_700Bold", letterSpacing: 0.5 }}>
+                          CORE26
+                        </Text>
+                        <Pressable
+                          onPress={() => Share.share({ message: "CORE26", title: "CliQ Username" })}
+                          className="flex-row items-center gap-1.5 rounded-lg px-3 py-2"
+                          style={{ backgroundColor: "#006B3F" }}
+                        >
+                          <Text style={{ color: "#fff", fontSize: 11, fontFamily: "Manrope_600SemiBold" }}>{t("checkout.copy")}</Text>
+                        </Pressable>
+                      </View>
+                    </View>
+
+                    <View
+                      className="flex-row items-center rounded-lg border px-4"
+                      style={{ height: 44, borderColor: c.inputBorder, backgroundColor: c.card }}
+                    >
+                      <TextInput
+                        value={cliqReference}
+                        onChangeText={setCliqReference}
+                        placeholder={t("checkout.cliqReferencePlaceholder")}
+                        placeholderTextColor={c.placeholder}
+                        spellCheck={false}
+                        autoCorrect={false}
+                        style={{ flex: 1, fontFamily: "Manrope_400Regular", color: c.brand, fontSize: 14 }}
+                      />
                     </View>
                   </View>
                 )}

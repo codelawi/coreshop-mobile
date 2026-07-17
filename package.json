@@ -1,6 +1,6 @@
 {
   "name": "coreshop-mobile",
-  "version": "1.0.0",
+  "version": "1.9.2",
   "main": "expo-router/entry",
   "scripts": {
     "start": "expo start",

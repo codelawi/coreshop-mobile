@@ -3,7 +3,7 @@ import { View, ScrollView, Pressable, RefreshControl } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import Animated, { FadeInDown } from "react-native-reanimated";
-import * as Notifications from "expo-notifications";
+import * as ExpoNotifications from "expo-notifications";
 import { HugeiconsIcon } from "@hugeicons/react-native";
 import {
   ArrowLeft01Icon,
@@ -109,7 +109,7 @@ export default function Notifications() {
 
   useEffect(() => {
     markAllRead.mutate();
-    void Notifications.setBadgeCountAsync(0);
+    void ExpoNotifications.setBadgeCountAsync(0);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

@@ -614,6 +614,7 @@
     "kmAway": "~{{dist}} كم",
     "payment": "الدفع",
     "cliqTransfer": "حوّل إلى اسم CliQ",
+    "cliqReferencePlaceholder": "مرجع العملية (اختياري)",
     "copy": "نسخ",
     "creditCard": "بطاقة ائتمان / خصم",
     "notes": "ملاحظات (اختياري)",

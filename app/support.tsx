@@ -74,10 +74,10 @@ export default function SupportChat() {
     paddingBottom: keyboard.height.value > 0 ? 8 : insets.bottom,
   }));
 
-  // Clear support unread badge when opening the chat
+  // Clear support unread badge immediately on open
   useEffect(() => {
     void Notifications.setBadgeCountAsync(0);
-    qc.invalidateQueries({ queryKey: ["support", "unread-count"] });
+    qc.setQueryData(["support", "unread-count"], 0);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -119,6 +119,7 @@ export default function SupportChat() {
 
   const renderMessage = ({ item }: { item: SupportMessage }) => {
     const isMine = item.sender_id === user?.id;
+    const isImage = item.type === "image" || /^https?:\/\/.+\/chat\//i.test(item.body ?? "");
 
     return (
       <View
@@ -140,7 +141,7 @@ export default function SupportChat() {
             backgroundColor: isMine ? MINE_BG : c.brandLight,
           }}
         >
-          {item.type === "image" ? (
+          {isImage ? (
             <Image
               source={{ uri: item.body }}
               style={{ width: 200, height: 200 }}

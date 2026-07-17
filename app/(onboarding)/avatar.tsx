@@ -17,24 +17,30 @@ import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
 import { ProgressBar } from "@/components/onboarding/progress-bar";
 import { useOnboardingStore } from "@/stores/onboarding-store";
+import { useAuthStore } from "@/stores/auth-store";
 import { useThemeColors } from "@/lib/theme";
 import { Spinner } from "@/components/ui/spinner";
 import { API_URL } from "@/lib/api";
 
-const DEFAULT_AVATAR_URL =
-  "https://api.dicebear.com/9.x/initials/png?seed=User&backgroundColor=0A0A0A&radius=50&size=200";
+function dicebearUrl(userId: number | undefined): string {
+  const seed = userId ?? Math.floor(Math.random() * 9999);
+  return `https://api.dicebear.com/9.x/lorelei/png?seed=${seed}&size=200`;
+}
 
 export default function AvatarStep() {
   const { t } = useTranslation();
   const router = useRouter();
   const c = useThemeColors();
   const setAvatar = useOnboardingStore((s) => s.setAvatar);
+  const userId = useAuthStore((s) => s.user?.id);
+
+  const defaultAvatarUrl = dicebearUrl(userId);
 
   const [previewUri, setPreviewUri] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadedUrl, setUploadedUrl] = useState<string | null>(null);
 
-  const displayUri = previewUri ?? DEFAULT_AVATAR_URL;
+  const displayUri = previewUri ?? defaultAvatarUrl;
   const hasCustomAvatar = !!uploadedUrl;
 
   const pickAndUpload = async () => {
@@ -84,7 +90,7 @@ export default function AvatarStep() {
   };
 
   const onNext = () => {
-    setAvatar(uploadedUrl ?? DEFAULT_AVATAR_URL);
+    setAvatar(uploadedUrl ?? defaultAvatarUrl);
     router.push("/(onboarding)/location" as any);
   };
 

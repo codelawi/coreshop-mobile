@@ -86,8 +86,10 @@ export default function Categories() {
               onPress={() => setActiveId(cat.id)}
               style={{
                 paddingHorizontal: 18,
-                paddingVertical: 8,
-                borderRadius: 24,
+                height: 36,
+                borderRadius: 18,
+                alignItems: "center",
+                justifyContent: "center",
                 backgroundColor: isActive ? c.brand : c.card,
                 borderWidth: 1,
                 borderColor: isActive ? c.brand : c.border,
@@ -95,7 +97,7 @@ export default function Categories() {
             >
               <Text
                 variant={isActive ? "bold" : "medium"}
-                style={{ color: isActive ? "#fff" : c.brand, fontSize: 13 }}
+                style={{ color: isActive ? c.bg : c.brand, fontSize: 13 }}
                 numberOfLines={1}
               >
                 {localName(cat, isAr)}

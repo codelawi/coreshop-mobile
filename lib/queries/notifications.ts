@@ -38,7 +38,6 @@ export function useUnreadCount() {
         return 0;
       }
     },
-    refetchInterval: 60_000,
   });
 }
 
@@ -79,6 +78,5 @@ export function useSupportUnreadCount() {
         return 0;
       }
     },
-    refetchInterval: 30_000,
   });
 }

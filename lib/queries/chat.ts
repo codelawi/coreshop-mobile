@@ -116,7 +116,8 @@ export function useChatChannel(
           onEvent: (event: PusherEvent) => {
             if (event.eventName !== "MessageSent") return;
             try {
-              const data: Message = JSON.parse(event.data as string);
+              const raw = event.data;
+              const data: Message = typeof raw === "string" ? JSON.parse(raw) : raw as Message;
               if (data.sender_id === currentUserId) return;
 
               qc.setQueryData<Message[]>(["chat", role, conversationId], (prev = []) => {
@@ -230,7 +231,6 @@ export function useSupportMessages(conversationId: number | undefined) {
       return res.data.data;
     },
     enabled: !!conversationId,
-    refetchInterval: 4000,
   });
 }
 
@@ -253,8 +253,7 @@ export function useSendSupportMessage(conversationId: number | undefined) {
 
       const res = await api.post<{ success: boolean; data: SupportMessage }>(
         `/client/support/${conversationId}/messages`,
-        data,
-        payload.imageUri ? { headers: { "Content-Type": "multipart/form-data" } } : undefined
+        data
       );
       return res.data.data;
     },
@@ -287,7 +286,8 @@ export function useSupportChannel(
           onEvent: (event: PusherEvent) => {
             if (event.eventName !== "SupportMessageSent") return;
             try {
-              const data: SupportMessage = JSON.parse(event.data as string);
+              const raw = event.data;
+              const data: SupportMessage = typeof raw === "string" ? JSON.parse(raw) : raw as SupportMessage;
               if (data.sender_id === currentUserId) return;
 
               qc.setQueryData<SupportMessage[]>(

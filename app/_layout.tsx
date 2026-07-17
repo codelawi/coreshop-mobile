@@ -36,7 +36,7 @@ import { OfflineBanner } from "@/components/ui/offline-banner";
 
 const queryClient = new QueryClient({
   defaultOptions: {
-    queries: { retry: 1, staleTime: 1000 * 60 },
+    queries: { retry: 1, staleTime: 0 },
   },
 });
 

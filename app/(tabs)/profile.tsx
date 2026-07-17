@@ -212,7 +212,7 @@ export default function Profile() {
           </Animated.View>
 
           <Text className="mt-6 text-center text-xs" style={{ color: c.muted }}>
-            CoreShop v1.0.0
+            CoreShop v1.9.2
           </Text>
         </ScrollView>
       </SafeAreaView>
@@ -333,7 +333,7 @@ export default function Profile() {
         </Animated.View>
 
         <Text className="mt-6 text-center text-xs" style={{ color: c.muted }}>
-          CoreShop v1.0.0
+          CoreShop v1.9.2
         </Text>
       </ScrollView>
     </SafeAreaView>

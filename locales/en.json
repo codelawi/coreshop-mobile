@@ -614,6 +614,7 @@
     "kmAway": "~{{dist}} km away",
     "payment": "Payment",
     "cliqTransfer": "Transfer to CliQ username",
+    "cliqReferencePlaceholder": "Transaction reference (optional)",
     "copy": "Copy",
     "creditCard": "Credit / Debit Card",
     "notes": "Notes (optional)",

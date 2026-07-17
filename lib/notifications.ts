@@ -33,14 +33,17 @@ if (Platform.OS === "android") {
 }
 
 // Controls how notifications are displayed when the app is in the foreground.
+// Suppress everything when no user is logged in.
 Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
+  handleNotification: async () => {
+    const isLoggedIn = !!useAuthStore.getState().user;
+    return {
+      shouldPlaySound: isLoggedIn,
+      shouldSetBadge: isLoggedIn,
+      shouldShowBanner: isLoggedIn,
+      shouldShowList: isLoggedIn,
+    };
+  },
 });
 
 // ─── Exported so _layout can call it on every app open ───────────────────────
