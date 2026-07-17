@@ -4,7 +4,7 @@ import { useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 import { HugeiconsIcon } from "@hugeicons/react-native";
-import { Search01Icon, ShoppingCart01Icon, Notification03Icon, Store01Icon } from "@hugeicons/core-free-icons";
+import { Search01Icon, ShoppingCart01Icon, Notification03Icon, Store01Icon, MessageMultiple01Icon } from "@hugeicons/core-free-icons";
 import { useState } from "react";
 
 import { Text } from "@/components/ui/text";
@@ -63,23 +63,35 @@ export default function Home() {
             {user?.name ?? t("home.welcome")}
           </Text>
         </View>
-        <Pressable
-          onPress={() => router.push("/notifications" as any)}
-          className="h-10 w-10 items-center justify-center rounded-full bg-white dark:bg-bg-card"
-        >
-          <HugeiconsIcon icon={Notification03Icon} size={22} color={c.brand} />
-          {unreadCount > 0 ? (
-            <View
-              className="absolute right-0.5 top-0.5 h-4 min-w-[16px] items-center justify-center rounded-full px-0.5"
-              style={{ backgroundColor: "#FF4D4F" }}
-            >
-              <Text variant="bold" style={{ color: "#fff", fontSize: 8 }}>
-                {unreadCount > 9 ? "9+" : unreadCount}
-              </Text>
-            </View>
-          ) : null}
-        </Pressable>
         {user?.role === "seller" ? (
+          /* Seller: chats button */
+          <Pressable
+            onPress={() => router.push("/seller/chats" as any)}
+            className="h-10 w-10 items-center justify-center rounded-full bg-white dark:bg-bg-card"
+          >
+            <HugeiconsIcon icon={MessageMultiple01Icon} size={22} color={c.brand} />
+          </Pressable>
+        ) : (
+          /* Client: notification bell */
+          <Pressable
+            onPress={() => router.push("/notifications" as any)}
+            className="h-10 w-10 items-center justify-center rounded-full bg-white dark:bg-bg-card"
+          >
+            <HugeiconsIcon icon={Notification03Icon} size={22} color={c.brand} />
+            {unreadCount > 0 ? (
+              <View
+                className="absolute right-0.5 top-0.5 h-4 min-w-[16px] items-center justify-center rounded-full px-0.5"
+                style={{ backgroundColor: "#FF4D4F" }}
+              >
+                <Text variant="bold" style={{ color: "#fff", fontSize: 8 }}>
+                  {unreadCount > 9 ? "9+" : unreadCount}
+                </Text>
+              </View>
+            ) : null}
+          </Pressable>
+        )}
+        {user?.role === "seller" ? (
+          /* Seller: store dashboard button */
           <Pressable
             onPress={() => router.push("/seller" as any)}
             className="h-10 w-10 items-center justify-center rounded-full bg-white dark:bg-bg-card"
@@ -97,11 +109,12 @@ export default function Home() {
             ) : null}
           </Pressable>
         ) : (
+          /* Client: chats button */
           <Pressable
-            onPress={() => router.push("/(tabs)/cart" as any)}
+            onPress={() => router.push("/chats" as any)}
             className="h-10 w-10 items-center justify-center rounded-full bg-white dark:bg-bg-card"
           >
-            <HugeiconsIcon icon={ShoppingCart01Icon} size={22} color={c.brand} />
+            <HugeiconsIcon icon={MessageMultiple01Icon} size={22} color={c.brand} />
           </Pressable>
         )}
       </Animated.View>
@@ -121,19 +134,13 @@ export default function Home() {
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
-            refreshing={false}
+            refreshing={isRefetching}
             onRefresh={refetch}
-            tintColor="transparent"
-            colors={["transparent"]}
-            progressBackgroundColor="transparent"
+            tintColor="#0A0A0A"
+            colors={["#0A0A0A"]}
           />
         }
       >
-        {isRefetching ? (
-          <View style={{ alignItems: "center", paddingVertical: 8 }}>
-            <Spinner size={30} strokeWidth={2.5} />
-          </View>
-        ) : null}
         {data?.banners && data.banners.length > 0 ? (
           <Animated.View entering={FadeInUp.duration(500).delay(150)} className="px-6">
             <BannerCarousel banners={data.banners} />

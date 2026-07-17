@@ -20,6 +20,7 @@ import {
   Store01Icon,
   Notification03Icon,
   Message01Icon,
+  CustomerSupportIcon,
 } from "@hugeicons/core-free-icons";
 import { toast } from "sonner-native";
 import { useColorScheme } from "nativewind";
@@ -32,10 +33,11 @@ import { useCartStore } from "@/stores/cart-store";
 import { useThemeStore } from "@/stores/theme-store";
 import { useWishlistStore } from "@/stores/wishlist-store";
 import { useThemeColors } from "@/lib/theme";
-import { useUnreadCount } from "@/lib/queries/notifications";
+import { useUnreadCount, useSupportUnreadCount } from "@/lib/queries/notifications";
 import { useSellerStore } from "@/lib/queries/seller";
 import { api } from "@/lib/api";
 import type { ThemeMode } from "@/stores/theme-store";
+import { resolveAvatar } from "@/lib/avatar";
 
 interface RowProps {
   icon: any;
@@ -96,7 +98,8 @@ export default function Profile() {
   const { setColorScheme } = useColorScheme();
   const wishlistCount = useWishlistStore((s) => s.ids.size);
   const { data: unreadCount = 0 } = useUnreadCount();
-  const { data: sellerStore } = useSellerStore();
+  const { data: supportUnreadCount = 0 } = useSupportUnreadCount();
+  const { data: sellerStore } = useSellerStore(user?.role === 'seller');
 
   const themeLabels: Record<ThemeMode, string> = {
     system: t("profile.themeSystem"),
@@ -228,13 +231,11 @@ export default function Profile() {
           className="mx-6 flex-row items-center gap-4 rounded-md bg-white dark:bg-bg-card p-4"
         >
           <View className="h-16 w-16 overflow-hidden rounded-full bg-brand-50 dark:bg-[#2A2A2A]">
-            {user?.avatar ? (
-              <Image source={{ uri: user.avatar }} style={{ flex: 1 }} contentFit="cover" />
-            ) : (
-              <View className="flex-1 items-center justify-center">
-                <HugeiconsIcon icon={UserIcon} size={28} color={c.brand} />
-              </View>
-            )}
+            <Image
+              source={{ uri: resolveAvatar(user?.avatar, user?.id ?? 0) }}
+              style={{ flex: 1 }}
+              contentFit="cover"
+            />
           </View>
           <View className="flex-1">
             <Text variant="bold" className="text-base text-brand dark:text-white">{user?.name ?? "User"}</Text>
@@ -284,6 +285,13 @@ export default function Profile() {
             icon={Message01Icon}
             label={t("chat.myChats")}
             onPress={() => router.push("/chats" as any)}
+          />
+          <View className="ml-16 h-px bg-brand-100 dark:bg-[#2A2A2A]" />
+          <Row
+            icon={CustomerSupportIcon}
+            label={t("support.title")}
+            badge={supportUnreadCount}
+            onPress={() => router.push("/support" as any)}
           />
         </Animated.View>
 

@@ -4,30 +4,35 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { HugeiconsIcon } from "@hugeicons/react-native";
-import { ArrowLeft01Icon, ArrowDown01Icon } from "@hugeicons/core-free-icons";
+import { ArrowLeft01Icon, ArrowRight01Icon, ArrowDown01Icon } from "@hugeicons/core-free-icons";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { Text } from "@/components/ui/text";
 import { ProductCard } from "@/components/product/product-card";
 import { useProducts, type ProductFilters } from "@/lib/queries/home";
 import { useThemeColors } from "@/lib/theme";
+import { useLanguageStore } from "@/stores/language-store";
 import { SkeletonProductCard } from "@/components/ui/skeleton";
 import { api } from "@/lib/api";
-
-const SORTS: { id: NonNullable<ProductFilters["sort"]>; label: string }[] = [
-  { id: "newest", label: "Newest" },
-  { id: "popular", label: "Popular" },
-  { id: "rating", label: "Top Rated" },
-  { id: "price_low", label: "Price: Low to High" },
-  { id: "price_high", label: "Price: High to Low" },
-];
 
 export default function CategoryProducts() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const { t } = useTranslation();
   const c = useThemeColors();
+  const { language } = useLanguageStore();
+  const BackIcon = language === "ar" ? ArrowRight01Icon : ArrowLeft01Icon;
   const [sort, setSort] = useState<ProductFilters["sort"]>("popular");
   const [sortOpen, setSortOpen] = useState(false);
+
+  const SORTS: { id: NonNullable<ProductFilters["sort"]>; label: string }[] = [
+    { id: "newest", label: t("search.sorts.newest") },
+    { id: "popular", label: t("search.sorts.popular") },
+    { id: "rating", label: t("search.sorts.rating") },
+    { id: "price_low", label: t("search.sorts.price_low") },
+    { id: "price_high", label: t("search.sorts.price_high") },
+  ];
 
   const { data: category } = useQuery({
     queryKey: ["category", id],
@@ -51,15 +56,15 @@ export default function CategoryProducts() {
           onPress={() => router.back()}
           className="h-10 w-10 items-center justify-center rounded-full bg-white dark:bg-bg-card"
         >
-          <HugeiconsIcon icon={ArrowLeft01Icon} size={22} color={c.brand} />
+          <HugeiconsIcon icon={BackIcon} size={22} color={c.brand} />
         </Pressable>
         <View className="flex-1">
           <Text variant="bold" className="text-xl text-brand dark:text-white" numberOfLines={1}>
-            {category?.name ?? "Category"}
+            {category?.name ?? t("categories.title")}
           </Text>
           {products ? (
             <Text className="text-xs" style={{ color: c.secondary }}>
-              {products.length} products
+              {t("categories.productsCount", { count: products.length })}
             </Text>
           ) : null}
         </View>
@@ -115,9 +120,9 @@ export default function CategoryProducts() {
           </View>
         ) : !products || products.length === 0 ? (
           <View className="items-center pt-12">
-            <Text variant="semibold" className="text-base text-brand dark:text-white">No products</Text>
+            <Text variant="semibold" className="text-base text-brand dark:text-white">{t("categories.noProducts")}</Text>
             <Text className="mt-1 text-sm" style={{ color: c.secondary }}>
-              Nothing here yet
+              {t("categories.noProductsDesc")}
             </Text>
           </View>
         ) : (

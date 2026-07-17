@@ -47,7 +47,7 @@ export default function StoreProfile() {
         onSuccess: (conv) => {
           router.push({
             pathname: "/chat/[id]",
-            params: { id: conv.id, title: store.name, role: "client", store_id: store.id },
+            params: { id: conv.id, title: store.name, role: "client", store_id: store.id, avatar: store.logo ?? "" },
           } as any);
         },
         onError: () => {

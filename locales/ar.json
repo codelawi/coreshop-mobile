@@ -93,7 +93,11 @@
   "categories": {
     "title": "التصنيفات",
     "shopAll": "تسوق الكل",
-    "noSubcategories": "لا توجد تصنيفات فرعية"
+    "noSubcategories": "لا توجد تصنيفات فرعية",
+    "productsCount_one": "{{count}} منتج",
+    "productsCount_other": "{{count}} منتج",
+    "noProducts": "لا توجد منتجات",
+    "noProductsDesc": "لا يوجد شيء هنا بعد"
   },
   "cart": {
     "title": "السلة",
@@ -592,5 +596,39 @@
       }
     },
     "finish": "إنهاء"
+  },
+  "support": {
+    "title": "دعم العملاء",
+    "supportTeam": "فريق الدعم",
+    "empty": "لا توجد رسائل بعد. أرسل لنا رسالة وسنرد عليك في أقرب وقت."
+  },
+  "checkout": {
+    "title": "الدفع",
+    "emptyCart": "السلة فارغة",
+    "goBack": "رجوع",
+    "deliverTo": "توصيل إلى",
+    "addDeliveryAddress": "أضف عنوان التوصيل",
+    "change": "تغيير",
+    "orderFrom": "طلب من {{store}}",
+    "delivery": "التوصيل",
+    "kmAway": "~{{dist}} كم",
+    "payment": "الدفع",
+    "cliqTransfer": "حوّل إلى اسم CliQ",
+    "copy": "نسخ",
+    "creditCard": "بطاقة ائتمان / خصم",
+    "notes": "ملاحظات (اختياري)",
+    "notesPlaceholder": "أي تعليمات للبائع؟",
+    "coupon": "كوبون (اختياري)",
+    "apply": "تطبيق",
+    "subtotal": "المجموع الفرعي",
+    "discount": "خصم ({{code}})",
+    "total": "الإجمالي",
+    "placeOrder": "تأكيد الطلب",
+    "selectAddressRequired": "يرجى اختيار عنوان التوصيل",
+    "orderPlaced": "تم تقديم الطلب!",
+    "orderError": "تعذّر تقديم الطلب",
+    "invalidCoupon": "كوبون غير صالح",
+    "couponApplied": "تم تطبيق الكوبون — {{label}}",
+    "savingAmount": "توفير {{amount}} د.أ"
   }
 }

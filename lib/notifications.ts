@@ -109,17 +109,21 @@ export async function registerForPushNotifications(): Promise<void> {
   }
 }
 
+export async function clearAllNotifications(): Promise<void> {
+  await Notifications.dismissAllNotificationsAsync();
+  await Notifications.setBadgeCountAsync(0);
+}
+
 export function setupNotificationListeners(): () => void {
   const receivedSub = Notifications.addNotificationReceivedListener((notification) => {
+    const user = useAuthStore.getState().user;
+    if (!user) { return; }
+
     const data = notification.request.content.data as { type?: string };
 
     if (data?.type === "account_banned") {
-      const user = useAuthStore.getState().user;
-
-      if (user) {
-        useAuthStore.getState().setUser({ ...user, status: "suspended" });
-        router.replace("/banned" as any);
-      }
+      useAuthStore.getState().setUser({ ...user, status: "suspended" });
+      router.replace("/banned" as any);
     }
   });
 
@@ -132,13 +136,21 @@ export function setupNotificationListeners(): () => void {
       store_name?: string;
     };
 
-    if (data?.type === "account_banned") {
-      const user = useAuthStore.getState().user;
+    const user = useAuthStore.getState().user;
 
+    if (data?.type === "account_banned") {
       if (user) {
         useAuthStore.getState().setUser({ ...user, status: "suspended" });
         router.replace("/banned" as any);
       }
+      return;
+    }
+
+    // Ignore taps on notifications when logged out
+    if (!user) { return; }
+
+    if (data?.type === "support_message") {
+      router.push("/support" as any);
     } else if (data?.type === "new_message" && data?.conversation_id) {
       router.push({
         pathname: "/chat/[id]",

@@ -80,7 +80,7 @@ export default function OrderDetail() {
         onSuccess: (conv) => {
           router.push({
             pathname: "/chat/[id]",
-            params: { id: conv.id, title: order.store?.name, role: "client" },
+            params: { id: conv.id, title: order.store?.name, role: "client", avatar: order.store?.logo ?? "" },
           } as any);
         },
       }

@@ -8,7 +8,6 @@ import {
   ArrowLeft01Icon,
   ArrowRight01Icon,
   Message01Icon,
-  User02Icon,
 } from "@hugeicons/core-free-icons";
 import { useTranslation } from "react-i18next";
 
@@ -17,6 +16,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { useSellerConversations } from "@/lib/queries/chat";
 import { useLanguageStore } from "@/stores/language-store";
 import { useThemeColors } from "@/lib/theme";
+import { resolveAvatar } from "@/lib/avatar";
 import type { Conversation } from "@/lib/queries/chat";
 
 export default function SellerChatsScreen() {
@@ -50,18 +50,16 @@ export default function SellerChatsScreen() {
           onPress={() =>
             router.push({
               pathname: "/chat/[id]",
-              params: { id: item.id, title, role: "seller" },
+              params: { id: item.id, title, role: "seller", avatar: resolveAvatar(item.client.avatar, item.client.id) },
             } as any)
           }
         >
           <View className="h-12 w-12 overflow-hidden rounded-full bg-brand-50 dark:bg-[#2A2A2A]">
-            {item.client.avatar ? (
-              <Image source={{ uri: item.client.avatar }} style={{ flex: 1 }} contentFit="cover" />
-            ) : (
-              <View className="flex-1 items-center justify-center">
-                <HugeiconsIcon icon={User02Icon} size={20} color={c.brand} />
-              </View>
-            )}
+            <Image
+              source={{ uri: resolveAvatar(item.client.avatar, item.client.id) }}
+              style={{ flex: 1 }}
+              contentFit="cover"
+            />
           </View>
 
           <View className="flex-1">

@@ -43,6 +43,7 @@ import { useCartStore } from "@/stores/cart-store";
 import { useWishlistStore } from "@/stores/wishlist-store";
 import { useThemeColors } from "@/lib/theme";
 import { Spinner } from "@/components/ui/spinner";
+import { resolveAvatar } from "@/lib/avatar";
 
 const { width } = Dimensions.get("window");
 
@@ -392,9 +393,11 @@ export default function ProductDetail() {
               <View key={r.id} className="mt-4 border-t border-brand-100 dark:border-[#2A2A2A] pt-4">
                 <View className="flex-row items-center gap-2">
                   <View className="h-8 w-8 overflow-hidden rounded-full bg-brand-50 dark:bg-[#2A2A2A]">
-                    {r.user.avatar ? (
-                      <Image source={{ uri: r.user.avatar }} style={{ flex: 1 }} contentFit="cover" />
-                    ) : null}
+                    <Image
+                      source={{ uri: resolveAvatar(r.user.avatar, r.user.id) }}
+                      style={{ flex: 1 }}
+                      contentFit="cover"
+                    />
                   </View>
                   <View className="flex-1">
                     <Text variant="semibold" className="text-xs text-brand dark:text-white">{r.user.name}</Text>

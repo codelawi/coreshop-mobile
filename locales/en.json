@@ -93,7 +93,11 @@
   "categories": {
     "title": "Categories",
     "shopAll": "Shop all",
-    "noSubcategories": "No subcategories"
+    "noSubcategories": "No subcategories",
+    "productsCount_one": "{{count}} product",
+    "productsCount_other": "{{count}} products",
+    "noProducts": "No products",
+    "noProductsDesc": "Nothing here yet"
   },
   "cart": {
     "title": "Cart",
@@ -592,5 +596,39 @@
       }
     },
     "finish": "Finish"
+  },
+  "support": {
+    "title": "Support Chat",
+    "supportTeam": "Support Team",
+    "empty": "No messages yet. Send us a message and we'll get back to you."
+  },
+  "checkout": {
+    "title": "Checkout",
+    "emptyCart": "Cart is empty",
+    "goBack": "Go back",
+    "deliverTo": "Deliver to",
+    "addDeliveryAddress": "Add a delivery address",
+    "change": "Change",
+    "orderFrom": "Order from {{store}}",
+    "delivery": "Delivery",
+    "kmAway": "~{{dist}} km away",
+    "payment": "Payment",
+    "cliqTransfer": "Transfer to CliQ username",
+    "copy": "Copy",
+    "creditCard": "Credit / Debit Card",
+    "notes": "Notes (optional)",
+    "notesPlaceholder": "Any instructions for the seller?",
+    "coupon": "Coupon (optional)",
+    "apply": "Apply",
+    "subtotal": "Subtotal",
+    "discount": "Discount ({{code}})",
+    "total": "Total",
+    "placeOrder": "Place Order",
+    "selectAddressRequired": "Please select a delivery address",
+    "orderPlaced": "Order placed!",
+    "orderError": "Could not place order",
+    "invalidCoupon": "Invalid coupon",
+    "couponApplied": "Coupon applied — {{label}}",
+    "savingAmount": "saving JOD {{amount}}"
   }
 }

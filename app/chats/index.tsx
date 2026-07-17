@@ -45,7 +45,7 @@ export default function ChatsScreen() {
           onPress={() =>
             router.push({
               pathname: "/chat/[id]",
-              params: { id: item.id, title, role: "client" },
+              params: { id: item.id, title, role: "client", avatar: item.store.logo ?? "" },
             } as any)
           }
         >

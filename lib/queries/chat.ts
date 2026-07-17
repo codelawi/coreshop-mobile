@@ -1,7 +1,8 @@
 import { useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { PusherEvent } from "@pusher/pusher-websocket-react-native";
 import { api } from "@/lib/api";
-import { getPusher } from "@/lib/pusher";
+import { ensurePusher, pusher } from "@/lib/pusher";
 
 export interface ChatParticipant {
   id: number;
@@ -103,23 +104,36 @@ export function useChatChannel(
     if (!conversationId || !currentUserId) return;
 
     const channelName = `private-conversation.${conversationId}`;
-    const pusher = getPusher();
-    const channel = pusher.subscribe(channelName);
+    let active = true;
 
-    channel.bind("MessageSent", (data: Message) => {
-      if (data.sender_id === currentUserId) return;
+    (async () => {
+      try {
+        await ensurePusher();
+        if (!active) return;
 
-      qc.setQueryData<Message[]>(["chat", role, conversationId], (prev = []) => {
-        if (prev.some((m) => m.id === data.id)) return prev;
-        return [...prev, data];
-      });
+        await pusher.subscribe({
+          channelName,
+          onEvent: (event: PusherEvent) => {
+            if (event.eventName !== "MessageSent") return;
+            try {
+              const data: Message = JSON.parse(event.data as string);
+              if (data.sender_id === currentUserId) return;
 
-      qc.invalidateQueries({ queryKey: ["conversations", role] });
-    });
+              qc.setQueryData<Message[]>(["chat", role, conversationId], (prev = []) => {
+                if (prev.some((m) => m.id === data.id)) return prev;
+                return [...prev, data];
+              });
+
+              qc.invalidateQueries({ queryKey: ["conversations", role] });
+            } catch {}
+          },
+        });
+      } catch {}
+    })();
 
     return () => {
-      channel.unbind("MessageSent");
-      pusher.unsubscribe(channelName);
+      active = false;
+      pusher.unsubscribe({ channelName }).catch(() => {});
     };
   }, [conversationId, currentUserId, role, qc]);
 }
@@ -138,7 +152,7 @@ export function useStartConversation() {
   });
 }
 
-export function useSendMessage(conversationId: number, role: "client" | "seller") {
+export function useSendMessage(conversationId: number, role: "client" | "seller", userId?: number) {
   const qc = useQueryClient();
   const path =
     role === "seller"
@@ -150,8 +164,150 @@ export function useSendMessage(conversationId: number, role: "client" | "seller"
       const res = await api.post<{ success: boolean; data: Message }>(path, payload);
       return res.data.data;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["chat", role, conversationId] }),
+    onMutate: async (payload) => {
+      await qc.cancelQueries({ queryKey: ["chat", role, conversationId] });
+      const previous = qc.getQueryData<Message[]>(["chat", role, conversationId]);
+      const optimistic: Message = {
+        id: -Date.now(),
+        conversation_id: conversationId,
+        sender_id: userId ?? 0,
+        sender_name: "",
+        sender_avatar: null,
+        body: payload.body ?? "",
+        type: payload.type ?? "text",
+        reference_id: payload.reference_id ?? null,
+        reference_data: null,
+        read_at: null,
+        created_at: new Date().toISOString(),
+      };
+      qc.setQueryData<Message[]>(["chat", role, conversationId], (prev = []) => [...prev, optimistic]);
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous !== undefined) {
+        qc.setQueryData(["chat", role, conversationId], context.previous);
+      }
+    },
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: ["chat", role, conversationId] });
+      qc.invalidateQueries({ queryKey: ["conversations", role] });
+    },
   });
+}
+
+export interface SupportMessage {
+  id: number;
+  support_conversation_id: number;
+  sender_id: number;
+  sender_name: string;
+  sender_avatar: string | null;
+  sender_role: string;
+  type: "text" | "image";
+  body: string;
+  read_at: string | null;
+  created_at: string;
+}
+
+export function useSupportConversation() {
+  return useQuery({
+    queryKey: ["support", "conversation"],
+    queryFn: async () => {
+      const res = await api.get<{ success: boolean; data: { id: number } }>(
+        "/client/support/conversation"
+      );
+      return res.data.data;
+    },
+  });
+}
+
+export function useSupportMessages(conversationId: number | undefined) {
+  return useQuery({
+    queryKey: ["support", "messages", conversationId],
+    queryFn: async () => {
+      const res = await api.get<{ success: boolean; data: SupportMessage[] }>(
+        `/client/support/${conversationId}/messages`
+      );
+      return res.data.data;
+    },
+    enabled: !!conversationId,
+    refetchInterval: 4000,
+  });
+}
+
+export function useSendSupportMessage(conversationId: number | undefined) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: { body?: string; imageUri?: string }) => {
+      let data: FormData | Record<string, string>;
+
+      if (payload.imageUri) {
+        const form = new FormData();
+        const filename = payload.imageUri.split("/").pop() ?? "image.jpg";
+        const ext = filename.split(".").pop()?.toLowerCase() ?? "jpg";
+        const mime = ext === "png" ? "image/png" : ext === "webp" ? "image/webp" : "image/jpeg";
+        form.append("image", { uri: payload.imageUri, name: filename, type: mime } as any);
+        data = form;
+      } else {
+        data = { body: payload.body ?? "" };
+      }
+
+      const res = await api.post<{ success: boolean; data: SupportMessage }>(
+        `/client/support/${conversationId}/messages`,
+        data,
+        payload.imageUri ? { headers: { "Content-Type": "multipart/form-data" } } : undefined
+      );
+      return res.data.data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["support", "messages", conversationId] });
+      qc.invalidateQueries({ queryKey: ["support", "unread-count"] });
+    },
+  });
+}
+
+export function useSupportChannel(
+  conversationId: number | undefined,
+  currentUserId: number,
+) {
+  const qc = useQueryClient();
+
+  useEffect(() => {
+    if (!conversationId || !currentUserId) return;
+
+    const channelName = `private-support.${conversationId}`;
+    let active = true;
+
+    (async () => {
+      try {
+        await ensurePusher();
+        if (!active) return;
+
+        await pusher.subscribe({
+          channelName,
+          onEvent: (event: PusherEvent) => {
+            if (event.eventName !== "SupportMessageSent") return;
+            try {
+              const data: SupportMessage = JSON.parse(event.data as string);
+              if (data.sender_id === currentUserId) return;
+
+              qc.setQueryData<SupportMessage[]>(
+                ["support", "messages", conversationId],
+                (prev = []) => {
+                  if (prev.some((m) => m.id === data.id)) return prev;
+                  return [...prev, data];
+                }
+              );
+            } catch {}
+          },
+        });
+      } catch {}
+    })();
+
+    return () => {
+      active = false;
+      pusher.unsubscribe({ channelName }).catch(() => {});
+    };
+  }, [conversationId, currentUserId, qc]);
 }
 
 export function useClientOrders() {

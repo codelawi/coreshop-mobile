@@ -65,3 +65,20 @@ export function useMarkAllRead() {
     },
   });
 }
+
+export function useSupportUnreadCount() {
+  return useQuery({
+    queryKey: ["support", "unread-count"],
+    queryFn: async () => {
+      try {
+        const res = await api.get<{ success: boolean; data: { count: number } }>(
+          "/client/support/unread-count"
+        );
+        return res.data.data.count;
+      } catch {
+        return 0;
+      }
+    },
+    refetchInterval: 30_000,
+  });
+}

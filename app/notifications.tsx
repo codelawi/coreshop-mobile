@@ -1,12 +1,18 @@
+import { useEffect } from "react";
 import { View, ScrollView, Pressable, RefreshControl } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import Animated, { FadeInDown } from "react-native-reanimated";
+import * as Notifications from "expo-notifications";
 import { HugeiconsIcon } from "@hugeicons/react-native";
 import {
   ArrowLeft01Icon,
   Notification03Icon,
   Tick02Icon,
+  ShoppingBag01Icon,
+  DeliveryTruck02Icon,
+  CustomerSupportIcon,
+  PercentCircleIcon,
 } from "@hugeicons/core-free-icons";
 import { useTranslation } from "react-i18next";
 
@@ -20,11 +26,13 @@ import {
   type AppNotification,
 } from "@/lib/queries/notifications";
 
-const TYPE_ICON: Record<string, string> = {
-  order_status: "📦",
-  new_order: "🛒",
-  promo: "🎁",
-  system: "🔔",
+type IconType = typeof Notification03Icon;
+const TYPE_ICON: Record<string, IconType> = {
+  order_status: DeliveryTruck02Icon,
+  new_order: ShoppingBag01Icon,
+  promo: PercentCircleIcon,
+  system: Notification03Icon,
+  support_message: CustomerSupportIcon,
 };
 
 function useTimeAgo() {
@@ -51,7 +59,7 @@ function NotificationRow({
   const c = useThemeColors();
   const timeAgo = useTimeAgo();
   const isUnread = !notif.read_at;
-  const emoji = TYPE_ICON[notif.type] ?? "🔔";
+  const IconComponent = TYPE_ICON[notif.type] ?? Notification03Icon;
 
   return (
     <Pressable
@@ -63,7 +71,7 @@ function NotificationRow({
         className="h-10 w-10 items-center justify-center rounded-full"
         style={{ backgroundColor: c.brandLight }}
       >
-        <Text style={{ fontSize: 18 }}>{emoji}</Text>
+        <HugeiconsIcon icon={IconComponent} size={22} color={c.brand} />
       </View>
 
       <View className="flex-1 gap-0.5">
@@ -98,6 +106,12 @@ export default function Notifications() {
   const { data: notifications = [], isLoading, isRefetching, refetch } = useNotifications();
   const markRead = useMarkRead();
   const markAllRead = useMarkAllRead();
+
+  useEffect(() => {
+    markAllRead.mutate();
+    void Notifications.setBadgeCountAsync(0);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const hasUnread = notifications.some((n) => !n.read_at);
 
@@ -177,19 +191,13 @@ export default function Notifications() {
           contentContainerStyle={{ paddingBottom: 32 }}
           refreshControl={
             <RefreshControl
-              refreshing={false}
+              refreshing={isRefetching}
               onRefresh={refetch}
-              tintColor="transparent"
-              colors={["transparent"]}
-              progressBackgroundColor="transparent"
+              tintColor="#0A0A0A"
+              colors={["#0A0A0A"]}
             />
           }
         >
-          {isRefetching ? (
-            <View style={{ alignItems: "center", paddingVertical: 8 }}>
-              <Spinner size={28} strokeWidth={2.5} />
-            </View>
-          ) : null}
 
           {todayNotifs.length > 0 ? (
             <View>

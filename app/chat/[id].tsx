@@ -3,14 +3,15 @@ import {
   FlatList,
   TextInput,
   Pressable,
-  KeyboardAvoidingView,
   Platform,
   Modal,
   ScrollView,
-  Keyboard,
   useWindowDimensions,
-  type KeyboardEvent,
 } from "react-native";
+import Animated, {
+  useAnimatedKeyboard,
+  useAnimatedStyle,
+} from "react-native-reanimated";
 import { Image } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -19,7 +20,7 @@ import { HugeiconsIcon } from "@hugeicons/react-native";
 import {
   ArrowLeft01Icon,
   ArrowRight01Icon,
-  MailSend01Icon,
+  ArrowUp01Icon,
   Tick02Icon,
   AttachmentSquareIcon,
   ShoppingBag01Icon,
@@ -42,6 +43,7 @@ import {
 import { useAuthStore } from "@/stores/auth-store";
 import { useLanguageStore } from "@/stores/language-store";
 import { useThemeColors } from "@/lib/theme";
+import { resolveAvatar } from "@/lib/avatar";
 
 // Fixed bubble colors — don't use c.brand (flips to white in dark mode)
 const MINE_BG = "#0A0A0A";
@@ -51,11 +53,12 @@ const HEADER_HEIGHT = 52;
 type PickerType = "product" | "order" | null;
 
 export default function ChatRoom() {
-  const { id, title, role: roleParam, store_id } = useLocalSearchParams<{
+  const { id, title, role: roleParam, store_id, avatar } = useLocalSearchParams<{
     id: string;
     title: string;
     role: string;
     store_id?: string;
+    avatar?: string;
   }>();
   const router = useRouter();
   const { t } = useTranslation();
@@ -71,12 +74,11 @@ export default function ChatRoom() {
 
   const { width: screenWidth } = useWindowDimensions();
   const { data: messages = [], isLoading } = useMessages(conversationId, role);
-  const sendMessage = useSendMessage(conversationId, role);
+  const sendMessage = useSendMessage(conversationId, role, user?.id);
   useChatChannel(conversationId, role, user?.id ?? 0);
 
   const [body, setBody] = useState("");
   const [pickerType, setPickerType] = useState<PickerType>(null);
-  const [kbHeight, setKbHeight] = useState(0);
   const listRef = useRef<FlatList<Message>>(null);
 
   const clientOrders = useClientOrders();
@@ -86,20 +88,16 @@ export default function ChatRoom() {
   const products = role === "seller" ? sellerProducts.data ?? [] : clientStoreProducts.data ?? [];
   const orders = clientOrders.data ?? [];
 
-  // Android keyboard listener — edge-to-edge mode breaks KAV "height" behavior
-  useEffect(() => {
-    if (Platform.OS !== "android") return;
-    const show = Keyboard.addListener("keyboardDidShow", (e: KeyboardEvent) => {
-      setKbHeight(e.endCoordinates.height);
-    });
-    const hide = Keyboard.addListener("keyboardDidHide", () => {
-      setKbHeight(0);
-    });
-    return () => {
-      show.remove();
-      hide.remove();
-    };
-  }, []);
+  // Reanimated keyboard — works correctly with edgeToEdgeEnabled on Android
+  const keyboard = useAnimatedKeyboard();
+
+  const avoidKeyboardStyle = useAnimatedStyle(() => ({
+    paddingBottom: keyboard.height.value,
+  }));
+
+  const inputBarPaddingStyle = useAnimatedStyle(() => ({
+    paddingBottom: keyboard.height.value > 0 ? 10 : Math.max(insets.bottom, 8),
+  }));
 
   useEffect(() => {
     if (messages.length > 0) {
@@ -182,38 +180,55 @@ export default function ChatRoom() {
     const isProduct = item.type === "product";
     const isOrder = item.type === "order";
     const isAttachment = isProduct || isOrder;
+    const isPending = item.id < 0;
 
-    return (
-      <View style={{ marginBottom: 12, maxWidth: "78%", alignSelf: isMine ? "flex-end" : "flex-start" }}>
-        {isAttachment ? (
-          <View>
-            {isProduct ? renderProductCard(item, isMine) : renderOrderCard(item, isMine)}
-            {!!item.body && (
-              <View
-                style={{
-                  marginTop: 4,
-                  borderRadius: 16,
-                  paddingHorizontal: 14,
-                  paddingVertical: 8,
-                  backgroundColor: isMine ? MINE_BG : c.brandLight,
-                }}
-              >
-                <Text style={{ color: isMine ? MINE_TEXT : c.brand, fontSize: 14 }}>{item.body}</Text>
-              </View>
-            )}
-          </View>
-        ) : (
+    const bubble = isAttachment ? (
+      <View>
+        {isProduct ? renderProductCard(item, isMine) : renderOrderCard(item, isMine)}
+        {!!item.body && (
           <View
             style={{
-              borderRadius: 18,
+              marginTop: 4,
+              borderRadius: 16,
               paddingHorizontal: 14,
-              paddingVertical: 10,
+              paddingVertical: 8,
               backgroundColor: isMine ? MINE_BG : c.brandLight,
             }}
           >
-            <Text variant="medium" style={{ color: isMine ? MINE_TEXT : c.brand, fontSize: 14, lineHeight: 20 }}>
-              {item.body}
-            </Text>
+            <Text style={{ color: isMine ? MINE_TEXT : c.brand, fontSize: 14 }}>{item.body}</Text>
+          </View>
+        )}
+      </View>
+    ) : (
+      <View
+        style={{
+          borderRadius: 18,
+          paddingHorizontal: 14,
+          paddingVertical: 10,
+          backgroundColor: isMine ? MINE_BG : c.brandLight,
+          opacity: isPending ? 0.7 : 1,
+        }}
+      >
+        <Text variant="medium" style={{ color: isMine ? MINE_TEXT : c.brand, fontSize: 14, lineHeight: 20 }}>
+          {item.body}
+        </Text>
+      </View>
+    );
+
+    return (
+      <View style={{ marginBottom: 12, maxWidth: "82%", alignSelf: isMine ? "flex-end" : "flex-start" }}>
+        {isMine ? (
+          bubble
+        ) : (
+          <View style={{ flexDirection: "row", alignItems: "flex-end", gap: 6 }}>
+            <View style={{ width: 28, height: 28, borderRadius: 14, overflow: "hidden", flexShrink: 0, marginBottom: 2 }}>
+              <Image
+                source={{ uri: resolveAvatar(item.sender_avatar, item.sender_id) }}
+                style={{ width: 28, height: 28 }}
+                contentFit="cover"
+              />
+            </View>
+            <View style={{ flex: 1 }}>{bubble}</View>
           </View>
         )}
 
@@ -226,19 +241,19 @@ export default function ChatRoom() {
             })}
           </Text>
           {isMine && (
-            <>
-              <HugeiconsIcon icon={Tick02Icon} size={11} color={item.read_at ? "#22C55E" : c.muted} />
-              <HugeiconsIcon icon={Tick02Icon} size={11} color={item.read_at ? "#22C55E" : c.muted} />
-            </>
+            isPending ? (
+              <HugeiconsIcon icon={Tick02Icon} size={11} color={c.muted} />
+            ) : (
+              <>
+                <HugeiconsIcon icon={Tick02Icon} size={11} color={item.read_at ? "#22C55E" : c.muted} />
+                <HugeiconsIcon icon={Tick02Icon} size={11} color={item.read_at ? "#22C55E" : c.muted} />
+              </>
+            )
           )}
         </View>
       </View>
     );
   };
-
-  // Bottom padding: manual inset + android keyboard offset
-  const bottomInset = Math.max(insets.bottom, 8);
-  const androidExtraBottom = kbHeight > 0 ? kbHeight - insets.bottom : 0;
 
   return (
     <View style={{ flex: 1, backgroundColor: c.bg, paddingTop: insets.top }}>
@@ -258,17 +273,19 @@ export default function ChatRoom() {
         <Pressable onPress={() => router.back()} hitSlop={8}>
           <HugeiconsIcon icon={BackIcon} size={22} color={c.brand} />
         </Pressable>
+        <View style={{ width: 36, height: 36, borderRadius: 18, overflow: "hidden", flexShrink: 0 }}>
+          <Image
+            source={{ uri: resolveAvatar(avatar, id) }}
+            style={{ width: 36, height: 36 }}
+            contentFit="cover"
+          />
+        </View>
         <Text variant="bold" style={{ flex: 1, fontSize: 16, color: c.brand }} numberOfLines={1}>
           {title ?? t("chat.conversation")}
         </Text>
       </View>
 
-      {/* iOS uses KAV, Android uses manual keyboard height */}
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        keyboardVerticalOffset={Platform.OS === "ios" ? insets.top + HEADER_HEIGHT : 0}
-      >
+      <Animated.View style={[{ flex: 1 }, avoidKeyboardStyle]}>
         {isLoading ? (
           <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
             <Spinner />
@@ -333,18 +350,20 @@ export default function ChatRoom() {
         )}
 
         {/* Input bar */}
-        <View
-          style={{
-            flexDirection: "row",
-            alignItems: "flex-end",
-            gap: 8,
-            paddingHorizontal: 16,
-            paddingTop: 10,
-            paddingBottom: bottomInset + androidExtraBottom,
-            borderTopWidth: 1,
-            borderColor: c.border,
-            backgroundColor: c.card,
-          }}
+        <Animated.View
+          style={[
+            {
+              flexDirection: "row",
+              alignItems: "flex-end",
+              gap: 8,
+              paddingHorizontal: 16,
+              paddingTop: 10,
+              borderTopWidth: 1,
+              borderColor: c.border,
+              backgroundColor: c.card,
+            },
+            inputBarPaddingStyle,
+          ]}
         >
           <Pressable
             onPress={() => setPickerType(pickerType ? null : "product")}
@@ -397,11 +416,11 @@ export default function ChatRoom() {
             {sendMessage.isPending ? (
               <Spinner size={16} color={MINE_TEXT} />
             ) : (
-              <HugeiconsIcon icon={MailSend01Icon} size={18} color={body.trim() ? MINE_TEXT : c.muted} />
+              <HugeiconsIcon icon={ArrowUp01Icon} size={18} color={body.trim() ? MINE_TEXT : c.muted} />
             )}
           </Pressable>
-        </View>
-      </KeyboardAvoidingView>
+        </Animated.View>
+      </Animated.View>
 
       {/* Product picker modal */}
       <Modal

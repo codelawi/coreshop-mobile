@@ -1,17 +1,31 @@
-import { View, ScrollView, Pressable, RefreshControl } from "react-native";
+import {
+  View,
+  ScrollView,
+  Pressable,
+  RefreshControl,
+  Dimensions,
+  StyleSheet,
+} from "react-native";
 import { Image } from "expo-image";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "expo-router";
-import Animated, { FadeInUp, FadeIn } from "react-native-reanimated";
-
+import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
 import { useTranslation } from "react-i18next";
+import { HugeiconsIcon } from "@hugeicons/react-native";
+import { ArrowRight01Icon, ArrowLeft01Icon } from "@hugeicons/core-free-icons";
 
 import { Text } from "@/components/ui/text";
 import { Spinner } from "@/components/ui/spinner";
 import { useCategories } from "@/lib/queries/home";
 import { useThemeColors } from "@/lib/theme";
 import { useLanguageStore } from "@/stores/language-store";
+
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
+const CARD_GAP = 10;
+const CONTENT_PADDING = 16;
+const COLS = 3;
+const CARD_SIZE = (SCREEN_WIDTH - CONTENT_PADDING * 2 - CARD_GAP * (COLS - 1)) / COLS;
 
 function localName(item: { name: string; name_ar?: string | null }, isAr: boolean): string {
   return isAr && item.name_ar ? item.name_ar : item.name;
@@ -25,12 +39,18 @@ export default function Categories() {
   const isAr = language === "ar";
   const { data, isLoading, isRefetching, refetch } = useCategories();
   const [activeId, setActiveId] = useState<number | null>(null);
+  const chipScrollRef = useRef<ScrollView>(null);
 
   useEffect(() => {
-    if (data && data.length > 0 && activeId === null) {
+    if (!data || data.length === 0) { return; }
+    if (activeId === null || !data.some((cat) => cat.id === activeId)) {
       setActiveId(data[0].id);
     }
   }, [data, activeId]);
+
+  const active = data?.find((cat) => cat.id === activeId);
+  const subcategories = active?.children ?? [];
+  const ChevronIcon = isAr ? ArrowLeft01Icon : ArrowRight01Icon;
 
   if (isLoading) {
     return (
@@ -42,131 +62,163 @@ export default function Categories() {
     );
   }
 
-  const active = data?.find((cat) => cat.id === activeId);
-
   return (
     <SafeAreaView className="flex-1 bg-bg-light dark:bg-bg-dark" edges={["top"]}>
-      <View className="px-6 pb-3 pt-4">
-        <Text variant="bold" className="text-2xl text-brand dark:text-white">{t("categories.title")}</Text>
+      {/* Header */}
+      <View className="px-6 pb-2 pt-4">
+        <Text variant="bold" className="text-2xl text-brand dark:text-white">
+          {t("categories.title")}
+        </Text>
       </View>
 
-      <View className="flex-1 flex-row">
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingVertical: 8 }}
-          style={{ width: 72, backgroundColor: c.card }}
-        >
-          {data?.map((cat) => {
-            const isActive = cat.id === activeId;
-            return (
-              <Pressable
-                key={cat.id}
-                onPress={() => setActiveId(cat.id)}
-                className={`px-3 py-4 ${isActive ? "bg-bg-light dark:bg-[#2A2A2A]" : ""}`}
-                style={{
-                  borderLeftWidth: 3,
-                  borderLeftColor: isActive ? c.brand : "transparent",
-                }}
+      {/* Category chips — horizontal scroll */}
+      <ScrollView
+        ref={chipScrollRef}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 12, gap: 8 }}
+      >
+        {data?.map((cat) => {
+          const isActive = cat.id === activeId;
+          return (
+            <Pressable
+              key={cat.id}
+              onPress={() => setActiveId(cat.id)}
+              style={{
+                paddingHorizontal: 18,
+                paddingVertical: 8,
+                borderRadius: 24,
+                backgroundColor: isActive ? c.brand : c.card,
+                borderWidth: 1,
+                borderColor: isActive ? c.brand : c.border,
+              }}
+            >
+              <Text
+                variant={isActive ? "bold" : "medium"}
+                style={{ color: isActive ? "#fff" : c.brand, fontSize: 13 }}
+                numberOfLines={1}
               >
-                <Text
-                  variant={isActive ? "bold" : "medium"}
-                  numberOfLines={2}
-                  className="text-center text-xs text-brand dark:text-white"
-                >
-                  {localName(cat, isAr)}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </ScrollView>
+                {localName(cat, isAr)}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </ScrollView>
 
-        <ScrollView
-          className="flex-1"
-          contentContainerStyle={{ padding: 16 }}
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl
-              refreshing={false}
-              onRefresh={refetch}
-              tintColor="transparent"
-              colors={["transparent"]}
-              progressBackgroundColor="transparent"
-            />
-          }
-        >
-          {isRefetching ? (
-            <View style={{ alignItems: "center", paddingBottom: 8 }}>
-              <Spinner size={28} strokeWidth={2.5} />
-            </View>
-          ) : null}
-          {active ? (
-            <Animated.View key={active.id} entering={FadeIn.duration(250)}>
-              <Pressable
-                onPress={() => router.push(`/category/${active.id}` as any)}
-                className="mb-4 h-32 overflow-hidden rounded-md bg-brand-50 dark:bg-[#2A2A2A]"
+      {/* Main content */}
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingHorizontal: CONTENT_PADDING, paddingBottom: 32 }}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefetching}
+            onRefresh={refetch}
+            tintColor={c.brand}
+            colors={[c.brand]}
+          />
+        }
+      >
+        {active ? (
+          <Animated.View key={active.id} entering={FadeIn.duration(220)}>
+            {/* Hero banner */}
+            <Pressable
+              onPress={() => router.push(`/category/${active.id}` as any)}
+              style={{ borderRadius: 16, overflow: "hidden", height: 180, marginBottom: 16 }}
+            >
+              {active.image ? (
+                <Image
+                  source={{ uri: active.image }}
+                  style={StyleSheet.absoluteFillObject}
+                  contentFit="cover"
+                />
+              ) : (
+                <View style={[StyleSheet.absoluteFillObject, { backgroundColor: c.brandLight }]} />
+              )}
+              {/* Gradient overlay */}
+              <View
+                style={[
+                  StyleSheet.absoluteFillObject,
+                  { backgroundColor: "rgba(0,0,0,0.35)", justifyContent: "flex-end", padding: 20 },
+                ]}
               >
-                {active.image ? (
-                  <Image source={{ uri: active.image }} style={{ flex: 1 }} contentFit="cover" />
-                ) : null}
-                <View
-                  className="absolute inset-0 justify-end p-4"
-                  style={{ backgroundColor: "rgba(0,0,0,0.3)" }}
-                >
-                  <Text variant="bold" style={{ color: "#fff", fontSize: 20 }}>
-                    {localName(active, isAr)}
-                  </Text>
-                  <Text variant="medium" style={{ color: "#fff", fontSize: 12, marginTop: 2 }}>
+                <Text variant="bold" style={{ color: "#fff", fontSize: 22, marginBottom: 4 }}>
+                  {localName(active, isAr)}
+                </Text>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                  <Text variant="medium" style={{ color: "rgba(255,255,255,0.85)", fontSize: 13 }}>
                     {t("categories.shopAll")}
                   </Text>
+                  <HugeiconsIcon icon={ChevronIcon} size={14} color="rgba(255,255,255,0.85)" />
                 </View>
-              </Pressable>
+              </View>
+            </Pressable>
 
-              {active.children.length > 0 ? (
-                <View className="flex-row flex-wrap justify-between">
-                  {active.children.map((sub, i) => (
-                    <Animated.View
-                      key={sub.id}
-                      entering={FadeInUp.duration(300).delay(i * 40)}
-                      style={{ width: "48%" }}
-                      className="mb-3"
+            {/* Subcategory grid */}
+            {subcategories.length > 0 ? (
+              <View
+                style={{
+                  flexDirection: "row",
+                  flexWrap: "wrap",
+                  gap: CARD_GAP,
+                }}
+              >
+                {subcategories.map((sub, i) => (
+                  <Animated.View
+                    key={sub.id}
+                    entering={FadeInUp.duration(280).delay(i * 35)}
+                    style={{ width: CARD_SIZE }}
+                  >
+                    <Pressable
+                      onPress={() => router.push(`/category/${sub.id}` as any)}
+                      style={{ borderRadius: 12, overflow: "hidden" }}
                     >
-                      <Pressable
-                        onPress={() => router.push(`/category/${sub.id}` as any)}
-                        className="overflow-hidden rounded-md bg-white dark:bg-bg-card"
+                      <View
+                        style={{
+                          width: CARD_SIZE,
+                          height: CARD_SIZE,
+                          backgroundColor: c.brandLight,
+                        }}
                       >
-                        <View className="aspect-square w-full bg-brand-50 dark:bg-[#2A2A2A]">
-                          {sub.image ? (
-                            <Image
-                              source={{ uri: sub.image }}
-                              style={{ flex: 1 }}
-                              contentFit="cover"
-                            />
-                          ) : null}
-                        </View>
-                        <View className="p-2">
+                        {sub.image ? (
+                          <Image
+                            source={{ uri: sub.image }}
+                            style={{ flex: 1 }}
+                            contentFit="cover"
+                          />
+                        ) : null}
+                        <View
+                          style={[
+                            StyleSheet.absoluteFillObject,
+                            {
+                              backgroundColor: "rgba(0,0,0,0.28)",
+                              justifyContent: "flex-end",
+                              padding: 7,
+                            },
+                          ]}
+                        >
                           <Text
                             variant="semibold"
-                            numberOfLines={1}
-                            className="text-center text-xs text-brand dark:text-white"
+                            numberOfLines={2}
+                            style={{ color: "#fff", fontSize: 10, lineHeight: 13 }}
                           >
                             {localName(sub, isAr)}
                           </Text>
                         </View>
-                      </Pressable>
-                    </Animated.View>
-                  ))}
-                </View>
-              ) : (
-                <View className="items-center pt-12">
-                  <Text className="text-sm" style={{ color: c.secondary }}>
-                    {t("categories.noSubcategories")}
-                  </Text>
-                </View>
-              )}
-            </Animated.View>
-          ) : null}
-        </ScrollView>
-      </View>
+                      </View>
+                    </Pressable>
+                  </Animated.View>
+                ))}
+              </View>
+            ) : (
+              <View style={{ alignItems: "center", paddingTop: 40 }}>
+                <Text style={{ color: c.secondary, fontSize: 14 }}>
+                  {t("categories.noSubcategories")}
+                </Text>
+              </View>
+            )}
+          </Animated.View>
+        ) : null}
+      </ScrollView>
     </SafeAreaView>
   );
 }
