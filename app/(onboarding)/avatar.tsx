@@ -97,7 +97,7 @@ export default function AvatarStep() {
   return (
     <SafeAreaView className="flex-1 bg-bg-light dark:bg-bg-dark">
       <View className="flex-1 px-6 pt-4">
-        <ProgressBar current={2} total={5} />
+        <ProgressBar current={2} total={4} />
 
         <Animated.View entering={FadeInDown.duration(500).springify()} className="mt-8">
           <Text variant="bold" className="text-3xl text-brand dark:text-white">

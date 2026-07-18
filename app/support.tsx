@@ -4,11 +4,12 @@ import {
   TextInput,
   Pressable,
   Platform,
+  ActivityIndicator,
 } from "react-native";
 import { Image } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import Animated, {
   useAnimatedKeyboard,
   useAnimatedStyle,
@@ -57,8 +58,12 @@ export default function SupportChat() {
   const { data: conv } = useSupportConversation();
   const conversationId = conv?.id;
 
-  const { data: messages = [], isLoading } = useSupportMessages(conversationId);
-  const sendMessage = useSendSupportMessage(conversationId);
+  const { data: messagePages, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useSupportMessages(conversationId);
+  const messages = useMemo(
+    () => [...(messagePages?.pages ?? [])].reverse().flatMap((p) => p.data),
+    [messagePages]
+  );
+  const sendMessage = useSendSupportMessage(conversationId, user?.id ?? 0);
   useSupportChannel(conversationId, user?.id ?? 0);
 
   const [body, setBody] = useState("");
@@ -142,11 +147,26 @@ export default function SupportChat() {
           }}
         >
           {isImage ? (
-            <Image
-              source={{ uri: item.body }}
-              style={{ width: 200, height: 200 }}
-              contentFit="cover"
-            />
+            <View style={{ width: 200, height: 200 }}>
+              <Image
+                source={{ uri: item._localUri ?? item.body }}
+                style={{ width: 200, height: 200 }}
+                contentFit="cover"
+              />
+              {item._pending && (
+                <View
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    backgroundColor: "rgba(0,0,0,0.35)",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <ActivityIndicator color="#fff" />
+                </View>
+              )}
+            </View>
           ) : (
             <View style={{ paddingHorizontal: 14, paddingVertical: 10 }}>
               <Text
@@ -214,6 +234,20 @@ export default function SupportChat() {
             contentContainerStyle={{ padding: 16, paddingBottom: 8 }}
             showsVerticalScrollIndicator={false}
             onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: false })}
+            maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
+            onScroll={(e) => {
+              if (e.nativeEvent.contentOffset.y < 80 && hasNextPage && !isFetchingNextPage) {
+                fetchNextPage();
+              }
+            }}
+            scrollEventThrottle={200}
+            ListHeaderComponent={
+              isFetchingNextPage ? (
+                <View style={{ alignItems: "center", paddingVertical: 12 }}>
+                  <ActivityIndicator color={c.brand} />
+                </View>
+              ) : null
+            }
             ListEmptyComponent={
               <View
                 style={{

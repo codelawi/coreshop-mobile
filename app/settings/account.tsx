@@ -22,6 +22,8 @@ import {
   Alert02Icon,
   UserIcon,
   ImageUpload01Icon,
+  Tick02Icon,
+  Mail01Icon,
 } from "@hugeicons/core-free-icons";
 import { useLanguageStore } from "@/stores/language-store";
 import { useAuthStore } from "@/stores/auth-store";
@@ -131,14 +133,27 @@ export default function AccountSettings() {
     defaultValues: { current_password: "", password: "", password_confirmation: "" },
   });
 
+  const resendVerification = useMutation({
+    mutationFn: async () => { await api.post("/auth/email/resend"); },
+    onSuccess: () => toast.success(t("auth.verificationEmailSent")),
+    onError: (err: any) =>
+      toast.error(err?.response?.data?.message ?? t("auth.couldNotResend")),
+  });
+
   const updateProfile = useMutation({
     mutationFn: async (data: ProfileForm) => {
       const res = await api.patch("/auth/profile", data);
       return res.data;
     },
-    onSuccess: (res) => {
-      setUser(res.data);
-      toast.success(t("settings.toastProfileSaved"));
+    onSuccess: (res, variables) => {
+      const updatedUser = res.data;
+      setUser(updatedUser);
+      if (variables.email !== user?.email) {
+        toast.success(t("settings.emailChangedVerify"));
+        router.push("/(auth)/verify-email" as any);
+      } else {
+        toast.success(t("settings.toastProfileSaved"));
+      }
     },
     onError: (err: any) => {
       toast.error(err?.response?.data?.message ?? t("settings.toastProfileError"));
@@ -258,20 +273,48 @@ export default function AccountSettings() {
                   />
                 )}
               />
-              <Controller
-                control={profileForm.control}
-                name="email"
-                render={({ field: { onChange, value } }) => (
-                  <Input
-                    label={t("settings.emailAddress")}
-                    value={value}
-                    onChangeText={onChange}
-                    error={profileForm.formState.errors.email?.message}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                  />
-                )}
-              />
+              <View>
+                <Controller
+                  control={profileForm.control}
+                  name="email"
+                  render={({ field: { onChange, value } }) => (
+                    <Input
+                      label={t("settings.emailAddress")}
+                      value={value}
+                      onChangeText={onChange}
+                      error={profileForm.formState.errors.email?.message}
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                    />
+                  )}
+                />
+                <View className="mt-1.5 flex-row items-center justify-between">
+                  <View className="flex-row items-center gap-1.5">
+                    <HugeiconsIcon
+                      icon={user?.email_verified_at ? Tick02Icon : Mail01Icon}
+                      size={13}
+                      color={user?.email_verified_at ? "#16A34A" : "#F59E0B"}
+                    />
+                    <Text
+                      variant="medium"
+                      style={{ fontSize: 11, color: user?.email_verified_at ? "#16A34A" : "#F59E0B" }}
+                    >
+                      {user?.email_verified_at ? t("settings.emailVerified") : t("settings.emailNotVerified")}
+                    </Text>
+                  </View>
+                  {!user?.email_verified_at && (
+                    <Pressable
+                      onPress={() => resendVerification.mutate()}
+                      disabled={resendVerification.isPending}
+                      hitSlop={8}
+                    >
+                      <Text variant="semibold" style={{ fontSize: 11, color: c.brand }}>
+                        {resendVerification.isPending ? t("common.loading") : t("settings.resendVerification")}
+                      </Text>
+                    </Pressable>
+                  )}
+                </View>
+              </View>
               <Button
                 label={t("settings.saveChanges")}
                 onPress={profileForm.handleSubmit((d) => updateProfile.mutate(d))}

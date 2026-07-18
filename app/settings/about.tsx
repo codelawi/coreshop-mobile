@@ -10,7 +10,6 @@ import {
   ExternalLinkIcon,
   DocumentValidationIcon,
   SecurityLockIcon,
-  CustomerSupportIcon,
   StarIcon,
 } from "@hugeicons/core-free-icons";
 import Constants from "expo-constants";
@@ -120,19 +119,11 @@ export default function About() {
           />
           <View className="ml-[72px] h-px bg-brand-100 dark:bg-[#2A2A2A]" />
           <AboutRow
-            icon={CustomerSupportIcon}
-            title={t("settings.contactSupport")}
-            onPress={() => Linking.openURL("mailto:support@coreshop.app")}
-            showArrow
-            delay={280}
-          />
-          <View className="ml-[72px] h-px bg-brand-100 dark:bg-[#2A2A2A]" />
-          <AboutRow
             icon={StarIcon}
             title={t("settings.rateApp")}
             onPress={() => Linking.openURL("https://play.google.com/store/apps")}
             showArrow
-            delay={340}
+            delay={280}
           />
         </Animated.View>
       </ScrollView>

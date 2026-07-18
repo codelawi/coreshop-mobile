@@ -132,6 +132,7 @@ export default function Categories() {
                   source={{ uri: active.image }}
                   style={StyleSheet.absoluteFillObject}
                   contentFit="cover"
+                  cachePolicy="memory-disk"
                 />
               ) : (
                 <View style={[StyleSheet.absoluteFillObject, { backgroundColor: c.brandLight }]} />
@@ -179,15 +180,22 @@ export default function Categories() {
                           width: CARD_SIZE,
                           height: CARD_SIZE,
                           backgroundColor: c.brandLight,
+                          alignItems: "center",
+                          justifyContent: "center",
                         }}
                       >
                         {sub.image ? (
                           <Image
                             source={{ uri: sub.image }}
-                            style={{ flex: 1 }}
+                            style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
                             contentFit="cover"
+                            cachePolicy="memory-disk"
                           />
-                        ) : null}
+                        ) : (
+                          <Text variant="bold" style={{ fontSize: 28, color: "#FF4D4F", opacity: 0.3 }}>
+                            {localName(sub, isAr).charAt(0).toUpperCase()}
+                          </Text>
+                        )}
                         <View
                           style={[
                             StyleSheet.absoluteFillObject,

@@ -12,6 +12,8 @@ import {
   Notification03Icon,
   SecurityLockIcon,
   InformationCircleIcon,
+  Bug01Icon,
+  Alert02Icon,
 } from "@hugeicons/core-free-icons";
 import { useLanguageStore } from "@/stores/language-store";
 import { Text } from "@/components/ui/text";
@@ -101,6 +103,24 @@ export default function SettingsIndex() {
             subtitle={t("settings.aboutDesc")}
             onPress={() => router.push("/settings/about" as any)}
             delay={180}
+          />
+        </View>
+
+        <View className="mx-4 mt-4 overflow-hidden rounded-xl bg-white dark:bg-bg-card">
+          <SettingsRow
+            icon={Bug01Icon}
+            title={t("settings.reportBug")}
+            subtitle={t("settings.reportBugDesc")}
+            onPress={() => router.push("/settings/report-bug" as any)}
+            delay={240}
+          />
+          <View className="ml-[72px] h-px bg-brand-100 dark:bg-[#2A2A2A]" />
+          <SettingsRow
+            icon={Alert02Icon}
+            title={t("settings.reportProblem")}
+            subtitle={t("settings.reportProblemDesc")}
+            onPress={() => router.push("/settings/report-problem" as any)}
+            delay={300}
           />
         </View>
       </ScrollView>

@@ -3,13 +3,14 @@ import { toast } from "sonner-native";
 import { useTranslation } from "react-i18next";
 
 import { AddressForm } from "@/components/address-form";
-import { useCreateAddress } from "@/lib/queries/addresses";
+import { useCreateAddress, useAddresses } from "@/lib/queries/addresses";
 import type { AddressInput } from "@/lib/queries/addresses";
 
 export default function NewAddress() {
   const router = useRouter();
   const { t } = useTranslation();
   const createMutation = useCreateAddress();
+  const { data: addresses } = useAddresses();
 
   const handleSave = (data: AddressInput) => {
     createMutation.mutate(data, {
@@ -21,11 +22,14 @@ export default function NewAddress() {
     });
   };
 
+  const isFirstAddress = !addresses || addresses.length === 0;
+
   return (
     <AddressForm
       title={t("addresses.newTitle")}
       onSave={handleSave}
       isSaving={createMutation.isPending}
+      defaultChecked={isFirstAddress}
     />
   );
 }

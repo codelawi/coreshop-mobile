@@ -30,6 +30,7 @@ import { useLanguageStore } from "@/stores/language-store";
 import { useCartStore } from "@/stores/cart-store";
 import { useWishlistStore } from "@/stores/wishlist-store";
 import { useThemeStore } from "@/stores/theme-store";
+import { useNotifPrefsStore } from "@/stores/notif-prefs-store";
 import { useColorScheme } from "nativewind";
 import { registerForPushNotifications, setupNotificationListeners, ensureNotificationChannel } from "@/lib/notifications";
 import { OfflineBanner } from "@/components/ui/offline-banner";
@@ -57,19 +58,20 @@ export default function RootLayout() {
   const hydrateCart = useCartStore((s) => s.hydrate);
   const hydrateWishlist = useWishlistStore((s) => s.hydrate);
   const hydrateTheme = useThemeStore((s) => s.hydrate);
+  const hydrateNotifPrefs = useNotifPrefsStore((s) => s.hydrate);
   const themeMode = useThemeStore((s) => s.mode);
   const { colorScheme, setColorScheme } = useColorScheme();
   const token = useAuthStore((s) => s.token);
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    Promise.all([hydrateAuth(), hydrateLang(), hydrateCart(), hydrateWishlist(), hydrateTheme()]).then(
+    Promise.all([hydrateAuth(), hydrateLang(), hydrateCart(), hydrateWishlist(), hydrateTheme(), hydrateNotifPrefs()]).then(
       () => setHydrated(true)
     );
   }, [hydrateAuth, hydrateLang, hydrateCart, hydrateWishlist, hydrateTheme]);
 
   useEffect(() => {
-    setColorScheme(themeMode);
+    setColorScheme(themeMode === "pink" ? "light" : themeMode);
   }, [themeMode, setColorScheme]);
 
   // Register push token whenever the user is authenticated

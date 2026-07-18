@@ -92,11 +92,15 @@ export default function StoreProfile() {
   return (
     <View className="flex-1 bg-bg-light dark:bg-bg-dark">
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 32 }}>
-        <View className="h-56 w-full bg-brand-50 dark:bg-[#2A2A2A]">
+        <View className="h-56 w-full items-center justify-center bg-brand-50 dark:bg-[#2A2A2A]">
           {store.banner ? (
-            <Image source={{ uri: store.banner }} style={{ flex: 1 }} contentFit="cover" />
-          ) : null}
-          <View className="absolute inset-0" style={{ backgroundColor: "rgba(0,0,0,0.2)" }} />
+            <Image source={{ uri: store.banner }} style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }} contentFit="cover" />
+          ) : (
+            <Text variant="bold" style={{ fontSize: 96, color: "#FF4D4F", opacity: 0.12 }}>
+              {store.name.charAt(0).toUpperCase()}
+            </Text>
+          )}
+          <View className="absolute inset-0" style={{ backgroundColor: "rgba(0,0,0,0.15)" }} />
           <SafeAreaView edges={["top"]} className="absolute left-0 right-0 top-0">
             <View className="flex-row items-center justify-between px-4 pt-2">
               <Pressable
@@ -199,15 +203,15 @@ export default function StoreProfile() {
           <Pressable
             onPress={handleChatWithStore}
             disabled={startConversation.isPending}
-            className="flex-row items-center justify-center gap-2 rounded-xl border py-4"
-            style={{ borderColor: c.brand, opacity: startConversation.isPending ? 0.6 : 1 }}
+            className="flex-row items-center justify-center gap-2 self-center rounded-full border px-5 py-2.5"
+            style={{ borderColor: c.border, opacity: startConversation.isPending ? 0.6 : 1 }}
           >
             {startConversation.isPending ? (
-              <Spinner size={18} />
+              <Spinner size={14} />
             ) : (
-              <HugeiconsIcon icon={Message01Icon} size={18} color={c.brand} />
+              <HugeiconsIcon icon={Message01Icon} size={14} color={c.secondary} />
             )}
-            <Text variant="semibold" style={{ color: c.brand, fontSize: 14 }}>
+            <Text variant="medium" style={{ color: c.secondary, fontSize: 13 }}>
               {t("chat.chatWithStore")}
             </Text>
           </Pressable>

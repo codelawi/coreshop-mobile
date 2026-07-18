@@ -6,7 +6,6 @@ import { useTranslation } from "react-i18next";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 import { HugeiconsIcon } from "@hugeicons/react-native";
 import { Location01Icon, MapsLocation02Icon } from "@hugeicons/core-free-icons";
-import { LocationSuccessOverlay } from "@/components/ui/location-success-overlay";
 import * as Location from "expo-location";
 import MapboxGL from "@rnmapbox/maps";
 import { toast } from "sonner-native";
@@ -33,7 +32,6 @@ export default function LocationStep() {
   const [loading, setLoading] = useState(true);
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [city, setCity] = useState("");
-  const [locationSuccess, setLocationSuccess] = useState(false);
 
   useEffect(() => {
     detectLocation();
@@ -57,8 +55,6 @@ export default function LocationStep() {
         animationDuration: 800,
       });
       await updateCityFromCoords(newCoords.lat, newCoords.lng);
-      setLocationSuccess(true);
-      setTimeout(() => setLocationSuccess(false), 1500);
     } catch {
       toast.error("Could not get location");
     } finally {
@@ -93,7 +89,7 @@ export default function LocationStep() {
   return (
     <SafeAreaView className="flex-1 bg-bg-light dark:bg-bg-dark">
       <View className="flex-1 px-6 pt-4">
-        <ProgressBar current={3} total={5} />
+        <ProgressBar current={3} total={4} />
 
         <Animated.View entering={FadeInDown.duration(500).springify()} className="mt-6">
           <Text variant="bold" className="text-3xl text-brand dark:text-white">
@@ -130,9 +126,7 @@ export default function LocationStep() {
             style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, alignItems: "center", justifyContent: "center" }}
           >
             <View style={{ marginBottom: 28 }}>
-              <View className="h-12 w-12 items-center justify-center rounded-full bg-brand">
-                <HugeiconsIcon icon={Location01Icon} size={24} color="#fff" />
-              </View>
+              <HugeiconsIcon icon={Location01Icon} size={40} color="#FF4D4F" />
             </View>
           </View>
 
@@ -168,8 +162,6 @@ export default function LocationStep() {
             </Text>
           </View>
         </Animated.View>
-
-        <LocationSuccessOverlay visible={locationSuccess} />
 
         <Animated.View entering={FadeInUp.duration(600).delay(400)} className="pb-4 pt-4">
           <Button

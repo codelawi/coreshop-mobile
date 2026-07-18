@@ -132,6 +132,7 @@
     "themeSystem": "System",
     "themeLight": "Light",
     "themeDark": "Dark",
+    "themePink": "Pink",
     "langEnglish": "English",
     "langArabic": "العربية",
     "guest": "Guest",
@@ -462,6 +463,19 @@
       }
     }
   },
+  "feedback": {
+    "reportBugTitle": "Report a Bug",
+    "reportBugSubtitle": "Found something broken? Tell us what happened.",
+    "reportProblemTitle": "Report a Problem",
+    "reportProblemSubtitle": "Something went wrong with your order or account?",
+    "descriptionLabel": "Description",
+    "descriptionPlaceholder": "Describe what happened in detail...",
+    "stepsLabel": "Steps to reproduce (optional)",
+    "stepsPlaceholder": "1. Open the app\n2. Go to...",
+    "send": "Send Report",
+    "toastSent": "Report sent — thank you!",
+    "toastError": "Could not send report. Please try again."
+  },
   "settings": {
     "title": "Settings",
     "account": "Account",
@@ -472,6 +486,10 @@
     "privacyDesc": "Data and account security",
     "about": "About",
     "aboutDesc": "Version, terms, support",
+    "reportBug": "Report a Bug",
+    "reportBugDesc": "Something broken? Let us know",
+    "reportProblem": "Report a Problem",
+    "reportProblemDesc": "Order or account issue?",
     "accountTitle": "Account Settings",
     "fullName": "Full Name",
     "emailAddress": "Email Address",
@@ -506,7 +524,11 @@
     "termsOfService": "Terms of Service",
     "privacyPolicy": "Privacy Policy",
     "contactSupport": "Contact Support",
-    "rateApp": "Rate the App"
+    "rateApp": "Rate the App",
+    "emailVerified": "Email verified",
+    "emailNotVerified": "Email not verified",
+    "resendVerification": "Resend verification",
+    "emailChangedVerify": "Check your inbox to verify your new email"
   },
   "chat": {
     "myChats": "My Chats",
@@ -522,7 +544,9 @@
     "shareProduct": "Share Product",
     "shareOrder": "Share Order",
     "noProducts": "No products available",
-    "noOrders": "No orders available"
+    "noOrders": "No orders available",
+    "deleteTitle": "Delete conversation?",
+    "deleteDesc": "This will permanently remove this conversation and all its messages."
   },
   "onboarding": {
     "stepOf": "Step {{current}} of {{total}}",

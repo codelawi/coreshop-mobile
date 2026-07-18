@@ -11,8 +11,9 @@ import {
 } from "@hugeicons/core-free-icons";
 import { useThemeColors } from "@/lib/theme";
 import { useCartStore } from "@/stores/cart-store";
-import { useUnreadCount } from "@/lib/queries/notifications";
+import { useUnreadCount, useUserChannel } from "@/lib/queries/notifications";
 import { useLanguageStore } from "@/stores/language-store";
+import { useAuthStore } from "@/stores/auth-store";
 
 export default function TabsLayout() {
   const { t } = useTranslation();
@@ -21,6 +22,8 @@ export default function TabsLayout() {
   const language = useLanguageStore((s) => s.language);
   const cartCount = useCartStore((s) => s.count());
   const { data: unreadCount = 0 } = useUnreadCount();
+  const userId = useAuthStore((s) => s.user?.id);
+  useUserChannel(userId);
 
   return (
     <Tabs

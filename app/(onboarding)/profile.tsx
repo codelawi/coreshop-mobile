@@ -59,7 +59,7 @@ export default function ProfileStep() {
         className="flex-1"
       >
         <View className="flex-1 px-6 pt-4">
-          <ProgressBar current={1} total={5} />
+          <ProgressBar current={1} total={4} />
 
           <ScrollView
             className="mt-8"

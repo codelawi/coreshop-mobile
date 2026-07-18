@@ -132,6 +132,7 @@
     "themeSystem": "تلقائي",
     "themeLight": "فاتح",
     "themeDark": "داكن",
+    "themePink": "وردي",
     "langEnglish": "English",
     "langArabic": "العربية",
     "guest": "ضيف",
@@ -462,6 +463,19 @@
       }
     }
   },
+  "feedback": {
+    "reportBugTitle": "الإبلاغ عن خطأ",
+    "reportBugSubtitle": "وجدت شيئاً معطوباً؟ أخبرنا بما حدث.",
+    "reportProblemTitle": "الإبلاغ عن مشكلة",
+    "reportProblemSubtitle": "حدث خطأ في طلبك أو حسابك؟",
+    "descriptionLabel": "الوصف",
+    "descriptionPlaceholder": "اصف ما حدث بالتفصيل...",
+    "stepsLabel": "خطوات إعادة الإنتاج (اختياري)",
+    "stepsPlaceholder": "1. افتح التطبيق\n2. اذهب إلى...",
+    "send": "إرسال التقرير",
+    "toastSent": "تم الإرسال — شكراً لك!",
+    "toastError": "تعذّر إرسال التقرير. يرجى المحاولة مرة أخرى."
+  },
   "settings": {
     "title": "الإعدادات",
     "account": "الحساب",
@@ -472,6 +486,10 @@
     "privacyDesc": "البيانات وأمان الحساب",
     "about": "حول التطبيق",
     "aboutDesc": "الإصدار، الشروط، الدعم",
+    "reportBug": "الإبلاغ عن خطأ",
+    "reportBugDesc": "شيء معطوب؟ أخبرنا",
+    "reportProblem": "الإبلاغ عن مشكلة",
+    "reportProblemDesc": "مشكلة في الطلب أو الحساب؟",
     "accountTitle": "إعدادات الحساب",
     "fullName": "الاسم الكامل",
     "emailAddress": "البريد الإلكتروني",
@@ -506,7 +524,11 @@
     "termsOfService": "شروط الخدمة",
     "privacyPolicy": "سياسة الخصوصية",
     "contactSupport": "التواصل مع الدعم",
-    "rateApp": "تقييم التطبيق"
+    "rateApp": "تقييم التطبيق",
+    "emailVerified": "البريد الإلكتروني مُحقَّق",
+    "emailNotVerified": "البريد الإلكتروني غير مُحقَّق",
+    "resendVerification": "إعادة إرسال التحقق",
+    "emailChangedVerify": "تحقق من بريدك الإلكتروني الجديد"
   },
   "chat": {
     "myChats": "محادثاتي",
@@ -522,7 +544,9 @@
     "shareProduct": "مشاركة منتج",
     "shareOrder": "مشاركة طلب",
     "noProducts": "لا توجد منتجات متاحة",
-    "noOrders": "لا توجد طلبات متاحة"
+    "noOrders": "لا توجد طلبات متاحة",
+    "deleteTitle": "حذف المحادثة؟",
+    "deleteDesc": "سيتم حذف هذه المحادثة وجميع رسائلها نهائياً."
   },
   "onboarding": {
     "stepOf": "الخطوة {{current}} من {{total}}",

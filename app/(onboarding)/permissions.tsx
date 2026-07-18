@@ -9,6 +9,8 @@ import { Notification03Icon, Image01Icon, Tick02Icon } from "@hugeicons/core-fre
 import * as Notifications from "expo-notifications";
 import * as ImagePicker from "expo-image-picker";
 import Constants from "expo-constants";
+import { useMutation } from "@tanstack/react-query";
+import { toast } from "sonner-native";
 import { registerForPushNotifications } from "@/lib/notifications";
 
 const isExpoGo = Constants.executionEnvironment === "storeClient";
@@ -17,6 +19,9 @@ import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
 import { ProgressBar } from "@/components/onboarding/progress-bar";
 import { useThemeColors } from "@/lib/theme";
+import { useOnboardingStore } from "@/stores/onboarding-store";
+import { useAuthStore } from "@/stores/auth-store";
+import { api } from "@/lib/api";
 
 interface PermissionCardProps {
   icon: any;
@@ -69,6 +74,8 @@ export default function PermissionsStep() {
   const c = useThemeColors();
   const [notif, setNotif] = useState(false);
   const [media, setMedia] = useState(false);
+  const onboarding = useOnboardingStore();
+  const setUser = useAuthStore((s) => s.setUser);
 
   const reqNotif = async () => {
     if (isExpoGo) {
@@ -88,10 +95,39 @@ export default function PermissionsStep() {
     setMedia(status === "granted");
   };
 
+  const finishMutation = useMutation({
+    mutationFn: async () => {
+      const res = await api.patch("/auth/onboarding", {
+        name: onboarding.name,
+        role: onboarding.role,
+        avatar: onboarding.avatar,
+        city: onboarding.city,
+        latitude: onboarding.latitude,
+        longitude: onboarding.longitude,
+        interests: [],
+      });
+      return res.data;
+    },
+    onSuccess: (res) => {
+      const updatedUser = res.data;
+      setUser(updatedUser);
+      onboarding.reset();
+      toast.success(t("onboarding.interests.welcomeToApp"));
+      if (updatedUser.role === "seller") {
+        router.replace("/(onboarding)/store-prompt" as any);
+      } else {
+        router.replace("/(tabs)/home" as any);
+      }
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.message ?? t("onboarding.interests.couldNotSave"));
+    },
+  });
+
   return (
     <SafeAreaView className="flex-1 bg-bg-light dark:bg-bg-dark">
       <View className="flex-1 px-6 pt-4">
-        <ProgressBar current={4} total={5} />
+        <ProgressBar current={4} total={4} />
 
         <Animated.View entering={FadeInDown.duration(500).springify()} className="mt-8">
           <Text variant="bold" className="text-3xl text-brand dark:text-white">
@@ -129,15 +165,17 @@ export default function PermissionsStep() {
 
         <Animated.View entering={FadeInUp.duration(600).delay(400)} className="pb-4 gap-2">
           <Button
-            label={t("common.next")}
-            onPress={() => router.push("/(onboarding)/interests" as any)}
+            label={t("onboarding.finish")}
+            onPress={() => finishMutation.mutate()}
+            loading={finishMutation.isPending}
             fullWidth
             size="lg"
           />
           <Button
             label={t("common.skip")}
-            onPress={() => router.push("/(onboarding)/interests" as any)}
+            onPress={() => finishMutation.mutate()}
             variant="ghost"
+            disabled={finishMutation.isPending}
             fullWidth
             size="md"
           />

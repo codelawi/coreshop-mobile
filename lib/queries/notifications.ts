@@ -1,5 +1,8 @@
+import { useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { PusherEvent } from "@pusher/pusher-websocket-react-native";
 import { api } from "@/lib/api";
+import { ensurePusher, pusher } from "@/lib/pusher";
 
 export interface AppNotification {
   id: number;
@@ -63,6 +66,41 @@ export function useMarkAllRead() {
       qc.invalidateQueries({ queryKey: ["notifications"] });
     },
   });
+}
+
+export function useUserChannel(userId: number | undefined) {
+  const qc = useQueryClient();
+
+  useEffect(() => {
+    if (!userId) { return; }
+
+    const channelName = `private-user.${userId}`;
+    let active = true;
+
+    (async () => {
+      try {
+        await ensurePusher();
+        if (!active) { return; }
+
+        await pusher.subscribe({
+          channelName,
+          onEvent: (event: PusherEvent) => {
+            try {
+              if (event.eventName === "UserNotificationCreated") {
+                qc.invalidateQueries({ queryKey: ["notifications", "unread-count"] });
+                qc.invalidateQueries({ queryKey: ["notifications"] });
+              }
+            } catch {}
+          },
+        });
+      } catch {}
+    })();
+
+    return () => {
+      active = false;
+      pusher.unsubscribe({ channelName }).catch(() => {});
+    };
+  }, [userId, qc]);
 }
 
 export function useSupportUnreadCount() {

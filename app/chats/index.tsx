@@ -1,4 +1,4 @@
-import { View, FlatList, Pressable, RefreshControl } from "react-native";
+import { View, FlatList, Pressable, RefreshControl, Alert } from "react-native";
 import { Image } from "expo-image";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -14,7 +14,7 @@ import { useTranslation } from "react-i18next";
 
 import { Text } from "@/components/ui/text";
 import { Spinner } from "@/components/ui/spinner";
-import { useConversations } from "@/lib/queries/chat";
+import { useConversations, useDeleteConversation } from "@/lib/queries/chat";
 import { useLanguageStore } from "@/stores/language-store";
 import { useThemeColors } from "@/lib/theme";
 import type { Conversation } from "@/lib/queries/chat";
@@ -27,6 +27,18 @@ export default function ChatsScreen() {
   const BackIcon = language === "ar" ? ArrowRight01Icon : ArrowLeft01Icon;
 
   const { data: conversations = [], isLoading, refetch, isRefetching } = useConversations();
+  const deleteConversation = useDeleteConversation("client");
+
+  const confirmDelete = (id: number) => {
+    Alert.alert(t("chat.deleteTitle"), t("chat.deleteDesc"), [
+      { text: t("common.cancel"), style: "cancel" },
+      {
+        text: t("common.delete"),
+        style: "destructive",
+        onPress: () => deleteConversation.mutate(id),
+      },
+    ]);
+  };
 
   const renderItem = ({ item, index }: { item: Conversation; index: number }) => {
     const title = item.store.name;
@@ -48,6 +60,8 @@ export default function ChatsScreen() {
               params: { id: item.id, title, role: "client", avatar: item.store.logo ?? "" },
             } as any)
           }
+          onLongPress={() => confirmDelete(item.id)}
+          delayLongPress={400}
         >
           <View className="relative h-12 w-12 overflow-hidden rounded-full bg-brand-50 dark:bg-[#2A2A2A]">
             {item.store.logo ? (

@@ -55,15 +55,17 @@ interface Props {
   initialAddress?: Address;
   onSave: (data: AddressInput) => void;
   isSaving: boolean;
+  defaultChecked?: boolean;
 }
 
-export function AddressForm({ title, initialAddress, onSave, isSaving }: Props) {
+export function AddressForm({ title, initialAddress, onSave, isSaving, defaultChecked = false }: Props) {
   const router = useRouter();
   const { t } = useTranslation();
   const c = useThemeColors();
   const cameraRef = useRef<MapboxGL.Camera>(null);
 
   const [locationSuccess, setLocationSuccess] = useState(false);
+  const [mapScrollLocked, setMapScrollLocked] = useState(false);
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(
     initialAddress
       ? {
@@ -90,7 +92,7 @@ export function AddressForm({ title, initialAddress, onSave, isSaving }: Props) 
       floor: initialAddress?.floor ?? "",
       apartment: initialAddress?.apartment ?? "",
       notes: initialAddress?.notes ?? "",
-      is_default: initialAddress?.is_default ?? false,
+      is_default: initialAddress?.is_default ?? defaultChecked,
     },
   });
 
@@ -186,9 +188,16 @@ export function AddressForm({ title, initialAddress, onSave, isSaving }: Props) 
           contentContainerStyle={{ paddingBottom: 40 }}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
+          scrollEnabled={!mapScrollLocked}
         >
           {/* Map picker */}
           <View className="h-64 overflow-hidden border-b border-brand-100 dark:border-[#2A2A2A]">
+            <View
+              style={{ flex: 1 }}
+              onTouchStart={() => setMapScrollLocked(true)}
+              onTouchEnd={() => setMapScrollLocked(false)}
+              onTouchCancel={() => setMapScrollLocked(false)}
+            >
             <MapboxGL.MapView
               style={{ flex: 1 }}
               onMapIdle={onMapIdle}
@@ -206,6 +215,7 @@ export function AddressForm({ title, initialAddress, onSave, isSaving }: Props) 
               />
               <MapboxGL.UserLocation visible />
             </MapboxGL.MapView>
+            </View>
 
             {/* Fixed center pin */}
             <View
@@ -213,9 +223,7 @@ export function AddressForm({ title, initialAddress, onSave, isSaving }: Props) 
               style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, alignItems: "center", justifyContent: "center" }}
             >
               <View style={{ marginBottom: 28 }}>
-                <View className="h-12 w-12 items-center justify-center rounded-full bg-brand">
-                  <HugeiconsIcon icon={Location01Icon} size={24} color="#fff" />
-                </View>
+                <HugeiconsIcon icon={Location01Icon} size={40} color="#FF4D4F" />
               </View>
             </View>
 

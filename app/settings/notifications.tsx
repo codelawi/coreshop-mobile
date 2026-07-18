@@ -2,7 +2,6 @@ import { View, ScrollView, Pressable, Switch } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
-import { useEffect, useState } from "react";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { HugeiconsIcon } from "@hugeicons/react-native";
 import {
@@ -13,26 +12,10 @@ import {
   StarIcon,
   SecurityLockIcon,
 } from "@hugeicons/core-free-icons";
-import * as SecureStore from "expo-secure-store";
 import { useLanguageStore } from "@/stores/language-store";
+import { useNotifPrefsStore, type NotifPrefs } from "@/stores/notif-prefs-store";
 import { Text } from "@/components/ui/text";
 import { useThemeColors } from "@/lib/theme";
-
-const PREFS_KEY = "notif_prefs";
-
-interface Prefs {
-  orders: boolean;
-  promotions: boolean;
-  newArrivals: boolean;
-  account: boolean;
-}
-
-const defaultPrefs: Prefs = {
-  orders: true,
-  promotions: true,
-  newArrivals: false,
-  account: true,
-};
 
 interface NotifRowProps {
   icon: any;
@@ -79,23 +62,8 @@ export default function NotificationSettings() {
   const c = useThemeColors();
   const { language } = useLanguageStore();
   const BackIcon = language === "ar" ? ArrowRight01Icon : ArrowLeft02Icon;
-  const [prefs, setPrefs] = useState<Prefs>(defaultPrefs);
-
-  useEffect(() => {
-    SecureStore.getItemAsync(PREFS_KEY).then((raw) => {
-      if (raw) {
-        try {
-          setPrefs({ ...defaultPrefs, ...JSON.parse(raw) });
-        } catch {}
-      }
-    });
-  }, []);
-
-  const update = async (key: keyof Prefs, value: boolean) => {
-    const next = { ...prefs, [key]: value };
-    setPrefs(next);
-    await SecureStore.setItemAsync(PREFS_KEY, JSON.stringify(next));
-  };
+  const prefs = useNotifPrefsStore((s) => s.prefs);
+  const update = useNotifPrefsStore((s) => s.update);
 
   return (
     <SafeAreaView className="flex-1 bg-bg-light dark:bg-bg-dark">

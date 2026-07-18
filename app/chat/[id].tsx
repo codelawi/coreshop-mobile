@@ -7,6 +7,7 @@ import {
   Modal,
   ScrollView,
   useWindowDimensions,
+  ActivityIndicator,
 } from "react-native";
 import Animated, {
   useAnimatedKeyboard,
@@ -15,7 +16,7 @@ import Animated, {
 import { Image } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { HugeiconsIcon } from "@hugeicons/react-native";
 import {
   ArrowLeft01Icon,
@@ -73,7 +74,11 @@ export default function ChatRoom() {
   const storeId = Number(store_id ?? 0);
 
   const { width: screenWidth } = useWindowDimensions();
-  const { data: messages = [], isLoading } = useMessages(conversationId, role);
+  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useMessages(conversationId, role);
+  const messages = useMemo(
+    () => [...(data?.pages ?? [])].reverse().flatMap((p) => p.data),
+    [data]
+  );
   const sendMessage = useSendMessage(conversationId, role, user?.id);
   useChatChannel(conversationId, role, user?.id ?? 0);
 
@@ -299,6 +304,20 @@ export default function ChatRoom() {
             contentContainerStyle={{ padding: 16, paddingBottom: 8 }}
             showsVerticalScrollIndicator={false}
             onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: false })}
+            maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
+            onScroll={(e) => {
+              if (e.nativeEvent.contentOffset.y < 80 && hasNextPage && !isFetchingNextPage) {
+                fetchNextPage();
+              }
+            }}
+            scrollEventThrottle={200}
+            ListHeaderComponent={
+              isFetchingNextPage ? (
+                <View style={{ alignItems: "center", paddingVertical: 12 }}>
+                  <ActivityIndicator color={c.brand} />
+                </View>
+              ) : null
+            }
             ListEmptyComponent={
               <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingVertical: 80 }}>
                 <Text style={{ color: c.muted }}>{t("chat.noMessages")}</Text>

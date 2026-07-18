@@ -105,6 +105,7 @@ export default function Profile() {
     system: t("profile.themeSystem"),
     light: t("profile.themeLight"),
     dark: t("profile.themeDark"),
+    pink: t("profile.themePink"),
   };
 
   const logoutMutation = useMutation({
@@ -154,6 +155,13 @@ export default function Profile() {
         onPress: async () => {
           await setMode("dark");
           setColorScheme("dark");
+        },
+      },
+      {
+        text: t("profile.themePink"),
+        onPress: async () => {
+          await setMode("pink");
+          setColorScheme("light");
         },
       },
       { text: t("common.cancel"), style: "cancel" },
@@ -212,7 +220,7 @@ export default function Profile() {
           </Animated.View>
 
           <Text className="mt-6 text-center text-xs" style={{ color: c.muted }}>
-            CoreShop v1.9.2
+            CoreShop v1.10.0
           </Text>
         </ScrollView>
       </SafeAreaView>
@@ -333,7 +341,7 @@ export default function Profile() {
         </Animated.View>
 
         <Text className="mt-6 text-center text-xs" style={{ color: c.muted }}>
-          CoreShop v1.9.2
+          CoreShop v1.10.0
         </Text>
       </ScrollView>
     </SafeAreaView>

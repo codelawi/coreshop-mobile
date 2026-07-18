@@ -1,8 +1,29 @@
 import { useColorScheme } from "nativewind";
+import { useThemeStore } from "@/stores/theme-store";
 
 export function useThemeColors() {
   const { colorScheme } = useColorScheme();
+  const mode = useThemeStore((s) => s.mode);
   const isDark = colorScheme === "dark";
+
+  if (mode === "pink") {
+    return {
+      bg: "#FFF0F6",
+      card: "#FFFFFF",
+      brand: "#1A1A1A",
+      secondary: "#9D174D",
+      muted: "#BE185D",
+      border: "#FECDD3",
+      brandLight: "#FCE4EC",
+      tabBar: "#FFFFFF",
+      tabBorder: "#FECDD3",
+      inputBg: "#FFFFFF",
+      inputBorder: "#FECDD3",
+      placeholder: "#D1649E",
+      isDark: false,
+    } as const;
+  }
+
   return {
     bg: isDark ? "#0A0A0A" : "#FAFAFA",
     card: isDark ? "#1A1A1A" : "#FFFFFF",

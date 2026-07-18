@@ -2,8 +2,10 @@ import * as Notifications from "expo-notifications";
 import Constants, { ExecutionEnvironment } from "expo-constants";
 import { Platform } from "react-native";
 import { router } from "expo-router";
+import { toast } from "sonner-native";
 import { api } from "@/lib/api";
 import { useAuthStore } from "@/stores/auth-store";
+import { isNotifTypeAllowed } from "@/stores/notif-prefs-store";
 
 const PROJECT_ID =
   (Constants.expoConfig?.extra?.eas?.projectId as string | undefined) ??
@@ -32,16 +34,18 @@ if (Platform.OS === "android") {
   void Notifications.setNotificationChannelAsync(NOTIFICATION_CHANNEL_ID, CHANNEL_CONFIG);
 }
 
-// Controls how notifications are displayed when the app is in the foreground.
-// Suppress everything when no user is logged in.
+// Suppress OS banners in foreground — we show in-app toasts instead.
+// Background notifications always use the OS banner regardless of this setting.
 Notifications.setNotificationHandler({
-  handleNotification: async () => {
+  handleNotification: async (notification) => {
     const isLoggedIn = !!useAuthStore.getState().user;
+    const data = notification.request.content.data as { type?: string };
+    const allowed = isNotifTypeAllowed(data?.type);
     return {
-      shouldPlaySound: isLoggedIn,
-      shouldSetBadge: isLoggedIn,
-      shouldShowBanner: isLoggedIn,
-      shouldShowList: isLoggedIn,
+      shouldPlaySound: isLoggedIn && allowed,
+      shouldSetBadge: isLoggedIn && allowed,
+      shouldShowBanner: false,
+      shouldShowList: isLoggedIn && allowed,
     };
   },
 });
@@ -122,11 +126,22 @@ export function setupNotificationListeners(): () => void {
     const user = useAuthStore.getState().user;
     if (!user) { return; }
 
-    const data = notification.request.content.data as { type?: string };
+    const content = notification.request.content;
+    const data = content.data as { type?: string };
 
     if (data?.type === "account_banned") {
       useAuthStore.getState().setUser({ ...user, status: "suspended" });
       router.replace("/banned" as any);
+      return;
+    }
+
+    if (!isNotifTypeAllowed(data?.type)) { return; }
+
+    // Show in-app toast instead of OS banner
+    const title = content.title ?? "";
+    const body = content.body ?? "";
+    if (title || body) {
+      toast(title || body, { description: title ? body : undefined });
     }
   });
 

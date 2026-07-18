@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { type InfiniteData, useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { PusherEvent } from "@pusher/pusher-websocket-react-native";
 import { api } from "@/lib/api";
 import { ensurePusher, pusher } from "@/lib/pusher";
@@ -83,11 +83,20 @@ export function useMessages(conversationId: number, role: "client" | "seller") {
       ? `/seller/conversations/${conversationId}/messages`
       : `/client/conversations/${conversationId}/messages`;
 
-  return useQuery({
+  return useInfiniteQuery({
     queryKey: ["chat", role, conversationId],
-    queryFn: async () => {
-      const res = await api.get<{ success: boolean; data: Message[] }>(path);
-      return res.data.data;
+    queryFn: async ({ pageParam }: { pageParam: number | undefined }) => {
+      const params = pageParam ? { before_id: pageParam, limit: 50 } : { limit: 50 };
+      const res = await api.get<{ success: boolean; data: Message[]; meta: { has_more: boolean } }>(
+        path,
+        { params }
+      );
+      return res.data;
+    },
+    initialPageParam: undefined as number | undefined,
+    getNextPageParam: (firstPage) => {
+      if (!firstPage.meta.has_more || firstPage.data.length === 0) { return undefined; }
+      return firstPage.data[0].id;
     },
     enabled: !!conversationId,
   });
@@ -120,9 +129,18 @@ export function useChatChannel(
               const data: Message = typeof raw === "string" ? JSON.parse(raw) : raw as Message;
               if (data.sender_id === currentUserId) return;
 
-              qc.setQueryData<Message[]>(["chat", role, conversationId], (prev = []) => {
-                if (prev.some((m) => m.id === data.id)) return prev;
-                return [...prev, data];
+              type ChatPage = { data: Message[]; meta: { has_more: boolean } };
+              qc.setQueryData<InfiniteData<ChatPage>>(["chat", role, conversationId], (prev) => {
+                if (!prev || prev.pages.length === 0) return prev;
+                const lastIdx = prev.pages.length - 1;
+                const alreadyExists = prev.pages.some((p) => p.data.some((m) => m.id === data.id));
+                if (alreadyExists) return prev;
+                return {
+                  ...prev,
+                  pages: prev.pages.map((page, i) =>
+                    i === lastIdx ? { ...page, data: [...page.data, data] } : page
+                  ),
+                };
               });
 
               qc.invalidateQueries({ queryKey: ["conversations", role] });
@@ -153,6 +171,17 @@ export function useStartConversation() {
   });
 }
 
+export function useDeleteConversation(role: "client" | "seller") {
+  const qc = useQueryClient();
+  const path = role === "seller" ? "/seller/conversations" : "/client/conversations";
+  return useMutation({
+    mutationFn: async (id: number) => {
+      await api.delete(`${path}/${id}`);
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["conversations", role] }),
+  });
+}
+
 export function useSendMessage(conversationId: number, role: "client" | "seller", userId?: number) {
   const qc = useQueryClient();
   const path =
@@ -166,10 +195,12 @@ export function useSendMessage(conversationId: number, role: "client" | "seller"
       return res.data.data;
     },
     onMutate: async (payload) => {
+      type ChatPage = { data: Message[]; meta: { has_more: boolean } };
       await qc.cancelQueries({ queryKey: ["chat", role, conversationId] });
-      const previous = qc.getQueryData<Message[]>(["chat", role, conversationId]);
+      const previous = qc.getQueryData<InfiniteData<ChatPage>>(["chat", role, conversationId]);
+      const optimisticId = -Date.now();
       const optimistic: Message = {
-        id: -Date.now(),
+        id: optimisticId,
         conversation_id: conversationId,
         sender_id: userId ?? 0,
         sender_name: "",
@@ -181,8 +212,17 @@ export function useSendMessage(conversationId: number, role: "client" | "seller"
         read_at: null,
         created_at: new Date().toISOString(),
       };
-      qc.setQueryData<Message[]>(["chat", role, conversationId], (prev = []) => [...prev, optimistic]);
-      return { previous };
+      qc.setQueryData<InfiniteData<ChatPage>>(["chat", role, conversationId], (prev) => {
+        if (!prev || prev.pages.length === 0) return prev;
+        const lastIdx = prev.pages.length - 1;
+        return {
+          ...prev,
+          pages: prev.pages.map((page, i) =>
+            i === lastIdx ? { ...page, data: [...page.data, optimistic] } : page
+          ),
+        };
+      });
+      return { previous, optimisticId };
     },
     onError: (_err, _vars, context) => {
       if (context?.previous !== undefined) {
@@ -207,6 +247,8 @@ export interface SupportMessage {
   body: string;
   read_at: string | null;
   created_at: string;
+  _pending?: boolean;
+  _localUri?: string;
 }
 
 export function useSupportConversation() {
@@ -222,19 +264,26 @@ export function useSupportConversation() {
 }
 
 export function useSupportMessages(conversationId: number | undefined) {
-  return useQuery({
+  return useInfiniteQuery({
     queryKey: ["support", "messages", conversationId],
-    queryFn: async () => {
-      const res = await api.get<{ success: boolean; data: SupportMessage[] }>(
-        `/client/support/${conversationId}/messages`
+    queryFn: async ({ pageParam }: { pageParam: number | undefined }) => {
+      const params = pageParam ? { before_id: pageParam, limit: 50 } : { limit: 50 };
+      const res = await api.get<{ success: boolean; data: SupportMessage[]; meta: { has_more: boolean } }>(
+        `/client/support/${conversationId}/messages`,
+        { params }
       );
-      return res.data.data;
+      return res.data;
+    },
+    initialPageParam: undefined as number | undefined,
+    getNextPageParam: (firstPage) => {
+      if (!firstPage.meta.has_more || firstPage.data.length === 0) { return undefined; }
+      return firstPage.data[0].id;
     },
     enabled: !!conversationId,
   });
 }
 
-export function useSendSupportMessage(conversationId: number | undefined) {
+export function useSendSupportMessage(conversationId: number | undefined, currentUserId: number) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (payload: { body?: string; imageUri?: string }) => {
@@ -257,8 +306,61 @@ export function useSendSupportMessage(conversationId: number | undefined) {
       );
       return res.data.data;
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["support", "messages", conversationId] });
+    onMutate: async (payload) => {
+      type SupportPage = { data: SupportMessage[]; meta: { has_more: boolean } };
+      await qc.cancelQueries({ queryKey: ["support", "messages", conversationId] });
+      const previous = qc.getQueryData<InfiniteData<SupportPage>>(["support", "messages", conversationId]);
+      const optimistic: SupportMessage = {
+        id: -Date.now(),
+        support_conversation_id: conversationId ?? 0,
+        sender_id: currentUserId,
+        sender_name: "",
+        sender_avatar: null,
+        sender_role: "client",
+        type: payload.imageUri ? "image" : "text",
+        body: payload.imageUri ?? (payload.body ?? ""),
+        read_at: null,
+        created_at: new Date().toISOString(),
+        _pending: true,
+        _localUri: payload.imageUri,
+      };
+      qc.setQueryData<InfiniteData<SupportPage>>(
+        ["support", "messages", conversationId],
+        (prev) => {
+          if (!prev || prev.pages.length === 0) return prev;
+          const lastIdx = prev.pages.length - 1;
+          return {
+            ...prev,
+            pages: prev.pages.map((page, i) =>
+              i === lastIdx ? { ...page, data: [...page.data, optimistic] } : page
+            ),
+          };
+        }
+      );
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous !== undefined) {
+        qc.setQueryData(["support", "messages", conversationId], context.previous);
+      }
+    },
+    onSuccess: (serverMessage) => {
+      type SupportPage = { data: SupportMessage[]; meta: { has_more: boolean } };
+      qc.setQueryData<InfiniteData<SupportPage>>(
+        ["support", "messages", conversationId],
+        (prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            pages: prev.pages.map((page) => ({
+              ...page,
+              data: page.data.map((m) =>
+                m._pending && m.sender_id === currentUserId ? { ...serverMessage, _pending: false } : m
+              ),
+            })),
+          };
+        }
+      );
       qc.invalidateQueries({ queryKey: ["support", "unread-count"] });
     },
   });
@@ -290,11 +392,20 @@ export function useSupportChannel(
               const data: SupportMessage = typeof raw === "string" ? JSON.parse(raw) : raw as SupportMessage;
               if (data.sender_id === currentUserId) return;
 
-              qc.setQueryData<SupportMessage[]>(
+              type SupportPage = { data: SupportMessage[]; meta: { has_more: boolean } };
+              qc.setQueryData<InfiniteData<SupportPage>>(
                 ["support", "messages", conversationId],
-                (prev = []) => {
-                  if (prev.some((m) => m.id === data.id)) return prev;
-                  return [...prev, data];
+                (prev) => {
+                  if (!prev || prev.pages.length === 0) return prev;
+                  const alreadyExists = prev.pages.some((p) => p.data.some((m) => m.id === data.id));
+                  if (alreadyExists) return prev;
+                  const lastIdx = prev.pages.length - 1;
+                  return {
+                    ...prev,
+                    pages: prev.pages.map((page, i) =>
+                      i === lastIdx ? { ...page, data: [...page.data, data] } : page
+                    ),
+                  };
                 }
               );
             } catch {}
