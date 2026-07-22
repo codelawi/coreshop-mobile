@@ -11,7 +11,7 @@ import {
 } from "@hugeicons/core-free-icons";
 import { useThemeColors } from "@/lib/theme";
 import { useCartStore } from "@/stores/cart-store";
-import { useUnreadCount, useUserChannel } from "@/lib/queries/notifications";
+import { useUnreadCount, useSupportUnreadCount, useUserChannel } from "@/lib/queries/notifications";
 import { useLanguageStore } from "@/stores/language-store";
 import { useAuthStore } from "@/stores/auth-store";
 
@@ -22,6 +22,8 @@ export default function TabsLayout() {
   const language = useLanguageStore((s) => s.language);
   const cartCount = useCartStore((s) => s.count());
   const { data: unreadCount = 0 } = useUnreadCount();
+  const { data: supportUnreadCount = 0 } = useSupportUnreadCount();
+  const profileBadge = unreadCount + supportUnreadCount;
   const userId = useAuthStore((s) => s.user?.id);
   useUserChannel(userId);
 
@@ -85,7 +87,7 @@ export default function TabsLayout() {
         options={{
           title: t("tabs.profile"),
           tabBarIcon: ({ color }) => <HugeiconsIcon icon={UserIcon} size={24} color={color} />,
-          tabBarBadge: unreadCount > 0 ? unreadCount : undefined,
+          tabBarBadge: profileBadge > 0 ? profileBadge : undefined,
         }}
       />
     </Tabs>

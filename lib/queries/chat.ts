@@ -267,7 +267,7 @@ export function useSupportMessages(conversationId: number | undefined) {
   return useInfiniteQuery({
     queryKey: ["support", "messages", conversationId],
     queryFn: async ({ pageParam }: { pageParam: number | undefined }) => {
-      const params = pageParam ? { before_id: pageParam, limit: 50 } : { limit: 50 };
+      const params = pageParam ? { before_id: pageParam, limit: 20 } : { limit: 20 };
       const res = await api.get<{ success: boolean; data: SupportMessage[]; meta: { has_more: boolean } }>(
         `/client/support/${conversationId}/messages`,
         { params }
@@ -302,7 +302,10 @@ export function useSendSupportMessage(conversationId: number | undefined, curren
 
       const res = await api.post<{ success: boolean; data: SupportMessage }>(
         `/client/support/${conversationId}/messages`,
-        data
+        data,
+        payload.imageUri
+          ? { headers: { "Content-Type": "multipart/form-data" }, timeout: 60000 }
+          : undefined
       );
       return res.data.data;
     },
@@ -344,24 +347,9 @@ export function useSendSupportMessage(conversationId: number | undefined, curren
         qc.setQueryData(["support", "messages", conversationId], context.previous);
       }
     },
-    onSuccess: (serverMessage) => {
-      type SupportPage = { data: SupportMessage[]; meta: { has_more: boolean } };
-      qc.setQueryData<InfiniteData<SupportPage>>(
-        ["support", "messages", conversationId],
-        (prev) => {
-          if (!prev) return prev;
-          return {
-            ...prev,
-            pages: prev.pages.map((page) => ({
-              ...page,
-              data: page.data.map((m) =>
-                m._pending && m.sender_id === currentUserId ? { ...serverMessage, _pending: false } : m
-              ),
-            })),
-          };
-        }
-      );
-      qc.invalidateQueries({ queryKey: ["support", "unread-count"] });
+    onSettled: () => {
+      void qc.invalidateQueries({ queryKey: ["support", "messages", conversationId] });
+      void qc.invalidateQueries({ queryKey: ["support", "unread-count"] });
     },
   });
 }
@@ -389,25 +377,9 @@ export function useSupportChannel(
             if (event.eventName !== "SupportMessageSent") return;
             try {
               const raw = event.data;
-              const data: SupportMessage = typeof raw === "string" ? JSON.parse(raw) : raw as SupportMessage;
-              if (data.sender_id === currentUserId) return;
-
-              type SupportPage = { data: SupportMessage[]; meta: { has_more: boolean } };
-              qc.setQueryData<InfiniteData<SupportPage>>(
-                ["support", "messages", conversationId],
-                (prev) => {
-                  if (!prev || prev.pages.length === 0) return prev;
-                  const alreadyExists = prev.pages.some((p) => p.data.some((m) => m.id === data.id));
-                  if (alreadyExists) return prev;
-                  const lastIdx = prev.pages.length - 1;
-                  return {
-                    ...prev,
-                    pages: prev.pages.map((page, i) =>
-                      i === lastIdx ? { ...page, data: [...page.data, data] } : page
-                    ),
-                  };
-                }
-              );
+              const parsed: SupportMessage = typeof raw === "string" ? JSON.parse(raw) : raw as SupportMessage;
+              if (parsed.sender_id === currentUserId) return;
+              void qc.invalidateQueries({ queryKey: ["support", "messages", conversationId] });
             } catch {}
           },
         });

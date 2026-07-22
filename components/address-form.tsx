@@ -18,7 +18,6 @@ import {
   Location01Icon,
   MapsLocation02Icon,
 } from "@hugeicons/core-free-icons";
-import { LocationSuccessOverlay } from "@/components/ui/location-success-overlay";
 import MapboxGL from "@rnmapbox/maps";
 import * as Location from "expo-location";
 import { useTranslation } from "react-i18next";
@@ -30,7 +29,6 @@ import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useThemeColors } from "@/lib/theme";
-import { Spinner } from "@/components/ui/spinner";
 import type { Address, AddressInput } from "@/lib/queries/addresses";
 
 // Amman, Jordan [lng, lat]
@@ -64,7 +62,6 @@ export function AddressForm({ title, initialAddress, onSave, isSaving, defaultCh
   const c = useThemeColors();
   const cameraRef = useRef<MapboxGL.Camera>(null);
 
-  const [locationSuccess, setLocationSuccess] = useState(false);
   const [mapScrollLocked, setMapScrollLocked] = useState(false);
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(
     initialAddress
@@ -121,8 +118,6 @@ export function AddressForm({ title, initialAddress, onSave, isSaving, defaultCh
         animationDuration: 800,
       });
       await reverseGeocode(newCoords.lat, newCoords.lng);
-      setLocationSuccess(true);
-      setTimeout(() => setLocationSuccess(false), 1500);
     } catch {
       toast.error(t("addresses.form.couldNotGetLocation"));
     } finally {
@@ -235,11 +230,6 @@ export function AddressForm({ title, initialAddress, onSave, isSaving, defaultCh
               <HugeiconsIcon icon={MapsLocation02Icon} size={20} color={c.brand} />
             </Pressable>
 
-            {mapLoading && (
-              <View className="absolute inset-0 items-center justify-center bg-white/70 dark:bg-black/70">
-                <Spinner size={40} />
-              </View>
-            )}
           </View>
 
           {/* Detected city */}
@@ -252,7 +242,6 @@ export function AddressForm({ title, initialAddress, onSave, isSaving, defaultCh
               {city || t("addresses.form.dragToDetect")}
             </Text>
           </View>
-          <LocationSuccessOverlay visible={locationSuccess} />
 
           {/* Form fields */}
           <View className="gap-4 px-4 pt-5">

@@ -103,9 +103,19 @@ export default function Notifications() {
   const router = useRouter();
   const c = useThemeColors();
   const { t } = useTranslation();
-  const { data: notifications = [], isLoading, isRefetching, refetch } = useNotifications();
+  const {
+    data,
+    isLoading,
+    isRefetching,
+    refetch,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useNotifications();
   const markRead = useMarkRead();
   const markAllRead = useMarkAllRead();
+
+  const notifications = data?.pages.flatMap((p) => p.data) ?? [];
 
   useEffect(() => {
     markAllRead.mutate();
@@ -247,6 +257,22 @@ export default function Notifications() {
                 ))}
               </View>
             </View>
+          ) : null}
+
+          {hasNextPage ? (
+            <Pressable
+              onPress={() => fetchNextPage()}
+              disabled={isFetchingNextPage}
+              className="mx-4 mt-4 items-center justify-center rounded-xl bg-white dark:bg-bg-card py-3.5"
+            >
+              {isFetchingNextPage ? (
+                <Spinner size={20} />
+              ) : (
+                <Text variant="semibold" className="text-sm text-brand dark:text-white">
+                  {t("notifications.loadMore")}
+                </Text>
+              )}
+            </Pressable>
           ) : null}
         </ScrollView>
       )}

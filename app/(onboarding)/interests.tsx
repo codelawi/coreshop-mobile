@@ -91,10 +91,6 @@ export default function InterestsStep() {
   });
 
   const onFinish = () => {
-    if (selected.length < 3) {
-      toast.error(t("onboarding.interests.pickAtLeast3"));
-      return;
-    }
     finishMutation.mutate();
   };
 

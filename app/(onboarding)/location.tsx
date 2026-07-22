@@ -15,7 +15,6 @@ import { Button } from "@/components/ui/button";
 import { ProgressBar } from "@/components/onboarding/progress-bar";
 import { useOnboardingStore } from "@/stores/onboarding-store";
 import { useThemeColors } from "@/lib/theme";
-import { Spinner } from "@/components/ui/spinner";
 
 MapboxGL.setAccessToken(process.env.EXPO_PUBLIC_MAPBOX_TOKEN ?? "");
 
@@ -138,14 +137,6 @@ export default function LocationStep() {
             <HugeiconsIcon icon={MapsLocation02Icon} size={20} color={c.brand} />
           </Pressable>
 
-          {loading && (
-            <View className="absolute inset-0 items-center justify-center bg-white/70 dark:bg-black/70">
-              <Spinner size={40} />
-              <Text className="mt-3 text-sm text-brand dark:text-white">
-                {t("onboarding.location.detectingLocation")}
-              </Text>
-            </View>
-          )}
         </Animated.View>
 
         <Animated.View

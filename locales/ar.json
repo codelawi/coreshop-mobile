@@ -202,7 +202,8 @@
     "justNow": "الآن",
     "minutesAgo": "منذ {{count}}د",
     "hoursAgo": "منذ {{count}}س",
-    "daysAgo": "منذ {{count}}ي"
+    "daysAgo": "منذ {{count}}ي",
+    "loadMore": "تحميل المزيد"
   },
   "addresses": {
     "title": "العناوين",

@@ -8,7 +8,7 @@ export default {
     name: "CoreShop",
     slug: "coreshop-mobile",
     scheme: "coreshop",
-    version: "1.9.2",
+    version: "1.10.0",
     orientation: "portrait",
     icon: "./assets/logo.png",
     userInterfaceStyle: "automatic",

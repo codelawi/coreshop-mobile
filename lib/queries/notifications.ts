@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { type InfiniteData, useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { PusherEvent } from "@pusher/pusher-websocket-react-native";
 import { api } from "@/lib/api";
 import { ensurePusher, pusher } from "@/lib/pusher";
@@ -14,16 +14,23 @@ export interface AppNotification {
   created_at: string;
 }
 
+type NotificationsPage = { data: AppNotification[]; meta: { has_more: boolean } };
+
 export function useNotifications() {
-  return useQuery({
+  return useInfiniteQuery({
     queryKey: ["notifications"],
-    queryFn: async () => {
-      try {
-        const res = await api.get<{ success: boolean; data: AppNotification[] }>("/client/notifications");
-        return res.data.data;
-      } catch {
-        return [] as AppNotification[];
-      }
+    queryFn: async ({ pageParam }: { pageParam: number | undefined }) => {
+      const params = pageParam ? { before_id: pageParam, limit: 10 } : { limit: 10 };
+      const res = await api.get<{ success: boolean; data: AppNotification[]; meta: { has_more: boolean } }>(
+        "/client/notifications",
+        { params }
+      );
+      return res.data as NotificationsPage;
+    },
+    initialPageParam: undefined as number | undefined,
+    getNextPageParam: (lastPage) => {
+      if (!lastPage.meta.has_more || lastPage.data.length === 0) { return undefined; }
+      return lastPage.data[lastPage.data.length - 1].id;
     },
   });
 }
@@ -50,8 +57,18 @@ export function useMarkRead() {
     mutationFn: async (id: number) => {
       await api.patch(`/client/notifications/${id}/read`);
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["notifications"] });
+    onSuccess: (_data, id) => {
+      const now = new Date().toISOString();
+      qc.setQueryData<InfiniteData<NotificationsPage>>(["notifications"], (prev) => {
+        if (!prev) { return prev; }
+        return {
+          ...prev,
+          pages: prev.pages.map((page) => ({
+            ...page,
+            data: page.data.map((n) => n.id === id ? { ...n, read_at: now } : n),
+          })),
+        };
+      });
     },
   });
 }
@@ -63,7 +80,18 @@ export function useMarkAllRead() {
       await api.patch("/client/notifications/read-all");
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["notifications"] });
+      const now = new Date().toISOString();
+      qc.setQueryData<InfiniteData<NotificationsPage>>(["notifications"], (prev) => {
+        if (!prev) { return prev; }
+        return {
+          ...prev,
+          pages: prev.pages.map((page) => ({
+            ...page,
+            data: page.data.map((n) => ({ ...n, read_at: n.read_at ?? now })),
+          })),
+        };
+      });
+      qc.setQueryData<number>(["notifications", "unread-count"], 0);
     },
   });
 }

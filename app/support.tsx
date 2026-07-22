@@ -68,6 +68,7 @@ export default function SupportChat() {
 
   const [body, setBody] = useState("");
   const listRef = useRef<FlatList<SupportMessage>>(null);
+  const prevLastMsgId = useRef(0);
 
   const keyboard = useAnimatedKeyboard();
 
@@ -86,11 +87,18 @@ export default function SupportChat() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Scroll to bottom on first load and when a new message is appended.
+  // Does NOT scroll when an older page is prepended (the last message ID stays the same).
   useEffect(() => {
-    if (messages.length > 0) {
-      setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 80);
+    if (messages.length === 0) { return; }
+    const lastId = messages[messages.length - 1]?.id ?? 0;
+    if (prevLastMsgId.current === 0) {
+      setTimeout(() => listRef.current?.scrollToEnd({ animated: false }), 100);
+    } else if (lastId !== prevLastMsgId.current) {
+      setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
     }
-  }, [messages.length]);
+    prevLastMsgId.current = lastId;
+  }, [messages]);
 
   const handleSend = () => {
     const text = body.trim();
@@ -233,14 +241,13 @@ export default function SupportChat() {
             renderItem={renderMessage}
             contentContainerStyle={{ padding: 16, paddingBottom: 8 }}
             showsVerticalScrollIndicator={false}
-            onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: false })}
             maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
             onScroll={(e) => {
-              if (e.nativeEvent.contentOffset.y < 80 && hasNextPage && !isFetchingNextPage) {
+              if (e.nativeEvent.contentOffset.y <= 40 && hasNextPage && !isFetchingNextPage) {
                 fetchNextPage();
               }
             }}
-            scrollEventThrottle={200}
+            scrollEventThrottle={300}
             ListHeaderComponent={
               isFetchingNextPage ? (
                 <View style={{ alignItems: "center", paddingVertical: 12 }}>

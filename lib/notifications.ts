@@ -3,9 +3,106 @@ import Constants, { ExecutionEnvironment } from "expo-constants";
 import { Platform } from "react-native";
 import { router } from "expo-router";
 import { toast } from "sonner-native";
+import React from "react";
+import { HugeiconsIcon } from "@hugeicons/react-native";
+import {
+  DeliveryTruck01Icon,
+  Package01Icon,
+  SaleTag01Icon,
+  GiftIcon,
+  Message01Icon,
+  CustomerSupportIcon,
+  Alert01Icon,
+  Notification03Icon,
+} from "@hugeicons/core-free-icons";
 import { api } from "@/lib/api";
 import { useAuthStore } from "@/stores/auth-store";
 import { isNotifTypeAllowed } from "@/stores/notif-prefs-store";
+import { queryClient } from "@/lib/query-client";
+
+interface NotificationData {
+  type?: string;
+  order_id?: number;
+  conversation_id?: number;
+  role?: string;
+  store_name?: string;
+}
+
+function updateBadgesForNotification(data: NotificationData): void {
+  switch (data.type) {
+    case "support_message":
+    case "new_support_message":
+      queryClient.setQueryData<number>(["support", "unread-count"], (prev) => (prev ?? 0) + 1);
+      break;
+    case "new_order":
+      // Increment seller store pending orders badge
+      queryClient.setQueryData<{ pending_orders_count: number } & Record<string, unknown>>(
+        ["seller", "store"],
+        (prev) => prev ? { ...prev, pending_orders_count: prev.pending_orders_count + 1 } : prev
+      );
+      queryClient.setQueryData<number>(["notifications", "unread-count"], (prev) => (prev ?? 0) + 1);
+      break;
+    default:
+      // order_status, promotion, flash_deal, new_arrival, etc.
+      queryClient.setQueryData<number>(["notifications", "unread-count"], (prev) => (prev ?? 0) + 1);
+  }
+}
+
+function navigateForNotification(data: NotificationData): void {
+  switch (data.type) {
+    case "support_message":
+    case "new_support_message":
+      router.push("/support" as any);
+      break;
+    case "new_message":
+      if (data.conversation_id) {
+        router.push({
+          pathname: "/chat/[id]",
+          params: { id: data.conversation_id, role: data.role ?? "client", title: data.store_name ?? "Chat" },
+        } as any);
+      }
+      break;
+    case "order_status":
+      if (data.order_id) {
+        router.push(`/orders/${data.order_id}` as any);
+      }
+      break;
+    case "new_order":
+      router.push("/seller/orders" as any);
+      break;
+    case "promotion":
+    case "flash_deal":
+    case "new_arrival":
+      router.push("/(tabs)/home" as any);
+      break;
+    default:
+      router.push("/notifications" as any);
+  }
+}
+
+function getNotificationIcon(type: string | undefined): React.ReactNode {
+  const color = type === "account_banned" ? "#FF4D4F" : "#0A0A0A";
+  switch (type) {
+    case "order_status":
+      return React.createElement(HugeiconsIcon, { icon: DeliveryTruck01Icon, size: 20, color });
+    case "new_order":
+      return React.createElement(HugeiconsIcon, { icon: Package01Icon, size: 20, color });
+    case "promotion":
+    case "flash_deal":
+      return React.createElement(HugeiconsIcon, { icon: SaleTag01Icon, size: 20, color: "#FF4D4F" });
+    case "new_arrival":
+      return React.createElement(HugeiconsIcon, { icon: GiftIcon, size: 20, color });
+    case "new_message":
+      return React.createElement(HugeiconsIcon, { icon: Message01Icon, size: 20, color });
+    case "support_message":
+    case "new_support_message":
+      return React.createElement(HugeiconsIcon, { icon: CustomerSupportIcon, size: 20, color });
+    case "account_banned":
+      return React.createElement(HugeiconsIcon, { icon: Alert01Icon, size: 20, color });
+    default:
+      return React.createElement(HugeiconsIcon, { icon: Notification03Icon, size: 20, color });
+  }
+}
 
 const PROJECT_ID =
   (Constants.expoConfig?.extra?.eas?.projectId as string | undefined) ??
@@ -34,20 +131,15 @@ if (Platform.OS === "android") {
   void Notifications.setNotificationChannelAsync(NOTIFICATION_CHANNEL_ID, CHANNEL_CONFIG);
 }
 
-// Suppress OS banners in foreground — we show in-app toasts instead.
-// Background notifications always use the OS banner regardless of this setting.
+// Suppress all system UI for foreground notifications — the addNotificationReceivedListener
+// below handles in-app toasts and cache refreshes instead.
 Notifications.setNotificationHandler({
-  handleNotification: async (notification) => {
-    const isLoggedIn = !!useAuthStore.getState().user;
-    const data = notification.request.content.data as { type?: string };
-    const allowed = isNotifTypeAllowed(data?.type);
-    return {
-      shouldPlaySound: isLoggedIn && allowed,
-      shouldSetBadge: isLoggedIn && allowed,
-      shouldShowBanner: false,
-      shouldShowList: isLoggedIn && allowed,
-    };
-  },
+  handleNotification: async () => ({
+    shouldPlaySound: false,
+    shouldSetBadge: false,
+    shouldShowBanner: false,
+    shouldShowList: false,
+  }),
 });
 
 // ─── Exported so _layout can call it on every app open ───────────────────────
@@ -127,7 +219,7 @@ export function setupNotificationListeners(): () => void {
     if (!user) { return; }
 
     const content = notification.request.content;
-    const data = content.data as { type?: string };
+    const data = content.data as NotificationData;
 
     if (data?.type === "account_banned") {
       useAuthStore.getState().setUser({ ...user, status: "suspended" });
@@ -135,25 +227,32 @@ export function setupNotificationListeners(): () => void {
       return;
     }
 
+    // Refresh support messages immediately when a push arrives — acts as Pusher fallback
+    if (data?.type === "support_message") {
+      void queryClient.invalidateQueries({ queryKey: ["support", "messages"] });
+    }
+
     if (!isNotifTypeAllowed(data?.type)) { return; }
+
+    updateBadgesForNotification(data);
 
     // Show in-app toast instead of OS banner
     const title = content.title ?? "";
     const body = content.body ?? "";
     if (title || body) {
-      toast(title || body, { description: title ? body : undefined });
+      const toastId = toast(title || body, {
+        description: title ? body : undefined,
+        icon: getNotificationIcon(data?.type),
+        onPress: () => {
+          toast.dismiss(toastId);
+          navigateForNotification(data);
+        },
+      });
     }
   });
 
   const responseSub = Notifications.addNotificationResponseReceivedListener((response) => {
-    const data = response.notification.request.content.data as {
-      type?: string;
-      order_id?: number;
-      conversation_id?: number;
-      role?: string;
-      store_name?: string;
-    };
-
+    const data = response.notification.request.content.data as NotificationData;
     const user = useAuthStore.getState().user;
 
     if (data?.type === "account_banned") {
@@ -164,25 +263,9 @@ export function setupNotificationListeners(): () => void {
       return;
     }
 
-    // Ignore taps on notifications when logged out
     if (!user) { return; }
 
-    if (data?.type === "support_message") {
-      router.push("/support" as any);
-    } else if (data?.type === "new_message" && data?.conversation_id) {
-      router.push({
-        pathname: "/chat/[id]",
-        params: {
-          id: data.conversation_id,
-          role: data.role ?? "client",
-          title: data.store_name ?? "Chat",
-        },
-      } as any);
-    } else if (data?.type === "order_status" && data?.order_id) {
-      router.push(`/orders/${data.order_id}` as any);
-    } else if (data?.type === "new_order") {
-      router.push("/seller/orders" as any);
-    }
+    navigateForNotification(data);
   });
 
   return () => {

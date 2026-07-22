@@ -11,7 +11,7 @@ import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
 import { useHome } from "@/lib/queries/home";
 import { useAuthStore } from "@/stores/auth-store";
-import { useUnreadCount } from "@/lib/queries/notifications";
+import { useUnreadCount, useSupportUnreadCount } from "@/lib/queries/notifications";
 import { useSellerStore } from "@/lib/queries/seller";
 import { BannerCarousel } from "@/components/home/banner-carousel";
 import { CategoryCircle } from "@/components/home/category-circle";
@@ -29,6 +29,8 @@ export default function Home() {
   const user = useAuthStore((s) => s.user);
   const { data, isLoading, isRefetching, refetch } = useHome();
   const { data: unreadCount = 0 } = useUnreadCount();
+  const { data: supportUnreadCount = 0 } = useSupportUnreadCount();
+  const bellBadge = unreadCount + supportUnreadCount;
   const [storeModalDismissed, setStoreModalDismissed] = useState(false);
   const { data: sellerStore, isLoading: isLoadingStore } = useSellerStore(user?.role === "seller");
   const showStoreModal =
@@ -78,13 +80,13 @@ export default function Home() {
             className="h-10 w-10 items-center justify-center rounded-full bg-white dark:bg-bg-card"
           >
             <HugeiconsIcon icon={Notification03Icon} size={22} color={c.brand} />
-            {unreadCount > 0 ? (
+            {bellBadge > 0 ? (
               <View
                 className="absolute right-0.5 top-0.5 h-4 min-w-[16px] items-center justify-center rounded-full px-0.5"
                 style={{ backgroundColor: "#FF4D4F" }}
               >
                 <Text variant="bold" style={{ color: "#fff", fontSize: 8 }}>
-                  {unreadCount > 9 ? "9+" : unreadCount}
+                  {bellBadge > 9 ? "9+" : bellBadge}
                 </Text>
               </View>
             ) : null}

@@ -1,12 +1,14 @@
-import { View, ScrollView, Pressable, Alert } from "react-native";
+import { View, ScrollView, Pressable, Alert, Modal, TouchableOpacity } from "react-native";
 import { Image } from "expo-image";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useMutation } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
+import { useState } from "react";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { HugeiconsIcon } from "@hugeicons/react-native";
 import {
+  Tick02Icon,
   PackageIcon,
   Location01Icon,
   FavouriteIcon,
@@ -38,6 +40,77 @@ import { useSellerStore } from "@/lib/queries/seller";
 import { api } from "@/lib/api";
 import type { ThemeMode } from "@/stores/theme-store";
 import { resolveAvatar } from "@/lib/avatar";
+
+interface ThemePickerModalProps {
+  visible: boolean;
+  options: { mode: ThemeMode; dot: string; label: string }[];
+  current: ThemeMode;
+  title: string;
+  onSelect: (mode: ThemeMode) => void;
+  onClose: () => void;
+  c: ReturnType<typeof useThemeColors>;
+}
+
+function ThemePickerModal({ visible, options, current, title, onSelect, onClose, c }: ThemePickerModalProps) {
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      onRequestClose={onClose}
+    >
+      <TouchableOpacity
+        style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.4)", justifyContent: "flex-end" }}
+        activeOpacity={1}
+        onPress={onClose}
+      >
+        <TouchableOpacity activeOpacity={1} onPress={() => {}}>
+          <View
+            style={{
+              backgroundColor: c.card,
+              borderTopLeftRadius: 20,
+              borderTopRightRadius: 20,
+              paddingHorizontal: 20,
+              paddingTop: 16,
+              paddingBottom: 36,
+            }}
+          >
+            <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: c.border, alignSelf: "center", marginBottom: 16 }} />
+            <Text variant="bold" style={{ fontSize: 16, color: c.brand, marginBottom: 12 }}>
+              {title}
+            </Text>
+            {options.map((opt, i) => (
+              <View key={opt.mode}>
+                {i > 0 && <View style={{ height: 1, backgroundColor: c.border, marginVertical: 2 }} />}
+                <Pressable
+                  onPress={() => onSelect(opt.mode)}
+                  style={{ flexDirection: "row", alignItems: "center", paddingVertical: 14, gap: 14 }}
+                >
+                  <View
+                    style={{
+                      width: 28,
+                      height: 28,
+                      borderRadius: 14,
+                      backgroundColor: opt.dot,
+                      borderWidth: 1.5,
+                      borderColor: c.border,
+                    }}
+                  />
+                  <Text variant="medium" style={{ flex: 1, fontSize: 15, color: c.brand }}>
+                    {opt.label}
+                  </Text>
+                  {current === opt.mode && (
+                    <HugeiconsIcon icon={Tick02Icon} size={20} color={c.brand} />
+                  )}
+                </Pressable>
+              </View>
+            ))}
+          </View>
+        </TouchableOpacity>
+      </TouchableOpacity>
+    </Modal>
+  );
+}
 
 interface RowProps {
   icon: any;
@@ -101,11 +174,12 @@ export default function Profile() {
   const { data: supportUnreadCount = 0 } = useSupportUnreadCount();
   const { data: sellerStore } = useSellerStore(user?.role === 'seller');
 
+  const [showThemePicker, setShowThemePicker] = useState(false);
+
   const themeLabels: Record<ThemeMode, string> = {
     system: t("profile.themeSystem"),
     light: t("profile.themeLight"),
     dark: t("profile.themeDark"),
-    pink: t("profile.themePink"),
   };
 
   const logoutMutation = useMutation({
@@ -134,39 +208,19 @@ export default function Profile() {
     toast.success(next === "ar" ? "تم تغيير اللغة" : "Language changed");
   };
 
-  const switchTheme = () => {
-    Alert.alert(t("profile.themeTitle"), t("profile.themeChoose"), [
-      {
-        text: t("profile.themeSystem"),
-        onPress: async () => {
-          await setMode("system");
-          setColorScheme("system");
-        },
-      },
-      {
-        text: t("profile.themeLight"),
-        onPress: async () => {
-          await setMode("light");
-          setColorScheme("light");
-        },
-      },
-      {
-        text: t("profile.themeDark"),
-        onPress: async () => {
-          await setMode("dark");
-          setColorScheme("dark");
-        },
-      },
-      {
-        text: t("profile.themePink"),
-        onPress: async () => {
-          await setMode("pink");
-          setColorScheme("light");
-        },
-      },
-      { text: t("common.cancel"), style: "cancel" },
-    ]);
+  const switchTheme = () => setShowThemePicker(true);
+
+  const applyTheme = async (newMode: ThemeMode) => {
+    setShowThemePicker(false);
+    await setMode(newMode);
+    setColorScheme(newMode);
   };
+
+  const themeOptions: { mode: ThemeMode; dot: string; label: string }[] = [
+    { mode: "system", dot: "#888888", label: t("profile.themeSystem") },
+    { mode: "light", dot: "#F5F5F5", label: t("profile.themeLight") },
+    { mode: "dark", dot: "#1A1A1A", label: t("profile.themeDark") },
+  ];
 
   if (isGuest) {
     return (
@@ -223,6 +277,16 @@ export default function Profile() {
             CoreShop v1.10.0
           </Text>
         </ScrollView>
+
+        <ThemePickerModal
+          visible={showThemePicker}
+          options={themeOptions}
+          current={mode}
+          title={t("profile.themeTitle")}
+          onSelect={applyTheme}
+          onClose={() => setShowThemePicker(false)}
+          c={c}
+        />
       </SafeAreaView>
     );
   }
@@ -344,6 +408,16 @@ export default function Profile() {
           CoreShop v1.10.0
         </Text>
       </ScrollView>
+
+      <ThemePickerModal
+        visible={showThemePicker}
+        options={themeOptions}
+        current={mode}
+        title={t("profile.themeTitle")}
+        onSelect={applyTheme}
+        onClose={() => setShowThemePicker(false)}
+        c={c}
+      />
     </SafeAreaView>
   );
 }
