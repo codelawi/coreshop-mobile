@@ -8,7 +8,7 @@ export default {
     name: "CoreShop",
     slug: "coreshop-mobile",
     scheme: "coreshop",
-    version: "1.10.0",
+    version: "1.10.1",
     orientation: "portrait",
     icon: "./assets/logo.png",
     userInterfaceStyle: "automatic",
@@ -28,7 +28,7 @@ export default {
         CFBundleURLTypes: [
           {
             CFBundleURLSchemes: [
-              "com.googleusercontent.apps.626063460740-tpasknjfe5ml4eu3nkevkf3di5ao4htq",
+              "com.googleusercontent.apps.529051789015-h5gvalnbobq9k9nbsncoi9ar69gd1hkm",
             ],
           },
         ],
