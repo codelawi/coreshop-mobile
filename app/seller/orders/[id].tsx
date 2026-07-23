@@ -1,6 +1,7 @@
 import { View, ScrollView, Pressable } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { useTranslation } from "react-i18next";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { Image } from "expo-image";
 import { HugeiconsIcon } from "@hugeicons/react-native";
@@ -19,19 +20,6 @@ import { useSellerOrder, useUpdateSellerOrderStatus } from "@/lib/queries/seller
 import { useThemeColors } from "@/lib/theme";
 import { Spinner } from "@/components/ui/spinner";
 
-const STATUS_LABEL: Record<string, string> = {
-  pending: "Pending",
-  approved: "Approved",
-  preparing: "Preparing",
-  ready_for_pickup: "Ready for Pickup",
-  assigned: "Driver Assigned",
-  out_for_delivery: "Out for Delivery",
-  delivered: "Delivered",
-  completed: "Completed",
-  cancelled: "Cancelled",
-  refunded: "Refunded",
-};
-
 const STATUS_COLOR: Record<string, string> = {
   pending: "#F59E0B",
   approved: "#6366F1",
@@ -45,30 +33,33 @@ const STATUS_COLOR: Record<string, string> = {
   refunded: "#9CA3AF",
 };
 
-// Only transitions the seller can make
-const NEXT_ACTION: Record<string, { status: string; label: string }> = {
-  pending: { status: "approved", label: "Accept Order" },
-  approved: { status: "preparing", label: "Start Preparing" },
-  preparing: { status: "ready_for_pickup", label: "Mark as Ready" },
-};
-
 export default function SellerOrderDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const { t } = useTranslation();
   const c = useThemeColors();
+
+  const getStatusLabel = (status: string) =>
+    t(`seller.orderStatus.${status}`, { defaultValue: status.replace(/_/g, " ") });
+
+  const NEXT_ACTION: Record<string, { status: string; label: string }> = {
+    pending: { status: "approved", label: t("seller.orderDetail.acceptOrder", { defaultValue: "Accept Order" }) },
+    approved: { status: "preparing", label: t("seller.orderDetail.startPreparing", { defaultValue: "Start Preparing" }) },
+    preparing: { status: "ready_for_pickup", label: t("seller.orderDetail.markReady", { defaultValue: "Mark as Ready" }) },
+  };
   const { data: order, isLoading } = useSellerOrder(Number(id));
   const updateStatus = useUpdateSellerOrderStatus();
 
   const action = order ? NEXT_ACTION[order.status] : null;
   const statusColor = order ? (STATUS_COLOR[order.status] ?? "#9CA3AF") : "#9CA3AF";
-  const statusLabel = order ? (STATUS_LABEL[order.status] ?? order.status) : "";
+  const statusLabel = order ? getStatusLabel(order.status) : "";
 
   const handleAction = () => {
     if (!order || !action) return;
     updateStatus.mutate(
       { id: order.id, status: action.status },
       {
-        onSuccess: () => toast.success(`Order marked as ${STATUS_LABEL[action.status]}`),
+        onSuccess: () => toast.success(t("seller.orderDetail.orderUpdated", { defaultValue: "Order updated" })),
         onError: (err: any) =>
           toast.error(err?.response?.data?.message ?? "Failed to update order"),
       }

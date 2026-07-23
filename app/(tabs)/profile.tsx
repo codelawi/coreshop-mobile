@@ -224,7 +224,7 @@ export default function Profile() {
 
   if (isGuest) {
     return (
-      <SafeAreaView className="flex-1 bg-bg-light dark:bg-bg-dark" edges={["top"]}>
+      <SafeAreaView className="flex-1 bg-bg-light dark:bg-bg-dark" edges={['top', 'left', 'right']}>
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }}>
           <View className="px-6 pb-4 pt-4">
             <Text variant="bold" className="text-2xl text-brand dark:text-white">{t("profile.title")}</Text>
@@ -292,7 +292,7 @@ export default function Profile() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-bg-light dark:bg-bg-dark" edges={["top"]}>
+    <SafeAreaView className="flex-1 bg-bg-light dark:bg-bg-dark" edges={['top', 'left', 'right']}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }}>
         <View className="px-6 pb-4 pt-4">
           <Text variant="bold" className="text-2xl text-brand dark:text-white">{t("profile.title")}</Text>

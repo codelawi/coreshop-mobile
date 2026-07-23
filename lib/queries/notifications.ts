@@ -117,6 +117,8 @@ export function useUserChannel(userId: number | undefined) {
               if (event.eventName === "UserNotificationCreated") {
                 qc.invalidateQueries({ queryKey: ["notifications", "unread-count"] });
                 qc.invalidateQueries({ queryKey: ["notifications"] });
+                qc.invalidateQueries({ queryKey: ["seller", "store"] });
+                qc.invalidateQueries({ queryKey: ["seller", "orders"] });
               }
             } catch {}
           },

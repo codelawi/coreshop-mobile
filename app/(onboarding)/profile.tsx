@@ -9,7 +9,6 @@ import { z } from "zod";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 import { HugeiconsIcon } from "@hugeicons/react-native";
 import { UserIcon, ShoppingBag01Icon, Store01Icon, Car01Icon, Tick02Icon } from "@hugeicons/core-free-icons";
-import { toast } from "sonner-native";
 
 import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
@@ -35,7 +34,7 @@ export default function ProfileStep() {
   const router = useRouter();
   const c = useThemeColors();
   const { name: storedName, role: storedRole, setName, setRole } = useOnboardingStore();
-  const [selectedRole, setSelectedRole] = useState<Role | null>(storedRole);
+  const [selectedRole, setSelectedRole] = useState<Role>(storedRole ?? "client");
 
   const { control, handleSubmit, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -43,10 +42,6 @@ export default function ProfileStep() {
   });
 
   const onNext = (data: FormData) => {
-    if (!selectedRole) {
-      toast.error(t("onboarding.profile.pleaseSelectRole"));
-      return;
-    }
     setName(data.name);
     setRole(selectedRole);
     router.push("/(onboarding)/avatar" as any);
@@ -59,7 +54,7 @@ export default function ProfileStep() {
         className="flex-1"
       >
         <View className="flex-1 px-6 pt-4">
-          <ProgressBar current={1} total={4} />
+          <ProgressBar current={1} total={3} />
 
           <ScrollView
             className="mt-8"

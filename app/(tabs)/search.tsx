@@ -174,7 +174,7 @@ export default function Search() {
   const sortLabel = SORTS.find((s) => s.id === sort)?.label ?? t("search.sort");
 
   return (
-    <SafeAreaView className="flex-1 bg-bg-light dark:bg-bg-dark" edges={["top"]}>
+    <SafeAreaView className="flex-1 bg-bg-light dark:bg-bg-dark" edges={['top', 'left', 'right']}>
       <View className="px-6 pt-4 pb-2">
         <Text variant="bold" className="text-2xl text-brand dark:text-white">{t("search.title")}</Text>
       </View>

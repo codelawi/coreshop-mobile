@@ -38,7 +38,7 @@ export default function Home() {
 
   if (isLoading) {
     return (
-      <SafeAreaView className="flex-1 bg-bg-light dark:bg-bg-dark" edges={["top"]}>
+      <SafeAreaView className="flex-1 bg-bg-light dark:bg-bg-dark" edges={['top', 'left', 'right']}>
         <View style={{ paddingHorizontal: 24, paddingTop: 16, gap: 24 }}>
           <Skeleton width="55%" height={20} />
           <Skeleton width="100%" height={160} radius={10} />
@@ -57,7 +57,7 @@ export default function Home() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-bg-light dark:bg-bg-dark" edges={["top"]}>
+    <SafeAreaView className="flex-1 bg-bg-light dark:bg-bg-dark" edges={['top', 'left', 'right']}>
       <Animated.View entering={FadeInDown.duration(400)} className="flex-row items-center gap-3 px-6 pb-3 pt-2">
         <View className="flex-1">
           <Text className="text-xs" style={{ color: c.secondary }}>{t("home.hello")}</Text>

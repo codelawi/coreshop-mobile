@@ -8,7 +8,7 @@ import {
   Switch,
 } from "react-native";
 import { Image } from "expo-image";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useState, useRef } from "react";
 import { useRouter } from "expo-router";
 import { useForm, Controller } from "react-hook-form";
@@ -25,7 +25,6 @@ import {
   Tick01Icon,
   Search01Icon,
 } from "@hugeicons/core-free-icons";
-import { LocationSuccessOverlay } from "@/components/ui/location-success-overlay";
 import MapboxGL from "@rnmapbox/maps";
 
 MapboxGL.setAccessToken(process.env.EXPO_PUBLIC_MAPBOX_TOKEN ?? "");
@@ -115,7 +114,7 @@ export default function SellerSetup() {
   const [city, setCity] = useState(existingStore?.city ?? "");
   const [address, setAddress] = useState(existingStore?.address ?? "");
   const [gpsLoading, setGpsLoading] = useState(false);
-  const [locationSuccess, setLocationSuccess] = useState(false);
+  const { bottom: bottomInset } = useSafeAreaInsets();
   const cameraRef = useRef<MapboxGL.Camera>(null);
 
   // Step 2 — images
@@ -166,8 +165,6 @@ export default function SellerSetup() {
       const [place] = await Location.reverseGeocodeAsync({ latitude, longitude });
       if (place?.city) { setCity(place.city); }
       if (place?.street) { setAddress(place.street); }
-      setLocationSuccess(true);
-      setTimeout(() => setLocationSuccess(false), 1500);
     } catch {
       toast.error(t("seller.setup.couldNotDetectLocation"));
     } finally {
@@ -398,7 +395,7 @@ export default function SellerSetup() {
 
             </ScrollView>
 
-            <View className="px-6 pb-8 pt-4">
+            <View className="px-6 pt-4" style={{ paddingBottom: Math.max(bottomInset, 16) }}>
               <Button
                 label={t("seller.setup.nextLocation")}
                 onPress={handleSubmit(() => setStep(1))}
@@ -495,7 +492,7 @@ export default function SellerSetup() {
                   pointerEvents="none"
                   style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, alignItems: "center", justifyContent: "center" }}
                 >
-                  <View style={{ marginBottom: 28 }}>
+                  <View style={{ transform: [{ translateY: -17 }] }}>
                     <View
                       style={{ width: 24, height: 24, borderRadius: 12, borderWidth: 2, borderColor: "#fff", backgroundColor: "#FF4D4F" }}
                     />
@@ -518,8 +515,6 @@ export default function SellerSetup() {
                   {t("seller.setup.useMyLocation")}
                 </Text>
               </Pressable>
-              <LocationSuccessOverlay visible={locationSuccess} />
-
               <View className="gap-1.5">
                 <Text variant="medium" className="text-sm text-brand dark:text-white">
                   {t("seller.setup.cityLabel")}
@@ -547,7 +542,7 @@ export default function SellerSetup() {
               </View>
             </ScrollView>
 
-            <View className="flex-row gap-3 px-6 pb-8 pt-4">
+            <View className="flex-row gap-3 px-6 pt-4" style={{ paddingBottom: Math.max(bottomInset, 16) }}>
               <Button
                 label={t("common.back")}
                 variant="outline"
@@ -685,7 +680,7 @@ export default function SellerSetup() {
               </View>
             </ScrollView>
 
-            <View className="flex-row gap-3 px-6 pb-8 pt-4">
+            <View className="flex-row gap-3 px-6 pt-4" style={{ paddingBottom: Math.max(bottomInset, 16) }}>
               <Button
                 label={t("common.back")}
                 variant="outline"
@@ -769,7 +764,7 @@ export default function SellerSetup() {
               })}
             </ScrollView>
 
-            <View className="flex-row gap-3 px-6 pb-8 pt-4">
+            <View className="flex-row gap-3 px-6 pt-4" style={{ paddingBottom: Math.max(bottomInset, 16) }}>
               <Button
                 label={t("common.back")}
                 variant="outline"

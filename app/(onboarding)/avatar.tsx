@@ -91,13 +91,13 @@ export default function AvatarStep() {
 
   const onNext = () => {
     setAvatar(uploadedUrl ?? defaultAvatarUrl);
-    router.push("/(onboarding)/location" as any);
+    router.push("/(onboarding)/permissions" as any);
   };
 
   return (
     <SafeAreaView className="flex-1 bg-bg-light dark:bg-bg-dark">
       <View className="flex-1 px-6 pt-4">
-        <ProgressBar current={2} total={4} />
+        <ProgressBar current={2} total={3} />
 
         <Animated.View entering={FadeInDown.duration(500).springify()} className="mt-8">
           <Text variant="bold" className="text-3xl text-brand dark:text-white">
@@ -167,11 +167,6 @@ export default function AvatarStep() {
             size="lg"
             disabled={uploading}
           />
-          <Pressable onPress={onNext} disabled={uploading} className="items-center py-2">
-            <Text variant="medium" className="text-sm" style={{ color: c.muted }}>
-              {t("common.skip")}
-            </Text>
-          </Pressable>
         </Animated.View>
       </View>
     </SafeAreaView>

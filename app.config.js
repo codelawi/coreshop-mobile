@@ -27,7 +27,7 @@ export default {
         CFBundleURLTypes: [
           {
             CFBundleURLSchemes: [
-              "com.googleusercontent.apps.529051789015-h5gvalnbobq9k9nbsncoi9ar69gd1hkm",
+              "com.googleusercontent.apps.855662469976-scounhlq4d7famrrsoqna094qtjta48j",
             ],
           },
         ],

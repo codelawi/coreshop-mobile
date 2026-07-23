@@ -41,7 +41,7 @@ export default function Cart() {
 
   if (isGuest) {
     return (
-      <SafeAreaView className="flex-1 bg-bg-light dark:bg-bg-dark" edges={["top"]}>
+      <SafeAreaView className="flex-1 bg-bg-light dark:bg-bg-dark" edges={['top', 'left', 'right']}>
         <View className="px-6 pt-4">
           <Text variant="bold" className="text-2xl text-brand dark:text-white">{t("cart.title")}</Text>
         </View>
@@ -80,7 +80,7 @@ export default function Cart() {
 
   if (items.length === 0) {
     return (
-      <SafeAreaView className="flex-1 bg-bg-light dark:bg-bg-dark" edges={["top"]}>
+      <SafeAreaView className="flex-1 bg-bg-light dark:bg-bg-dark" edges={['top', 'left', 'right']}>
         <View className="px-6 pt-4">
           <Text variant="bold" className="text-2xl text-brand dark:text-white">{t("cart.title")}</Text>
         </View>
@@ -109,7 +109,7 @@ export default function Cart() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-bg-light dark:bg-bg-dark" edges={["top"]}>
+    <SafeAreaView className="flex-1 bg-bg-light dark:bg-bg-dark" edges={['top', 'left', 'right']}>
       <View className="flex-row items-center justify-between px-6 pb-2 pt-4">
         <View>
           <Text variant="bold" className="text-2xl text-brand dark:text-white">{t("cart.title")}</Text>

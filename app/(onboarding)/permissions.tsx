@@ -1,6 +1,6 @@
 import { View, Pressable } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
@@ -77,6 +77,19 @@ export default function PermissionsStep() {
   const onboarding = useOnboardingStore();
   const setUser = useAuthStore((s) => s.setUser);
 
+  useEffect(() => {
+    (async () => {
+      const notifStatus = await Notifications.getPermissionsAsync();
+      if (notifStatus.status === "granted") {
+        setNotif(true);
+      }
+      const mediaStatus = await ImagePicker.getMediaLibraryPermissionsAsync();
+      if (mediaStatus.status === "granted") {
+        setMedia(true);
+      }
+    })();
+  }, []);
+
   const reqNotif = async () => {
     if (isExpoGo) {
       setNotif(true);
@@ -127,7 +140,7 @@ export default function PermissionsStep() {
   return (
     <SafeAreaView className="flex-1 bg-bg-light dark:bg-bg-dark">
       <View className="flex-1 px-6 pt-4">
-        <ProgressBar current={4} total={4} />
+        <ProgressBar current={3} total={3} />
 
         <Animated.View entering={FadeInDown.duration(500).springify()} className="mt-8">
           <Text variant="bold" className="text-3xl text-brand dark:text-white">
@@ -168,16 +181,9 @@ export default function PermissionsStep() {
             label={t("onboarding.finish")}
             onPress={() => finishMutation.mutate()}
             loading={finishMutation.isPending}
+            disabled={!notif || !media || finishMutation.isPending}
             fullWidth
             size="lg"
-          />
-          <Button
-            label={t("common.skip")}
-            onPress={() => finishMutation.mutate()}
-            variant="ghost"
-            disabled={finishMutation.isPending}
-            fullWidth
-            size="md"
           />
         </Animated.View>
       </View>
