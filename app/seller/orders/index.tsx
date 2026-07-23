@@ -1,7 +1,7 @@
 import { View, ScrollView, Pressable, RefreshControl } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useState } from "react";
-import { useRouter } from "expo-router";
+import { useState, useCallback } from "react";
+import { useRouter, useFocusEffect } from "expo-router";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { HugeiconsIcon } from "@hugeicons/react-native";
 import {
@@ -15,6 +15,7 @@ import { useTranslation } from "react-i18next";
 import { Text } from "@/components/ui/text";
 import { Spinner } from "@/components/ui/spinner";
 import { useSellerOrders } from "@/lib/queries/seller";
+import { useSellerBadgeStore } from "@/stores/seller-badge-store";
 import { useThemeColors } from "@/lib/theme";
 import { SkeletonOrderRow } from "@/components/ui/skeleton";
 import type { SellerOrder } from "@/lib/queries/seller";
@@ -88,6 +89,11 @@ export default function SellerOrders() {
   const c = useThemeColors();
   const { t } = useTranslation();
   const [activeFilter, setActiveFilter] = useState<FilterKey>("all");
+
+  useFocusEffect(useCallback(() => {
+    useSellerBadgeStore.getState().reset();
+  }, []));
+
   const { data: orders, isLoading, isRefetching, refetch } = useSellerOrders(
     activeFilter === "all" ? undefined : activeFilter
   );

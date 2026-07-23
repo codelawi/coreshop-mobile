@@ -33,7 +33,10 @@
     "verificationEmailSent": "Verification email sent",
     "couldNotCheckVerification": "Could not check verification status",
     "browseAsGuest": "Browse as guest",
-    "signInRequired": "Please sign in to continue"
+    "signInRequired": "Please sign in to continue",
+    "savedAccounts": "Saved accounts",
+    "useDifferentAccount": "Use a different account",
+    "sessionExpired": "Session expired. Please sign in again."
   },
   "common": {
     "continue": "Continue",
@@ -325,6 +328,26 @@
       "cancelled": "Cancelled",
       "refunded": "Refunded"
     },
+    "orderDetail": {
+      "title": "Order #{{id}}",
+      "items": "Items ({{count}})",
+      "qty": "Qty: {{qty}} · JOD {{price}} each",
+      "payment": "Payment",
+      "subtotal": "Subtotal",
+      "discount": "Discount",
+      "deliveryFee": "Delivery fee",
+      "total": "Total",
+      "paymentMethod": "Payment method",
+      "cashOnDelivery": "Cash on Delivery",
+      "noteFromCustomer": "Note from customer",
+      "chatWithCustomer": "Chat with Customer",
+      "notFound": "Order not found",
+      "orderUpdated": "Order updated",
+      "failedToUpdate": "Failed to update order",
+      "acceptOrder": "Accept Order",
+      "startPreparing": "Start Preparing",
+      "markReady": "Mark as Ready"
+    },
     "products": {
       "title": "My Products",
       "noProducts": "No products yet",
@@ -462,6 +485,34 @@
         "saturday": "Saturday",
         "sunday": "Sunday"
       }
+    },
+    "analytics": {
+      "title": "Analytics",
+      "totalRevenue": "Total Revenue",
+      "allTime": "All time",
+      "thisMonth": "This Month",
+      "vsLastMonth": "{{pct}}% vs last month",
+      "totalOrders": "Total Orders",
+      "pendingOrders": "{{count}} pending",
+      "avgOrderValue": "Avg Order Value",
+      "completedOrders": "{{count}} completed",
+      "last14Days": "Revenue — Last 14 Days",
+      "noOrdersYet": "No completed orders yet",
+      "topProducts": "Top Products",
+      "noSalesData": "No sales data yet",
+      "unitsSold": "{{count}} sold"
+    },
+    "payouts": {
+      "title": "Payouts",
+      "availableBalance": "Available balance",
+      "grossSales": "Gross sales",
+      "platformFee": "Platform fee ({{pct}}%)",
+      "withdrawComingSoon": "Withdraw — Coming Soon",
+      "bankComingSoonTitle": "Bank payouts coming soon",
+      "bankComingSoonDesc": "We're working on direct bank transfers. Once live, you'll be able to withdraw your earnings to any Jordanian bank account or CliQ.",
+      "payoutHistory": "Payout History",
+      "noPayouts": "No payouts yet",
+      "payoutsWillAppear": "Your payout history will appear here"
     }
   },
   "feedback": {

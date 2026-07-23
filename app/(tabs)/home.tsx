@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { useHome } from "@/lib/queries/home";
 import { useAuthStore } from "@/stores/auth-store";
 import { useUnreadCount, useSupportUnreadCount } from "@/lib/queries/notifications";
+import { useSellerBadgeStore } from "@/stores/seller-badge-store";
 import { useSellerStore } from "@/lib/queries/seller";
 import { BannerCarousel } from "@/components/home/banner-carousel";
 import { CategoryCircle } from "@/components/home/category-circle";
@@ -33,6 +34,8 @@ export default function Home() {
   const bellBadge = unreadCount + supportUnreadCount;
   const [storeModalDismissed, setStoreModalDismissed] = useState(false);
   const { data: sellerStore, isLoading: isLoadingStore } = useSellerStore(user?.role === "seller");
+  const unseenOrderCount = useSellerBadgeStore((s) => s.unseenOrderCount);
+  const storeBadge = unseenOrderCount > 0 ? unseenOrderCount : (sellerStore?.pending_orders_count ?? 0);
   const showStoreModal =
     user?.role === "seller" && !isLoadingStore && sellerStore === null && !storeModalDismissed;
 
@@ -99,13 +102,13 @@ export default function Home() {
             className="h-10 w-10 items-center justify-center rounded-full bg-white dark:bg-bg-card"
           >
             <HugeiconsIcon icon={Store01Icon} size={22} color={c.brand} />
-            {(sellerStore?.pending_orders_count ?? 0) > 0 ? (
+            {storeBadge > 0 ? (
               <View
                 className="absolute right-0.5 top-0.5 h-4 min-w-[16px] items-center justify-center rounded-full px-0.5"
                 style={{ backgroundColor: "#FF4D4F" }}
               >
                 <Text variant="bold" style={{ color: "#fff", fontSize: 8 }}>
-                  {(sellerStore?.pending_orders_count ?? 0) > 9 ? "9+" : sellerStore?.pending_orders_count}
+                  {storeBadge > 9 ? "9+" : storeBadge}
                 </Text>
               </View>
             ) : null}

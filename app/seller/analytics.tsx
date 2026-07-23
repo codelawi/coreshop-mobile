@@ -1,6 +1,7 @@
 import { View, ScrollView, Pressable, RefreshControl } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
+import { useTranslation } from "react-i18next";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { Image } from "expo-image";
 import { HugeiconsIcon } from "@hugeicons/react-native";
@@ -55,8 +56,9 @@ function StatCard({
 
 function RevenueBar({ point, maxRevenue }: { point: { date: string; revenue: number; orders: number }; maxRevenue: number }) {
   const c = useThemeColors();
+  const { i18n } = useTranslation();
   const heightPct = maxRevenue > 0 ? (point.revenue / maxRevenue) * 100 : 0;
-  const day = new Date(point.date).toLocaleDateString("en", { weekday: "short" }).slice(0, 2);
+  const day = new Date(point.date).toLocaleDateString(i18n.language, { weekday: "short" }).slice(0, 2);
 
   return (
     <View className="flex-1 items-center gap-1">
@@ -76,6 +78,7 @@ function RevenueBar({ point, maxRevenue }: { point: { date: string; revenue: num
 
 export default function SellerAnalytics() {
   const router = useRouter();
+  const { t, i18n } = useTranslation();
   const c = useThemeColors();
   const { data: overview, isLoading: overviewLoading, isRefetching: overviewRefetching, refetch: refetchOverview } = useSellerAnalyticsOverview();
   const { data: revenue, isLoading: revenueLoading, isRefetching: revenueRefetching, refetch: refetchRevenue } = useSellerRevenue();
@@ -107,7 +110,7 @@ export default function SellerAnalytics() {
         <Pressable onPress={() => router.back()}>
           <HugeiconsIcon icon={ArrowLeft01Icon} size={24} color={c.brand} />
         </Pressable>
-        <Text variant="bold" className="flex-1 text-xl text-brand dark:text-white">Analytics</Text>
+        <Text variant="bold" className="flex-1 text-xl text-brand dark:text-white">{t("seller.analytics.title")}</Text>
       </View>
 
       <ScrollView
@@ -131,18 +134,18 @@ export default function SellerAnalytics() {
         {/* Top stats */}
         <Animated.View entering={FadeInDown.duration(300)} className="flex-row gap-3">
           <StatCard
-            label="Total Revenue"
+            label={t("seller.analytics.totalRevenue")}
             value={`JOD ${(overview?.total_revenue ?? 0).toFixed(2)}`}
-            sub="all time"
+            sub={t("seller.analytics.allTime")}
             icon={MoneyReceive02Icon}
             color="#22C55E"
           />
           <StatCard
-            label="This Month"
+            label={t("seller.analytics.thisMonth")}
             value={`JOD ${(overview?.this_month_revenue ?? 0).toFixed(2)}`}
             sub={
               monthGrowth !== null
-                ? `${Number(monthGrowth) >= 0 ? "+" : ""}${monthGrowth}% vs last month`
+                ? t("seller.analytics.vsLastMonth", { pct: `${Number(monthGrowth) >= 0 ? "+" : ""}${monthGrowth}` })
                 : undefined
             }
             icon={ArrowUp01Icon}
@@ -152,16 +155,16 @@ export default function SellerAnalytics() {
 
         <Animated.View entering={FadeInDown.duration(300).delay(60)} className="flex-row gap-3">
           <StatCard
-            label="Total Orders"
+            label={t("seller.analytics.totalOrders")}
             value={String(overview?.total_orders ?? 0)}
-            sub={`${overview?.pending_orders ?? 0} pending`}
+            sub={t("seller.analytics.pendingOrders", { count: overview?.pending_orders ?? 0 })}
             icon={ShoppingCart01Icon}
             color="#F59E0B"
           />
           <StatCard
-            label="Avg Order Value"
+            label={t("seller.analytics.avgOrderValue")}
             value={`JOD ${(overview?.avg_order_value ?? 0).toFixed(2)}`}
-            sub={`${overview?.completed_orders ?? 0} completed`}
+            sub={t("seller.analytics.completedOrders", { count: overview?.completed_orders ?? 0 })}
             icon={ChartLineData02Icon}
             color="#0EA5E9"
           />
@@ -169,12 +172,12 @@ export default function SellerAnalytics() {
 
         {/* Revenue chart */}
         <Animated.View entering={FadeInDown.duration(300).delay(120)} className="rounded-xl bg-white dark:bg-bg-card p-4">
-          <Text variant="semibold" className="mb-4 text-sm text-brand dark:text-white">Revenue — Last 14 Days</Text>
+          <Text variant="semibold" className="mb-4 text-sm text-brand dark:text-white">{t("seller.analytics.last14Days")}</Text>
 
           {revenueSlice.every((p) => p.revenue === 0) ? (
             <View className="items-center py-6">
               <Text className="text-sm" style={{ color: c.muted }}>
-                No completed orders yet
+                {t("seller.analytics.noOrdersYet")}
               </Text>
             </View>
           ) : (
@@ -188,12 +191,12 @@ export default function SellerAnalytics() {
           <View className="mt-3 flex-row justify-between">
             <Text style={{ color: c.muted, fontSize: 10 }}>
               {revenueSlice[0]?.date
-                ? new Date(revenueSlice[0].date).toLocaleDateString("en", { month: "short", day: "numeric" })
+                ? new Date(revenueSlice[0].date).toLocaleDateString(i18n.language, { month: "short", day: "numeric" })
                 : ""}
             </Text>
             <Text style={{ color: c.muted, fontSize: 10 }}>
               {revenueSlice[revenueSlice.length - 1]?.date
-                ? new Date(revenueSlice[revenueSlice.length - 1].date).toLocaleDateString("en", { month: "short", day: "numeric" })
+                ? new Date(revenueSlice[revenueSlice.length - 1].date).toLocaleDateString(i18n.language, { month: "short", day: "numeric" })
                 : ""}
             </Text>
           </View>
@@ -201,11 +204,11 @@ export default function SellerAnalytics() {
 
         {/* Top products */}
         <Animated.View entering={FadeInDown.duration(300).delay(180)} className="rounded-xl bg-white dark:bg-bg-card p-4">
-          <Text variant="semibold" className="mb-3 text-sm text-brand dark:text-white">Top Products</Text>
+          <Text variant="semibold" className="mb-3 text-sm text-brand dark:text-white">{t("seller.analytics.topProducts")}</Text>
 
           {!topProducts?.length ? (
             <View className="items-center py-6">
-              <Text className="text-sm" style={{ color: c.muted }}>No sales data yet</Text>
+              <Text className="text-sm" style={{ color: c.muted }}>{t("seller.analytics.noSalesData")}</Text>
             </View>
           ) : (
             <View className="gap-3">
@@ -232,7 +235,7 @@ export default function SellerAnalytics() {
                       {product.name}
                     </Text>
                     <Text className="text-xs" style={{ color: c.secondary }}>
-                      {product.units_sold} sold
+                      {t("seller.analytics.unitsSold", { count: product.units_sold })}
                     </Text>
                   </View>
                   <Text variant="semibold" className="text-sm text-brand dark:text-white">

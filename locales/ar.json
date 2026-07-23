@@ -33,7 +33,10 @@
     "verificationEmailSent": "تم إرسال بريد التحقق",
     "couldNotCheckVerification": "تعذّر التحقق من حالة البريد الإلكتروني",
     "browseAsGuest": "تصفح كضيف",
-    "signInRequired": "يرجى تسجيل الدخول للمتابعة"
+    "signInRequired": "يرجى تسجيل الدخول للمتابعة",
+    "savedAccounts": "الحسابات المحفوظة",
+    "useDifferentAccount": "استخدام حساب آخر",
+    "sessionExpired": "انتهت صلاحية الجلسة. يرجى تسجيل الدخول مجدداً."
   },
   "common": {
     "continue": "متابعة",
@@ -325,6 +328,26 @@
       "cancelled": "ملغي",
       "refunded": "مسترد"
     },
+    "orderDetail": {
+      "title": "طلب #{{id}}",
+      "items": "المنتجات ({{count}})",
+      "qty": "الكمية: {{qty}} · JOD {{price}} للقطعة",
+      "payment": "الدفع",
+      "subtotal": "المجموع الفرعي",
+      "discount": "الخصم",
+      "deliveryFee": "رسوم التوصيل",
+      "total": "الإجمالي",
+      "paymentMethod": "طريقة الدفع",
+      "cashOnDelivery": "الدفع عند الاستلام",
+      "noteFromCustomer": "ملاحظة من العميل",
+      "chatWithCustomer": "محادثة مع العميل",
+      "notFound": "الطلب غير موجود",
+      "orderUpdated": "تم تحديث الطلب",
+      "failedToUpdate": "فشل تحديث الطلب",
+      "acceptOrder": "قبول الطلب",
+      "startPreparing": "بدء التحضير",
+      "markReady": "وضع علامة جاهز"
+    },
     "products": {
       "title": "منتجاتي",
       "noProducts": "لا توجد منتجات بعد",
@@ -462,6 +485,34 @@
         "saturday": "السبت",
         "sunday": "الأحد"
       }
+    },
+    "analytics": {
+      "title": "التحليلات",
+      "totalRevenue": "إجمالي الإيرادات",
+      "allTime": "منذ البداية",
+      "thisMonth": "هذا الشهر",
+      "vsLastMonth": "{{pct}}% مقارنةً بالشهر الماضي",
+      "totalOrders": "إجمالي الطلبات",
+      "pendingOrders": "{{count}} قيد الانتظار",
+      "avgOrderValue": "متوسط قيمة الطلب",
+      "completedOrders": "{{count}} مكتمل",
+      "last14Days": "الإيرادات — آخر 14 يوماً",
+      "noOrdersYet": "لا توجد طلبات مكتملة بعد",
+      "topProducts": "أفضل المنتجات",
+      "noSalesData": "لا توجد بيانات مبيعات بعد",
+      "unitsSold": "{{count}} مباع"
+    },
+    "payouts": {
+      "title": "المدفوعات",
+      "availableBalance": "الرصيد المتاح",
+      "grossSales": "إجمالي المبيعات",
+      "platformFee": "رسوم المنصة ({{pct}}%)",
+      "withdrawComingSoon": "السحب — قريباً",
+      "bankComingSoonTitle": "التحويلات البنكية قريباً",
+      "bankComingSoonDesc": "نعمل على توفير تحويلات بنكية مباشرة. بمجرد الإطلاق، ستتمكن من سحب أرباحك إلى أي حساب بنكي أردني أو عبر CliQ.",
+      "payoutHistory": "سجل المدفوعات",
+      "noPayouts": "لا توجد مدفوعات بعد",
+      "payoutsWillAppear": "سيظهر سجل مدفوعاتك هنا"
     }
   },
   "feedback": {

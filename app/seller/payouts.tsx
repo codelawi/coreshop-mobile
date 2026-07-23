@@ -1,6 +1,7 @@
 import { View, ScrollView, Pressable } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
+import { useTranslation } from "react-i18next";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 import { HugeiconsIcon } from "@hugeicons/react-native";
 import {
@@ -18,6 +19,7 @@ import { useThemeColors } from "@/lib/theme";
 
 export default function SellerPayouts() {
   const router = useRouter();
+  const { t } = useTranslation();
   const c = useThemeColors();
   const { data: overview } = useSellerAnalyticsOverview();
   const { data: feeSettings } = useFeeSettings();
@@ -33,7 +35,7 @@ export default function SellerPayouts() {
         <Pressable onPress={() => router.back()}>
           <HugeiconsIcon icon={ArrowLeft01Icon} size={24} color={c.brand} />
         </Pressable>
-        <Text variant="bold" className="flex-1 text-xl text-brand dark:text-white">Payouts</Text>
+        <Text variant="bold" className="flex-1 text-xl text-brand dark:text-white">{t("seller.payouts.title")}</Text>
       </View>
 
       <ScrollView
@@ -45,19 +47,19 @@ export default function SellerPayouts() {
           entering={FadeInDown.duration(400)}
           className="rounded-2xl bg-brand p-6"
         >
-          <Text className="mb-1 text-xs" style={{ color: "#9CA3AF" }}>Available balance</Text>
+          <Text className="mb-1 text-xs" style={{ color: "#9CA3AF" }}>{t("seller.payouts.availableBalance")}</Text>
           <Text variant="bold" style={{ color: "#fff", fontSize: 36 }}>
             JOD {netEarnings.toFixed(2)}
           </Text>
           <View className="mt-4 flex-row gap-4">
             <View className="flex-1">
-              <Text style={{ color: "#9CA3AF", fontSize: 11 }}>Gross sales</Text>
+              <Text style={{ color: "#9CA3AF", fontSize: 11 }}>{t("seller.payouts.grossSales")}</Text>
               <Text variant="semibold" style={{ color: "#fff", fontSize: 14 }}>
                 JOD {totalRevenue.toFixed(2)}
               </Text>
             </View>
             <View className="flex-1">
-              <Text style={{ color: "#9CA3AF", fontSize: 11 }}>Platform fee ({platformFeePercent}%)</Text>
+              <Text style={{ color: "#9CA3AF", fontSize: 11 }}>{t("seller.payouts.platformFee", { pct: platformFeePercent })}</Text>
               <Text variant="semibold" style={{ color: "#fff", fontSize: 14 }}>
                 - JOD {platformFee.toFixed(2)}
               </Text>
@@ -73,7 +75,7 @@ export default function SellerPayouts() {
             disabled
           >
             <HugeiconsIcon icon={LockIcon} size={16} color={c.muted} />
-            <Text variant="semibold" style={{ color: c.muted }}>Withdraw — Coming Soon</Text>
+            <Text variant="semibold" style={{ color: c.muted }}>{t("seller.payouts.withdrawComingSoon")}</Text>
           </Pressable>
         </Animated.View>
 
@@ -91,10 +93,9 @@ export default function SellerPayouts() {
               <HugeiconsIcon icon={BankIcon} size={18} color="#F59E0B" />
             </View>
             <View className="flex-1">
-              <Text variant="semibold" className="text-sm text-brand dark:text-white">Bank payouts coming soon</Text>
+              <Text variant="semibold" className="text-sm text-brand dark:text-white">{t("seller.payouts.bankComingSoonTitle")}</Text>
               <Text className="mt-1 text-xs leading-4" style={{ color: c.secondary }}>
-                We're working on direct bank transfers. Once live, you'll be able to withdraw
-                your earnings to any Jordanian bank account or CliQ.
+                {t("seller.payouts.bankComingSoonDesc")}
               </Text>
             </View>
           </View>
@@ -105,7 +106,7 @@ export default function SellerPayouts() {
           entering={FadeInUp.duration(400).delay(180)}
           className="rounded-xl bg-white dark:bg-bg-card p-4"
         >
-          <Text variant="semibold" className="mb-4 text-sm text-brand dark:text-white">Payout History</Text>
+          <Text variant="semibold" className="mb-4 text-sm text-brand dark:text-white">{t("seller.payouts.payoutHistory")}</Text>
           <View className="items-center py-8 gap-2">
             <View
               className="h-14 w-14 items-center justify-center rounded-full"
@@ -113,9 +114,9 @@ export default function SellerPayouts() {
             >
               <HugeiconsIcon icon={Invoice03Icon} size={28} color={c.border} />
             </View>
-            <Text className="mt-1 text-sm" style={{ color: c.muted }}>No payouts yet</Text>
+            <Text className="mt-1 text-sm" style={{ color: c.muted }}>{t("seller.payouts.noPayouts")}</Text>
             <Text className="text-xs text-center" style={{ color: c.border }}>
-              Your payout history will appear here
+              {t("seller.payouts.payoutsWillAppear")}
             </Text>
           </View>
         </Animated.View>

@@ -1,14 +1,9 @@
-const androidClientId = process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID ?? "";
-const androidOAuthScheme = androidClientId
-  ? `com.googleusercontent.apps.${androidClientId.replace(".apps.googleusercontent.com", "")}`
-  : "com.googleusercontent.apps.626063460740-pqhbpvld97iqbffte6lh9v4d0j1d6a6u";
-
 export default {
   expo: {
     name: "CoreShop",
     slug: "coreshop-mobile",
     scheme: "coreshop",
-    version: "1.10.1",
+    version: "1.11.5",
     orientation: "portrait",
     icon: "./assets/logo.png",
     userInterfaceStyle: "automatic",
@@ -24,13 +19,6 @@ export default {
       infoPlist: {
         NSLocationWhenInUseUsageDescription:
           "Allow CoreShop to use your location to show nearby stores.",
-        CFBundleURLTypes: [
-          {
-            CFBundleURLSchemes: [
-              "com.googleusercontent.apps.855662469976-scounhlq4d7famrrsoqna094qtjta48j",
-            ],
-          },
-        ],
       },
     },
     android: {
@@ -45,13 +33,6 @@ export default {
       permissions: [
         "android.permission.ACCESS_COARSE_LOCATION",
         "android.permission.ACCESS_FINE_LOCATION",
-      ],
-      intentFilters: [
-        {
-          action: "VIEW",
-          data: [{ scheme: androidOAuthScheme }],
-          category: ["BROWSABLE", "DEFAULT"],
-        },
       ],
     },
     web: {
@@ -73,7 +54,6 @@ export default {
             "Allow CoreShop to use your location to show nearby stores.",
         },
       ],
-      "expo-web-browser",
       [
         "expo-notifications",
         {

@@ -19,6 +19,7 @@ import { api } from "@/lib/api";
 import { useAuthStore } from "@/stores/auth-store";
 import { isNotifTypeAllowed } from "@/stores/notif-prefs-store";
 import { queryClient } from "@/lib/query-client";
+import { useSellerBadgeStore } from "@/stores/seller-badge-store";
 
 interface NotificationData {
   type?: string;
@@ -35,15 +36,18 @@ function updateBadgesForNotification(data: NotificationData): void {
       queryClient.setQueryData<number>(["support", "unread-count"], (prev) => (prev ?? 0) + 1);
       break;
     case "new_order":
-      // Increment seller store pending orders badge
       queryClient.setQueryData<{ pending_orders_count: number } & Record<string, unknown>>(
         ["seller", "store"],
         (prev) => prev ? { ...prev, pending_orders_count: prev.pending_orders_count + 1 } : prev
       );
       queryClient.setQueryData<number>(["notifications", "unread-count"], (prev) => (prev ?? 0) + 1);
+      useSellerBadgeStore.getState().increment();
+      break;
+    case "order_status":
+      queryClient.setQueryData<number>(["notifications", "unread-count"], (prev) => (prev ?? 0) + 1);
+      useSellerBadgeStore.getState().increment();
       break;
     default:
-      // order_status, promotion, flash_deal, new_arrival, etc.
       queryClient.setQueryData<number>(["notifications", "unread-count"], (prev) => (prev ?? 0) + 1);
   }
 }

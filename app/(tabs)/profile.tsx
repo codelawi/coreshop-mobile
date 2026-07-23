@@ -37,7 +37,7 @@ import { useWishlistStore } from "@/stores/wishlist-store";
 import { useThemeColors } from "@/lib/theme";
 import { useUnreadCount, useSupportUnreadCount } from "@/lib/queries/notifications";
 import { useSellerStore } from "@/lib/queries/seller";
-import { api } from "@/lib/api";
+import { useSellerBadgeStore } from "@/stores/seller-badge-store";
 import type { ThemeMode } from "@/stores/theme-store";
 import { resolveAvatar } from "@/lib/avatar";
 
@@ -173,6 +173,8 @@ export default function Profile() {
   const { data: unreadCount = 0 } = useUnreadCount();
   const { data: supportUnreadCount = 0 } = useSupportUnreadCount();
   const { data: sellerStore } = useSellerStore(user?.role === 'seller');
+  const unseenOrderCount = useSellerBadgeStore((s) => s.unseenOrderCount);
+  const myStoreBadge = unseenOrderCount > 0 ? unseenOrderCount : (sellerStore?.pending_orders_count ?? 0);
 
   const [showThemePicker, setShowThemePicker] = useState(false);
 
@@ -184,13 +186,10 @@ export default function Profile() {
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      try {
-        await api.post("/auth/logout");
-      } catch {}
-    },
-    onSettled: async () => {
       clearCart();
       await logout();
+    },
+    onSettled: () => {
       router.replace("/(auth)/sign-in" as any);
     },
   });
@@ -375,7 +374,7 @@ export default function Profile() {
             <Row
               icon={Store01Icon}
               label={t("profile.myStore")}
-              badge={sellerStore?.pending_orders_count ?? 0}
+              badge={myStoreBadge}
               onPress={() => router.push("/seller" as any)}
             />
           </Animated.View>

@@ -3,6 +3,7 @@ import { type InfiniteData, useInfiniteQuery, useMutation, useQuery, useQueryCli
 import type { PusherEvent } from "@pusher/pusher-websocket-react-native";
 import { api } from "@/lib/api";
 import { ensurePusher, pusher } from "@/lib/pusher";
+import { useSellerBadgeStore } from "@/stores/seller-badge-store";
 
 export interface AppNotification {
   id: number;
@@ -119,6 +120,14 @@ export function useUserChannel(userId: number | undefined) {
                 qc.invalidateQueries({ queryKey: ["notifications"] });
                 qc.invalidateQueries({ queryKey: ["seller", "store"] });
                 qc.invalidateQueries({ queryKey: ["seller", "orders"] });
+
+                const raw = event.data;
+                const payload: Record<string, unknown> = typeof raw === "string"
+                  ? (JSON.parse(raw) as Record<string, unknown>)
+                  : ((raw as Record<string, unknown>) ?? {});
+                if (payload.type === "new_order" || payload.type === "order_status") {
+                  useSellerBadgeStore.getState().increment();
+                }
               }
             } catch {}
           },

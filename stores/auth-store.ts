@@ -2,6 +2,7 @@ import { create } from "zustand";
 import * as SecureStore from "expo-secure-store";
 import { api } from "@/lib/api";
 import { disconnectPusher } from "@/lib/pusher";
+import { useSavedAccountsStore } from "@/stores/saved-accounts-store";
 import { clearAllNotifications } from "@/lib/notifications";
 
 export type Role = "client" | "seller" | "driver" | "admin";
@@ -36,6 +37,13 @@ export const useAuthStore = create<AuthState>((set) => ({
   isLoading: true,
   setAuth: async (user, token) => {
     await SecureStore.setItemAsync("auth_token", token);
+    await useSavedAccountsStore.getState().addAccount({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      avatar: user.avatar ?? null,
+      token,
+    });
     set({ user, token, isGuest: false, isLoading: false });
   },
   setUser: (user) => set({ user }),

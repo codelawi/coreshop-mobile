@@ -22,6 +22,7 @@ import { useTranslation } from "react-i18next";
 import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
 import { useSellerStore, useToggleStoreOpen } from "@/lib/queries/seller";
+import { useSellerBadgeStore } from "@/stores/seller-badge-store";
 import { useThemeColors } from "@/lib/theme";
 import { Spinner } from "@/components/ui/spinner";
 
@@ -86,6 +87,8 @@ export default function SellerHome() {
   const { t } = useTranslation();
   const { data: store, isLoading, isRefetching, refetch } = useSellerStore();
   const toggleOpen = useToggleStoreOpen();
+  const unseenOrderCount = useSellerBadgeStore((s) => s.unseenOrderCount);
+  const ordersBadge = unseenOrderCount > 0 ? unseenOrderCount : (store?.pending_orders_count ?? 0);
 
   if (isLoading) {
     return (
@@ -365,7 +368,7 @@ export default function SellerHome() {
               icon={ShoppingCart01Icon}
               label={t("seller.actions.orders")}
               onPress={() => router.push("/seller/orders" as any)}
-              badge={store.pending_orders_count > 0 ? store.pending_orders_count : undefined}
+              badge={ordersBadge > 0 ? ordersBadge : undefined}
             />
             <QuickAction
               icon={Add01Icon}

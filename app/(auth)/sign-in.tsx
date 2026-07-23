@@ -1,11 +1,12 @@
-import { View, Pressable, KeyboardAvoidingView, Platform, ScrollView } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { View, Pressable, KeyboardAvoidingView, Platform, ScrollView, Modal } from "react-native";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter, Link } from "expo-router";
 import { useState, useEffect } from "react";
+import * as SecureStore from "expo-secure-store";
 import { toast } from "sonner-native";
 import { HugeiconsIcon } from "@hugeicons/react-native";
 import {
@@ -13,21 +14,20 @@ import {
   LockPasswordIcon,
   View as ViewIcon,
   ViewOffSlashIcon,
+  Cancel01Icon,
 } from "@hugeicons/core-free-icons";
 import { useTranslation } from "react-i18next";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
-import * as Google from "expo-auth-session/providers/google";
-import * as WebBrowser from "expo-web-browser";
-import Svg, { Path } from "react-native-svg";
+import { Image } from "expo-image";
 
 import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Spinner } from "@/components/ui/spinner";
 import { api } from "@/lib/api";
 import { useAuthStore } from "@/stores/auth-store";
 import { useThemeColors } from "@/lib/theme";
-
-WebBrowser.maybeCompleteAuthSession();
+import { useSavedAccountsStore, type SavedAccount } from "@/stores/saved-accounts-store";
 
 const schema = z.object({
   email: z.string().email("Invalid email"),
@@ -36,36 +36,23 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>;
 
-function GoogleLogo() {
-  return (
-    <Svg width={20} height={20} viewBox="0 0 24 24">
-      <Path
-        fill="#4285F4"
-        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-      />
-      <Path
-        fill="#34A853"
-        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-      />
-      <Path
-        fill="#FBBC05"
-        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-      />
-      <Path
-        fill="#EA4335"
-        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-      />
-    </Svg>
-  );
-}
-
 export default function SignIn() {
   const { t } = useTranslation();
   const router = useRouter();
   const c = useThemeColors();
+  const insets = useSafeAreaInsets();
   const setAuth = useAuthStore((s) => s.setAuth);
   const continueAsGuest = useAuthStore((s) => s.continueAsGuest);
   const [showPassword, setShowPassword] = useState(false);
+  const { accounts, removeAccount } = useSavedAccountsStore();
+  const [showSavedModal, setShowSavedModal] = useState(accounts.length > 0);
+  const [loadingAccountId, setLoadingAccountId] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (accounts.length === 0) {
+      setShowSavedModal(false);
+    }
+  }, [accounts.length]);
 
   const {
     control,
@@ -97,36 +84,26 @@ export default function SignIn() {
     },
   });
 
-  const [, googleResponse, googlePromptAsync] = Google.useAuthRequest({
-    webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
-    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
-    androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
-  });
-
-  const { mutate: googleLogin, isPending: googlePending } = useMutation({
-    mutationFn: async (accessToken: string) => {
-      const res = await api.post("/auth/google", { access_token: accessToken });
-      return res.data;
-    },
-    onSuccess: async (res) => {
-      await setAuth(res.data.user, res.data.token);
-      toast.success(t("auth.welcomeBack"));
+  const loginWithSavedAccount = async (account: SavedAccount) => {
+    if (loadingAccountId !== null) return;
+    setLoadingAccountId(account.id);
+    await SecureStore.setItemAsync("auth_token", account.token);
+    try {
+      const res = await api.get("/auth/me");
+      await setAuth(res.data.data, account.token);
       router.replace("/");
-    },
-    onError: (err: any) => {
-      toast.error(err.response?.data?.message ?? t("auth.loginFailed"));
-    },
-  });
-
-  useEffect(() => {
-    if (googleResponse?.type !== "success") return;
-    const accessToken =
-      googleResponse.authentication?.accessToken ??
-      (googleResponse.params as any)?.access_token;
-    if (accessToken) {
-      googleLogin(accessToken);
+    } catch (err: any) {
+      await SecureStore.deleteItemAsync("auth_token");
+      if (err?.response?.status === 401) {
+        await removeAccount(account.id);
+        toast.error(t("auth.sessionExpired"));
+      } else {
+        toast.error(t("auth.loginFailed"));
+      }
+    } finally {
+      setLoadingAccountId(null);
     }
-  }, [googleResponse, googleLogin]);
+  };
 
   return (
     <SafeAreaView className="flex-1 bg-bg-light dark:bg-bg-dark">
@@ -224,23 +201,16 @@ export default function SignIn() {
                 className="mt-2"
               />
 
-              <View className="flex-row items-center gap-3">
-                <View className="h-px flex-1 bg-brand-100 dark:bg-[#2A2A2A]" />
-                <Text className="text-sm" style={{ color: c.muted }}>
-                  {t("auth.or")}
-                </Text>
-                <View className="h-px flex-1 bg-brand-100 dark:bg-[#2A2A2A]" />
-              </View>
-
-              <Button
-                label={t("auth.continueWithGoogle")}
-                variant="outline"
-                leftIcon={<GoogleLogo />}
-                onPress={() => googlePromptAsync()}
-                loading={googlePending}
-                fullWidth
-                size="lg"
-              />
+              {accounts.length > 0 && (
+                <Pressable
+                  onPress={() => setShowSavedModal(true)}
+                  className="items-center py-1"
+                >
+                  <Text variant="medium" className="text-sm text-brand dark:text-white">
+                    {t("auth.savedAccounts")}
+                  </Text>
+                </Pressable>
+              )}
             </Animated.View>
 
             <Animated.View
@@ -276,6 +246,98 @@ export default function SignIn() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* Saved accounts bottom sheet */}
+      <Modal
+        visible={showSavedModal}
+        transparent
+        animationType="none"
+        statusBarTranslucent
+        onRequestClose={() => setShowSavedModal(false)}
+      >
+        <View className="flex-1 justify-end">
+          <Pressable
+            className="absolute inset-0"
+            style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+            onPress={() => setShowSavedModal(false)}
+          />
+          <Animated.View
+            entering={FadeInUp.duration(400).springify()}
+            className="bg-bg-light dark:bg-bg-dark rounded-t-3xl"
+            style={{ paddingBottom: Math.max(insets.bottom, 16) }}
+          >
+            {/* Handle */}
+            <View className="items-center pt-3 pb-2">
+              <View className="h-1 w-10 rounded-full bg-brand-100 dark:bg-[#3A3A3A]" />
+            </View>
+
+            {/* Title */}
+            <Text variant="bold" className="text-xl text-brand dark:text-white px-6 pt-2 pb-3">
+              {t("auth.savedAccounts")}
+            </Text>
+
+            {/* Account rows */}
+            {accounts.map((account) => (
+              <Pressable
+                key={account.id}
+                onPress={() => loginWithSavedAccount(account)}
+                className="flex-row items-center px-6 py-3 active:opacity-70"
+              >
+                <View className="h-12 w-12 rounded-full overflow-hidden bg-brand-50 dark:bg-[#2A2A2A] items-center justify-center">
+                  {account.avatar ? (
+                    <Image
+                      source={{ uri: account.avatar }}
+                      style={{ width: "100%", height: "100%" }}
+                      contentFit="cover"
+                    />
+                  ) : (
+                    <Text variant="bold" className="text-lg text-brand">
+                      {account.name.charAt(0).toUpperCase()}
+                    </Text>
+                  )}
+                </View>
+
+                <View className="flex-1 ml-3">
+                  <Text variant="semibold" className="text-base text-brand dark:text-white" numberOfLines={1}>
+                    {account.name}
+                  </Text>
+                  <Text className="text-sm" style={{ color: c.secondary }} numberOfLines={1}>
+                    {account.email}
+                  </Text>
+                </View>
+
+                {loadingAccountId === account.id ? (
+                  <Spinner size={20} color={c.brand} strokeWidth={2.5} />
+                ) : (
+                  <Pressable
+                    onPress={() => removeAccount(account.id)}
+                    hitSlop={12}
+                    className="p-1"
+                  >
+                    <HugeiconsIcon icon={Cancel01Icon} size={18} color={c.muted} />
+                  </Pressable>
+                )}
+              </Pressable>
+            ))}
+
+            {/* Use a different account */}
+            <View className="mx-6 mt-1">
+              <View className="h-px bg-brand-100 dark:bg-[#2A2A2A] mb-1" />
+              <Pressable
+                onPress={() => setShowSavedModal(false)}
+                className="flex-row items-center py-3 gap-3 active:opacity-70"
+              >
+                <View className="h-12 w-12 rounded-full items-center justify-center border border-brand-100 dark:border-[#2A2A2A]">
+                  <Text variant="bold" className="text-xl text-brand dark:text-white">+</Text>
+                </View>
+                <Text variant="medium" className="text-base text-brand dark:text-white">
+                  {t("auth.useDifferentAccount")}
+                </Text>
+              </Pressable>
+            </View>
+          </Animated.View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }

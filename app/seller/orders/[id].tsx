@@ -43,9 +43,9 @@ export default function SellerOrderDetail() {
     t(`seller.orderStatus.${status}`, { defaultValue: status.replace(/_/g, " ") });
 
   const NEXT_ACTION: Record<string, { status: string; label: string }> = {
-    pending: { status: "approved", label: t("seller.orderDetail.acceptOrder", { defaultValue: "Accept Order" }) },
-    approved: { status: "preparing", label: t("seller.orderDetail.startPreparing", { defaultValue: "Start Preparing" }) },
-    preparing: { status: "ready_for_pickup", label: t("seller.orderDetail.markReady", { defaultValue: "Mark as Ready" }) },
+    pending: { status: "approved", label: t("seller.orderDetail.acceptOrder") },
+    approved: { status: "preparing", label: t("seller.orderDetail.startPreparing") },
+    preparing: { status: "ready_for_pickup", label: t("seller.orderDetail.markReady") },
   };
   const { data: order, isLoading } = useSellerOrder(Number(id));
   const updateStatus = useUpdateSellerOrderStatus();
@@ -59,9 +59,9 @@ export default function SellerOrderDetail() {
     updateStatus.mutate(
       { id: order.id, status: action.status },
       {
-        onSuccess: () => toast.success(t("seller.orderDetail.orderUpdated", { defaultValue: "Order updated" })),
+        onSuccess: () => toast.success(t("seller.orderDetail.orderUpdated")),
         onError: (err: any) =>
-          toast.error(err?.response?.data?.message ?? "Failed to update order"),
+          toast.error(err?.response?.data?.message ?? t("seller.orderDetail.failedToUpdate")),
       }
     );
   };
@@ -77,7 +77,7 @@ export default function SellerOrderDetail() {
   if (!order) {
     return (
       <SafeAreaView className="flex-1 items-center justify-center bg-bg-light dark:bg-bg-dark">
-        <Text style={{ color: c.muted }}>Order not found</Text>
+        <Text style={{ color: c.muted }}>{t("seller.orderDetail.notFound")}</Text>
       </SafeAreaView>
     );
   }
@@ -88,7 +88,7 @@ export default function SellerOrderDetail() {
         <Pressable onPress={() => router.back()}>
           <HugeiconsIcon icon={ArrowLeft01Icon} size={24} color={c.brand} />
         </Pressable>
-        <Text variant="bold" className="flex-1 text-xl text-brand dark:text-white">Order #{order.id}</Text>
+        <Text variant="bold" className="flex-1 text-xl text-brand dark:text-white">{t("seller.orderDetail.title", { id: order.id })}</Text>
         <View
           className="rounded-full px-3 py-1"
           style={{ backgroundColor: statusColor + "20" }}
@@ -145,7 +145,7 @@ export default function SellerOrderDetail() {
         <Animated.View entering={FadeInDown.duration(300).delay(60)} className="rounded-xl bg-white dark:bg-bg-card p-4">
           <View className="gap-3">
           <Text variant="semibold" className="text-sm text-brand dark:text-white">
-            Items ({order.items_count ?? order.items?.length ?? 0})
+            {t("seller.orderDetail.items", { count: order.items_count ?? order.items?.length ?? 0 })}
           </Text>
 
           {Array.isArray(order.items) && order.items.map((item, i) => (
@@ -175,7 +175,7 @@ export default function SellerOrderDetail() {
                     </Text>
                   ) : null}
                   <Text className="text-xs" style={{ color: c.secondary }}>
-                    Qty: {item.quantity} · JOD {Number(item.unit_price).toFixed(2)} each
+                    {t("seller.orderDetail.qty", { qty: item.quantity, price: Number(item.unit_price).toFixed(2) })}
                   </Text>
                 </View>
                 <Text variant="semibold" className="text-sm text-brand dark:text-white">
@@ -193,16 +193,16 @@ export default function SellerOrderDetail() {
           className="rounded-xl bg-white dark:bg-bg-card p-4"
         >
           <View className="gap-2">
-          <Text variant="semibold" className="mb-1 text-sm text-brand dark:text-white">Payment</Text>
+          <Text variant="semibold" className="mb-1 text-sm text-brand dark:text-white">{t("seller.orderDetail.payment")}</Text>
 
           <View className="flex-row justify-between">
-            <Text className="text-sm" style={{ color: c.secondary }}>Subtotal</Text>
+            <Text className="text-sm" style={{ color: c.secondary }}>{t("seller.orderDetail.subtotal")}</Text>
             <Text className="text-sm text-brand dark:text-white">JOD {Number(order.subtotal).toFixed(2)}</Text>
           </View>
 
           {Number(order.discount) > 0 ? (
             <View className="flex-row justify-between">
-              <Text className="text-sm" style={{ color: c.secondary }}>Discount</Text>
+              <Text className="text-sm" style={{ color: c.secondary }}>{t("seller.orderDetail.discount")}</Text>
               <Text className="text-sm" style={{ color: "#22C55E" }}>
                 - JOD {Number(order.discount).toFixed(2)}
               </Text>
@@ -210,27 +210,27 @@ export default function SellerOrderDetail() {
           ) : null}
 
           <View className="flex-row justify-between">
-            <Text className="text-sm" style={{ color: c.secondary }}>Delivery fee</Text>
+            <Text className="text-sm" style={{ color: c.secondary }}>{t("seller.orderDetail.deliveryFee")}</Text>
             <Text className="text-sm text-brand dark:text-white">JOD {Number(order.delivery_fee).toFixed(2)}</Text>
           </View>
 
           <View className="mt-1 h-px bg-brand-100 dark:bg-[#2A2A2A]" />
 
           <View className="flex-row justify-between">
-            <Text variant="bold" className="text-sm text-brand dark:text-white">Total</Text>
+            <Text variant="bold" className="text-sm text-brand dark:text-white">{t("seller.orderDetail.total")}</Text>
             <Text variant="bold" className="text-sm text-brand dark:text-white">
               JOD {Number(order.total).toFixed(2)}
             </Text>
           </View>
 
           <View className="mt-1 flex-row items-center justify-between">
-            <Text className="text-xs" style={{ color: c.secondary }}>Payment method</Text>
+            <Text className="text-xs" style={{ color: c.secondary }}>{t("seller.orderDetail.paymentMethod")}</Text>
             <Text
               variant="medium"
               className="text-xs capitalize"
               style={{ color: c.secondary }}
             >
-              {order.payment_method?.replace(/_/g, " ") ?? "Cash on Delivery"}
+              {order.payment_method?.replace(/_/g, " ") ?? t("seller.orderDetail.cashOnDelivery")}
             </Text>
           </View>
           </View>
@@ -242,7 +242,7 @@ export default function SellerOrderDetail() {
             entering={FadeInDown.duration(300).delay(180)}
             className="rounded-xl bg-white dark:bg-bg-card p-4"
           >
-            <Text variant="semibold" className="mb-1 text-sm text-brand dark:text-white">Note from customer</Text>
+            <Text variant="semibold" className="mb-1 text-sm text-brand dark:text-white">{t("seller.orderDetail.noteFromCustomer")}</Text>
             <Text className="text-sm leading-5" style={{ color: c.secondary }}>{order.notes}</Text>
           </Animated.View>
         ) : null}
@@ -255,7 +255,7 @@ export default function SellerOrderDetail() {
             style={{ borderColor: c.brand }}
           >
             <HugeiconsIcon icon={Message01Icon} size={18} color={c.brand} />
-            <Text variant="semibold" style={{ color: c.brand, fontSize: 14 }}>Chat with Customer</Text>
+            <Text variant="semibold" style={{ color: c.brand, fontSize: 14 }}>{t("seller.orderDetail.chatWithCustomer")}</Text>
           </Pressable>
         </Animated.View>
       </ScrollView>

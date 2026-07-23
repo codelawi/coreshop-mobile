@@ -1,9 +1,6 @@
 import "react-native-gesture-handler";
 import "../global.css";
 import "@/lib/i18n";
-import * as WebBrowser from "expo-web-browser";
-
-WebBrowser.maybeCompleteAuthSession();
 import { Stack } from "expo-router";
 import {
   useFonts,
@@ -32,6 +29,7 @@ import { useCartStore } from "@/stores/cart-store";
 import { useWishlistStore } from "@/stores/wishlist-store";
 import { useThemeStore } from "@/stores/theme-store";
 import { useNotifPrefsStore } from "@/stores/notif-prefs-store";
+import { useSavedAccountsStore } from "@/stores/saved-accounts-store";
 import { useColorScheme } from "nativewind";
 import { registerForPushNotifications, setupNotificationListeners, ensureNotificationChannel } from "@/lib/notifications";
 import { OfflineBanner } from "@/components/ui/offline-banner";
@@ -54,16 +52,17 @@ export default function RootLayout() {
   const hydrateWishlist = useWishlistStore((s) => s.hydrate);
   const hydrateTheme = useThemeStore((s) => s.hydrate);
   const hydrateNotifPrefs = useNotifPrefsStore((s) => s.hydrate);
+  const hydrateSavedAccounts = useSavedAccountsStore((s) => s.hydrate);
   const themeMode = useThemeStore((s) => s.mode);
   const { colorScheme, setColorScheme } = useColorScheme();
   const token = useAuthStore((s) => s.token);
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    Promise.all([hydrateAuth(), hydrateLang(), hydrateCart(), hydrateWishlist(), hydrateTheme(), hydrateNotifPrefs()]).then(
+    Promise.all([hydrateAuth(), hydrateLang(), hydrateCart(), hydrateWishlist(), hydrateTheme(), hydrateNotifPrefs(), hydrateSavedAccounts()]).then(
       () => setHydrated(true)
     );
-  }, [hydrateAuth, hydrateLang, hydrateCart, hydrateWishlist, hydrateTheme, hydrateNotifPrefs]);
+  }, [hydrateAuth, hydrateLang, hydrateCart, hydrateWishlist, hydrateTheme, hydrateNotifPrefs, hydrateSavedAccounts]);
 
   useEffect(() => {
     setColorScheme(themeMode);
