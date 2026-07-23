@@ -6,6 +6,7 @@ import {
   ScrollView,
   Modal,
 } from "react-native";
+
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -26,7 +27,6 @@ import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 import * as Google from "expo-auth-session/providers/google";
 import * as WebBrowser from "expo-web-browser";
 import Svg, { Path } from "react-native-svg";
-import Constants, { ExecutionEnvironment } from "expo-constants";
 
 import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
@@ -37,18 +37,6 @@ import { useThemeColors } from "@/lib/theme";
 import { useLanguageStore } from "@/stores/language-store";
 
 WebBrowser.maybeCompleteAuthSession();
-
-const isNativeBuild = [ExecutionEnvironment.Bare, ExecutionEnvironment.Standalone].includes(
-  Constants.executionEnvironment
-);
-const IOS_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID ?? "";
-const ANDROID_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID ?? "";
-const GOOGLE_REDIRECT_URI = isNativeBuild
-  ? (Platform.select({
-      ios: `com.googleusercontent.apps.${IOS_CLIENT_ID.replace(".apps.googleusercontent.com", "")}:/oauthredirect`,
-      android: `com.googleusercontent.apps.${ANDROID_CLIENT_ID.replace(".apps.googleusercontent.com", "")}:/oauthredirect`,
-    }) ?? undefined)
-  : undefined;
 
 const schema = z
   .object({
@@ -133,9 +121,8 @@ export default function SignUp() {
 
   const [, googleResponse, googlePromptAsync] = Google.useAuthRequest({
     webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
-    iosClientId: IOS_CLIENT_ID,
-    androidClientId: ANDROID_CLIENT_ID,
-    ...(GOOGLE_REDIRECT_URI ? { redirectUri: GOOGLE_REDIRECT_URI } : {}),
+    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
+    androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
   });
 
   const { mutate: googleLogin, isPending: googlePending } = useMutation({

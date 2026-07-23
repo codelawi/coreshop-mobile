@@ -38,6 +38,7 @@ export default {
         foregroundImage: "./assets/logo.png",
         backgroundColor: "#0A0A0A",
       },
+      googleServicesFile: "./google-services.json",
       edgeToEdgeEnabled: true,
       predictiveBackGestureEnabled: false,
       package: "com.coreshop.mobile",
@@ -48,7 +49,6 @@ export default {
       intentFilters: [
         {
           action: "VIEW",
-          autoVerify: true,
           data: [{ scheme: androidOAuthScheme }],
           category: ["BROWSABLE", "DEFAULT"],
         },

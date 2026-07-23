@@ -19,7 +19,6 @@ import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 import * as Google from "expo-auth-session/providers/google";
 import * as WebBrowser from "expo-web-browser";
 import Svg, { Path } from "react-native-svg";
-import Constants, { ExecutionEnvironment } from "expo-constants";
 
 import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
@@ -29,20 +28,6 @@ import { useAuthStore } from "@/stores/auth-store";
 import { useThemeColors } from "@/lib/theme";
 
 WebBrowser.maybeCompleteAuthSession();
-
-// Google OAuth registers the reversed-client-ID scheme, not the app bundle ID.
-// We must pass this explicitly so expo-auth-session sends the right redirect_uri.
-const isNativeBuild = [ExecutionEnvironment.Bare, ExecutionEnvironment.Standalone].includes(
-  Constants.executionEnvironment
-);
-const IOS_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID ?? "";
-const ANDROID_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID ?? "";
-const GOOGLE_REDIRECT_URI = isNativeBuild
-  ? (Platform.select({
-      ios: `com.googleusercontent.apps.${IOS_CLIENT_ID.replace(".apps.googleusercontent.com", "")}:/oauthredirect`,
-      android: `com.googleusercontent.apps.${ANDROID_CLIENT_ID.replace(".apps.googleusercontent.com", "")}:/oauthredirect`,
-    }) ?? undefined)
-  : undefined;
 
 const schema = z.object({
   email: z.string().email("Invalid email"),
@@ -114,9 +99,8 @@ export default function SignIn() {
 
   const [, googleResponse, googlePromptAsync] = Google.useAuthRequest({
     webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
-    iosClientId: IOS_CLIENT_ID,
-    androidClientId: ANDROID_CLIENT_ID,
-    ...(GOOGLE_REDIRECT_URI ? { redirectUri: GOOGLE_REDIRECT_URI } : {}),
+    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
+    androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
   });
 
   const { mutate: googleLogin, isPending: googlePending } = useMutation({
